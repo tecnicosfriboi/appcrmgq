@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM/GQ — Painel de Ferramentas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF1F6;--paper-dark:#DCE2ED;--ink:#14274E;--ink-soft:#51617E;
+    --card:#FFFFFF;--line:#D2D9E6;--pending:#C81E2E;--highlight:#2E5AAC;--radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--paper-dark) 1px, transparent 1px),linear-gradient(90deg, var(--paper-dark) 1px, transparent 1px);
+    background-size:28px 28px;color:var(--ink);font-family:'Inter',sans-serif;min-height:100vh;padding:0 0 60px;
+  }
+  header{padding:52px 20px 28px;max-width:960px;margin:0 auto;text-align:center;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .eyebrow::before,.eyebrow::after{content:"";width:8px;height:8px;background:var(--pending);display:inline-block;border-radius:1px;transform:rotate(45deg);}
+  h1{font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(28px,5vw,44px);letter-spacing:.01em;margin:10px 0 6px;text-transform:uppercase;}
+  .sub{color:var(--ink-soft);font-size:15px;max-width:520px;margin:0 auto;line-height:1.5;}
+  main{max-width:960px;margin:0 auto;padding:0 20px;}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit, minmax(230px, 1fr));gap:18px;}
+  a.tool-card{
+    display:block;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--ink);
+    border-radius:var(--radius);padding:26px 24px;text-decoration:none;color:var(--ink);
+    transition:transform .15s, box-shadow .15s;
+  }
+  a.tool-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(20,39,78,.10);}
+  .tool-icon{
+    width:40px;height:40px;border-radius:8px;background:var(--paper);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:14px;
+  }
+  .tool-card h2{font-family:'Oswald',sans-serif;font-size:16px;text-transform:uppercase;letter-spacing:.03em;margin:0 0 8px;}
+  .tool-card p{font-size:13px;color:var(--ink-soft);line-height:1.55;margin:0 0 14px;}
+  .tool-tag{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--highlight);}
+  .tool-tag::after{content:" →";}
+  .card-live{border-left-color:var(--pending);}
+  .card-live .tool-tag{color:var(--pending);}
+  footer{max-width:960px;margin:36px auto 0;padding:0 20px;font-size:12px;color:var(--ink-soft);font-family:'JetBrains Mono',monospace;text-align:center;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">CRM / GQ — Consultores Técnicos</div>
+  <h1>Painel de Ferramentas</h1>
+  <p class="sub">Registro, acompanhamento, entrega e pós-venda — tudo num só lugar.</p>
+</header>
+
+<main>
+  <div class="cards">
+    <a class="tool-card" href="registro.html">
+      <div class="tool-icon">📋</div>
+      <h2>Registro de Atendimentos</h2>
+      <p>Monta a programação do dia, bate o ponto e atualiza o status de cada item.</p>
+      <span class="tool-tag">Abrir</span>
+    </a>
+
+    <a class="tool-card card-live" href="painel.html">
+      <div class="tool-icon">📡</div>
+      <h2>Painel da Equipe</h2>
+      <p>Visão ao vivo ou histórico por período: ponto, itens e status de todos os técnicos.</p>
+      <span class="tool-tag">Abrir</span>
+    </a>
+
+    <a class="tool-card" href="ato-entrega/index.html">
+      <div class="tool-icon">📦</div>
+      <h2>Ato de Entrega</h2>
+      <p>Inspeção de entrega, laudo em PDF, quebra de peso e histórico.</p>
+      <span class="tool-tag">Abrir</span>
+    </a>
+
+    <a class="tool-card" href="posvenda/index.html">
+      <div class="tool-icon">🛒</div>
+      <h2>Visita Pós-Venda</h2>
+      <p>Registro de visitas pós-venda com fotos — funciona offline no celular.</p>
+      <span class="tool-tag">Abrir</span>
+    </a>
+  </div>
+</main>
+
+<footer>CRM/GQ · Consultores Técnicos</footer>
+
+</body>
+</html>
