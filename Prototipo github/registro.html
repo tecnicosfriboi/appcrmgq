@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script>
+function __toggleSwitcher(e){
+  if(e){e.stopPropagation();}
+  var m=document.getElementById('__sw-menu');
+  var b=document.getElementById('__sw-backdrop');
+  var open=m.classList.toggle('open');
+  b.classList.toggle('open', open);
+}
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Atendimentos — CRM/GQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF1F6;
+    --paper-dark:#DCE2ED;
+    --ink:#14274E;
+    --ink-soft:#51617E;
+    --card:#FFFFFF;
+    --line:#D2D9E6;
+    --done:#2F6B4F;
+    --done-bg:#E4EEE7;
+    --pending:#C81E2E;
+    --pending-bg:#FBE3E4;
+    --progress:#B0791F;
+    --progress-bg:#F5EBD6;
+    --neutral-mark:#98A2B3;
+    --highlight:#2E5AAC;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--paper-dark) 1px, transparent 1px),
+      linear-gradient(90deg, var(--paper-dark) 1px, transparent 1px);
+    background-size:28px 28px;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:0 0 60px;
+  }
+  header{padding:32px 20px 20px;max-width:720px;margin:0 auto;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-soft);display:flex;align-items:center;gap:8px;
+  }
+  .eyebrow::before{content:"";width:8px;height:8px;background:var(--pending);display:inline-block;border-radius:1px;transform:rotate(45deg);}
+  h1{
+    font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(26px,4vw,36px);
+    letter-spacing:.01em;margin:8px 0 4px;text-transform:uppercase;
+  }
+  .sub{color:var(--ink-soft);font-size:14px;max-width:560px;line-height:1.5;}
+
+  main{max-width:720px;margin:0 auto;padding:0 20px;}
+
+  .panel{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px;margin-bottom:18px;box-shadow:0 1px 0 rgba(30,42,34,.03);
+  }
+  .panel h2{
+    font-family:'Oswald',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.1em;
+    margin:0 0 14px;color:var(--ink-soft);
+  }
+
+  label{
+    display:block;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--ink-soft);margin-bottom:6px;
+  }
+  select, input[type=text], input[type=date], textarea{
+    width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:6px;
+    background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;
+    margin-bottom:14px;
+  }
+  textarea{resize:vertical;min-height:56px;}
+  select:focus, input:focus, textarea:focus{outline:2px solid var(--highlight);outline-offset:1px;}
+
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media(max-width:520px){.row2{grid-template-columns:1fr;}}
+
+  .toggle-group{display:flex;gap:8px;margin-bottom:14px;}
+  .toggle-btn{
+    flex:1;padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);
+    font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink-soft);cursor:pointer;
+    text-align:center;
+  }
+  .toggle-btn.active{border-color:var(--ink);background:var(--ink);color:var(--paper);font-weight:600;}
+
+  .conditional{display:none;}
+  .conditional.show{display:block;}
+
+  .btn{
+    font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;text-transform:uppercase;
+    letter-spacing:.04em;padding:12px 18px;border-radius:6px;border:none;cursor:pointer;
+    background:var(--ink);color:var(--paper);width:100%;
+  }
+  .btn:hover{opacity:.9;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+
+  .status-msg{font-family:'JetBrains Mono',monospace;font-size:12px;margin-top:8px;min-height:16px;}
+  .status-msg.err{color:var(--pending);}
+  .status-msg.ok{color:var(--done);}
+
+  .day-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+  .day-header h2{margin:0;}
+  .day-stats{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);}
+
+  .item-card{
+    border:1px solid var(--line);border-left:4px solid var(--ink);border-radius:8px;
+    padding:14px 16px;margin-bottom:10px;
+  }
+  .item-card.status-Concluído{border-left-color:var(--done);}
+  .item-card.status-Não_realizado{border-left-color:var(--pending);}
+  .item-card.status-Cancelado{border-left-color:var(--neutral-mark);}
+  .item-card.status-Em_andamento{border-left-color:var(--progress);}
+  .item-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+  .item-desc{font-size:14px;font-weight:500;flex:1;}
+  .item-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+  .tag{
+    font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.04em;
+    padding:2px 8px;border-radius:10px;background:var(--paper-dark);color:var(--ink-soft);
+  }
+  .status-pill{
+    font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 10px;border-radius:20px;
+    white-space:nowrap;flex-shrink:0;
+  }
+  .status-pill.Programado{background:var(--paper-dark);color:var(--ink-soft);}
+  .status-pill.Em_andamento{background:var(--progress-bg);color:var(--progress);}
+  .status-pill.Concluído{background:var(--done-bg);color:var(--done);}
+  .status-pill.Não_realizado, .status-pill.Cancelado{background:var(--pending-bg);color:var(--pending);}
+
+  .item-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+  .action-btn{
+    font-family:'JetBrains Mono',monospace;font-size:11px;padding:5px 10px;border-radius:20px;
+    border:1px solid var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;
+  }
+  .action-btn:hover{border-color:var(--ink);color:var(--ink);}
+  .action-btn.del{color:var(--pending);}
+
+  .empty-state{text-align:center;padding:30px 20px;color:var(--ink-soft);font-size:13px;}
+
+  .setup-note{font-size:12px;color:var(--ink-soft);line-height:1.5;margin-top:6px;}
+
+  .ponto-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .ponto-badge{
+    font-family:'JetBrains Mono',monospace;font-size:13px;
+    background:var(--paper);border:1px solid var(--line);border-radius:20px;
+    padding:6px 14px;flex:1;text-align:center;min-width:120px;
+  }
+  .ponto-badge.set{border-color:var(--highlight);color:#1d3f7a;font-weight:600;}
+  .ponto-btn{
+    font-family:'JetBrains Mono',monospace;font-size:12px;padding:8px 14px;border-radius:20px;
+    border:1px solid var(--ink);background:var(--ink);color:var(--paper);cursor:pointer;flex:1;
+    white-space:nowrap;
+  }
+  .ponto-btn:disabled{opacity:.45;cursor:not-allowed;background:var(--paper-dark);color:var(--ink-soft);border-color:var(--line);}
+
+  .app-nav{
+    background:var(--ink);display:flex;justify-content:space-between;align-items:center;
+    padding:10px 20px;flex-wrap:wrap;gap:10px;font-family:'JetBrains Mono',monospace;font-size:12px;
+  }
+  .app-nav a{color:var(--paper);text-decoration:none;opacity:.75;}
+  .app-nav a:hover{opacity:1;}
+  .app-nav a.active{opacity:1;font-weight:600;border-bottom:2px solid var(--pending);padding-bottom:2px;}
+  .app-nav-links{display:flex;gap:18px;flex-wrap:wrap;}
+  .app-nav-home{font-weight:600;opacity:1 !important;}
+</style>
+<style id="app-switcher-css">
+.app-switcher{position:relative;display:inline-block;font-family:'Georgia',serif;}
+.app-switcher-btn{background:transparent;border:none;color:#fff;font-size:15px;font-weight:400;letter-spacing:.03em;cursor:pointer;display:flex;align-items:center;gap:7px;padding:0;font-family:inherit;}
+.app-switcher-btn .caret{font-size:10px;opacity:.7;}
+.app-switcher-menu{position:absolute;top:calc(100% + 8px);left:0;background:#fff;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.28);min-width:210px;z-index:9999;overflow:hidden;display:none;}
+.app-switcher-menu.open{display:block;}
+.app-switcher-menu a{display:flex;align-items:center;gap:10px;padding:11px 14px;color:#14274E;text-decoration:none;font-size:13px;font-family:'Inter',Arial,sans-serif;border-bottom:1px solid #eef1f6;}
+.app-switcher-menu a:last-child{border-bottom:none;}
+.app-switcher-menu a:hover{background:#EEF1F6;}
+.app-switcher-menu a.current{background:#14274E;color:#fff;font-weight:600;}
+.app-switcher-menu .ico{font-size:15px;width:20px;text-align:center;}
+.app-switcher-backdrop{position:fixed;inset:0;z-index:9998;display:none;}
+.app-switcher-backdrop.open{display:block;}
+</style>
+
+<style id="black-header-css">
+.crm-app-header{background:linear-gradient(120deg,#002D5B 0%,#0A4A8F 62%,#2E6DB4 100%);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;gap:10px;flex-wrap:wrap;border-bottom:4px solid #E30613;}
+.crm-brand-logos{display:flex;align-items:center;gap:14px;}
+.crm-brand-logos img{height:26px;width:auto;display:block;}
+.crm-logo-fallback{display:none;font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;letter-spacing:.08em;padding:4px 10px;border-radius:5px;}
+.crm-logo-fallback.jbs{background:#fff;color:#002D5B;}
+.crm-logo-fallback.friboi{background:#E30613;color:#fff;}
+</style>
+
+</head>
+<body>
+<div class="crm-app-header">
+  <div class="app-switcher">
+  <button class="app-switcher-btn" onclick="__toggleSwitcher(event)">Registro de Atendimentos <span class="caret">▼</span></button>
+  <div class="app-switcher-backdrop" id="__sw-backdrop" onclick="__toggleSwitcher(event)"></div>
+  <div class="app-switcher-menu" id="__sw-menu">
+    <a href="registro.html" class="current"><span class="ico">📋</span>Registro de Atendimentos</a>
+    <a href="painel.html"><span class="ico">📡</span>Painel da Equipe</a>
+    <a href="ato-entrega/index.html"><span class="ico">📦</span>Ato de Entrega</a>
+    <a href="posvenda/index.html"><span class="ico">🛒</span>Visita Pós-Venda</a>
+    <a href="index.html"><span class="ico">🏠</span>Todos os apps</a>
+  </div>
+</div>
+
+  <div class="crm-brand-logos">
+    <img src="img/logo-jbs.png" alt="JBS" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
+    <span class="crm-logo-fallback jbs">JBS</span>
+    <img src="img/logo-friboi.png" alt="Friboi" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
+    <span class="crm-logo-fallback friboi">FRIBOI</span>
+  </div>
+</div>
+
+<header>
+  <div class="eyebrow">CRM / GQ — Consultores Técnicos</div>
+  <h1>Registro de Atendimentos</h1>
+  <p class="sub">Monte a programação do dia, bata o ponto e atualize o status de cada item — isso substitui a mensagem no grupo e o chamado no sistema da JBS.</p>
+</header>
+
+<main>
+
+  <div class="panel" id="setupPanel">
+    <h2>Quem é você e qual o dia?</h2>
+    <div class="row2">
+      <div>
+        <label for="tecnicoSelect">Técnico</label>
+        <select id="tecnicoSelect"><option value="">Carregando...</option></select>
+      </div>
+      <div>
+        <label for="dataInput">Data</label>
+        <input type="date" id="dataInput">
+      </div>
+    </div>
+    <div class="setup-note">O técnico selecionado fica salvo neste aparelho para as próximas vezes.</div>
+  </div>
+
+  <div class="panel" id="pontoPanel">
+    <h2>Ponto do dia</h2>
+    <div class="ponto-row">
+      <div class="ponto-badge" id="pontoInicioBadge">sem entrada</div>
+      <div class="ponto-badge" id="pontoFimBadge">sem saída</div>
+    </div>
+    <div class="ponto-row" style="margin-top:10px;">
+      <button class="ponto-btn" id="btnEntrada">Bater entrada</button>
+      <button class="ponto-btn" id="btnSaida">Bater saída</button>
+    </div>
+    <div class="status-msg" id="pontoMsg"></div>
+  </div>
+
+  <div class="panel" id="formPanel">
+    <h2>Novo item da programação</h2>
+
+    <label for="descInput">Descrição</label>
+    <input type="text" id="descInput" placeholder="ex: Ato de entrega remoto Carrefour">
+
+    <label>É atendimento a cliente?</label>
+    <div class="toggle-group">
+      <button type="button" class="toggle-btn active" data-val="sim" id="btnSim">Sim</button>
+      <button type="button" class="toggle-btn" data-val="nao" id="btnNao">Não</button>
+    </div>
+
+    <div class="conditional show" id="blocoAtendimento">
+      <label for="clienteInput">Cliente / Loja / Unidade</label>
+      <input type="text" id="clienteInput" placeholder="ex: Assaí Benfica">
+
+      <div class="row2">
+        <div>
+          <label for="finalidadeSelect">Finalidade</label>
+          <select id="finalidadeSelect">
+            <option>Ato de Entrega</option>
+            <option>Pós Entrega</option>
+            <option>Visita de Valor</option>
+            <option>Treinamento</option>
+            <option>Reunião com Cliente</option>
+            <option>Quebra de Peso</option>
+            <option>SAC</option>
+            <option>Acompanhamento Retirada</option>
+            <option>Investigação</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div>
+          <label for="tipoSelect">Tipo de Atendimento</label>
+          <select id="tipoSelect">
+            <option>Presencial</option>
+            <option>Remoto</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="conditional" id="blocoFinalidadeOutro">
+        <label for="finalidadeOutroInput">Descreva a finalidade</label>
+        <input type="text" id="finalidadeOutroInput" placeholder="ex: Suporte técnico ao comercial">
+      </div>
+
+      <div class="row2">
+        <div>
+          <label for="origemTipoSelect">Origem da demanda</label>
+          <select id="origemTipoSelect">
+            <option value="Cliente Externo">Cliente Externo</option>
+            <option value="Cliente Interno">Cliente Interno</option>
+          </select>
+        </div>
+        <div>
+          <label for="origemCanalSelect">Canal</label>
+          <select id="origemCanalSelect"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="conditional" id="blocoInterno">
+      <label for="localSelect">Local</label>
+      <select id="localSelect">
+        <option>Home Office</option>
+        <option>Escritório</option>
+        <option>Deslocamento</option>
+        <option>Outro</option>
+      </select>
+    </div>
+
+    <button class="btn" id="salvarBtn">Adicionar à programação</button>
+    <div class="status-msg" id="formMsg"></div>
+  </div>
+
+  <div class="panel">
+    <div class="day-header">
+      <h2 style="margin:0;">Programação do dia</h2>
+      <div class="day-stats" id="dayStats"></div>
+    </div>
+    <div id="itemsList"><div class="empty-state">Selecione o técnico para carregar a programação.</div></div>
+  </div>
+
+</main>
+
+<script>
+(function(){
+  // ⚠️ URL do Apps Script implantado (termina em /exec)
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxFtgcdxMIgwDk2Bf06CKXMWRLVlYibY112IanZ_dIzM7axA6t7ATexF4EF6-PEn3u9/exec';
+
+  const CANAIS_POR_ORIGEM = {
+    'Cliente Externo': ['E-mail', 'Ligação', 'WhatsApp'],
+    'Cliente Interno': ['Chamado oficial JBS', 'E-mail', 'Ligação', 'WhatsApp']
+  };
+
+  const tecnicoSelect = document.getElementById('tecnicoSelect');
+  const dataInput = document.getElementById('dataInput');
+  const descInput = document.getElementById('descInput');
+  const btnSim = document.getElementById('btnSim');
+  const btnNao = document.getElementById('btnNao');
+  const blocoAtendimento = document.getElementById('blocoAtendimento');
+  const blocoInterno = document.getElementById('blocoInterno');
+  const clienteInput = document.getElementById('clienteInput');
+  const finalidadeSelect = document.getElementById('finalidadeSelect');
+  const blocoFinalidadeOutro = document.getElementById('blocoFinalidadeOutro');
+  const finalidadeOutroInput = document.getElementById('finalidadeOutroInput');
+  const tipoSelect = document.getElementById('tipoSelect');
+  const origemTipoSelect = document.getElementById('origemTipoSelect');
+  const origemCanalSelect = document.getElementById('origemCanalSelect');
+  const localSelect = document.getElementById('localSelect');
+  const salvarBtn = document.getElementById('salvarBtn');
+  const formMsg = document.getElementById('formMsg');
+  const itemsList = document.getElementById('itemsList');
+  const dayStats = document.getElementById('dayStats');
+
+  const pontoInicioBadge = document.getElementById('pontoInicioBadge');
+  const pontoFimBadge = document.getElementById('pontoFimBadge');
+  const btnEntrada = document.getElementById('btnEntrada');
+  const btnSaida = document.getElementById('btnSaida');
+  const pontoMsg = document.getElementById('pontoMsg');
+
+  let ehAtendimento = true;
+  let currentItems = [];
+
+  // ---------- setup: técnico + data ----------
+  const today = new Date().toISOString().slice(0,10);
+  dataInput.value = today;
+
+  const savedTecnico = localStorage.getItem('registro_tecnico');
+
+  async function loadTechnicians(){
+    try{
+      const res = await fetch(`${API_URL}?action=technicians`);
+      const names = await res.json();
+      tecnicoSelect.innerHTML = '<option value="">Selecione...</option>' +
+        names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+      if (savedTecnico && names.includes(savedTecnico)){
+        tecnicoSelect.value = savedTecnico;
+        refreshDay();
+      }
+    } catch(err){
+      tecnicoSelect.innerHTML = '<option value="">Erro ao carregar — confira a API_URL</option>';
+    }
+  }
+
+  tecnicoSelect.addEventListener('change', () => {
+    localStorage.setItem('registro_tecnico', tecnicoSelect.value);
+    refreshDay();
+  });
+  dataInput.addEventListener('change', refreshDay);
+
+  function refreshDay(){
+    loadItems();
+    loadPonto();
+  }
+
+  // ---------- toggle atendimento / interno ----------
+  btnSim.addEventListener('click', () => setAtendimento(true));
+  btnNao.addEventListener('click', () => setAtendimento(false));
+  function setAtendimento(val){
+    ehAtendimento = val;
+    btnSim.classList.toggle('active', val);
+    btnNao.classList.toggle('active', !val);
+    blocoAtendimento.classList.toggle('show', val);
+    blocoInterno.classList.toggle('show', !val);
+  }
+
+  // ---------- finalidade "Outro" ----------
+  finalidadeSelect.addEventListener('change', () => {
+    blocoFinalidadeOutro.classList.toggle('show', finalidadeSelect.value === 'Outro');
+  });
+
+  // ---------- origem: canal depende do tipo ----------
+  function renderCanais(){
+    const canais = CANAIS_POR_ORIGEM[origemTipoSelect.value] || [];
+    origemCanalSelect.innerHTML = canais.map(c => `<option>${c}</option>`).join('');
+  }
+  origemTipoSelect.addEventListener('change', renderCanais);
+  renderCanais();
+
+  // ---------- salvar novo item ----------
+  salvarBtn.addEventListener('click', async () => {
+    const tecnico = tecnicoSelect.value;
+    const data = dataInput.value;
+    const descricao = descInput.value.trim();
+
+    if (!tecnico){ showMsg('Selecione o técnico.', true); return; }
+    if (!descricao){ showMsg('Descreva o item.', true); return; }
+
+    const payload = {
+      action: 'add',
+      tecnico, data, descricao,
+      ehAtendimento,
+      status: 'Programado'
+    };
+    if (ehAtendimento){
+      payload.cliente = clienteInput.value.trim();
+      payload.finalidade = finalidadeSelect.value;
+      payload.finalidadeDetalhe = finalidadeSelect.value === 'Outro' ? finalidadeOutroInput.value.trim() : '';
+      payload.tipoAtendimento = tipoSelect.value;
+      payload.origemTipo = origemTipoSelect.value;
+      payload.origemCanal = origemCanalSelect.value;
+    } else {
+      payload.local = localSelect.value;
+    }
+
+    salvarBtn.disabled = true;
+    showMsg('Salvando...', false);
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if (json.ok){
+        showMsg('✓ Adicionado.', false, true);
+        descInput.value = '';
+        clienteInput.value = '';
+        finalidadeOutroInput.value = '';
+        await loadItems();
+      } else {
+        showMsg('Erro: ' + (json.error || 'desconhecido'), true);
+      }
+    } catch(err){
+      showMsg('Falha de conexão — confira a API_URL.', true);
+    }
+    salvarBtn.disabled = false;
+  });
+
+  function showMsg(text, isErr, isOk){
+    formMsg.textContent = text;
+    formMsg.className = 'status-msg' + (isErr ? ' err' : isOk ? ' ok' : '');
+  }
+
+  // ---------- carregar/renderizar itens do dia ----------
+  async function loadItems(){
+    const tecnico = tecnicoSelect.value;
+    const data = dataInput.value;
+    if (!tecnico){
+      itemsList.innerHTML = '<div class="empty-state">Selecione o técnico para carregar a programação.</div>';
+      dayStats.textContent = '';
+      return;
+    }
+    itemsList.innerHTML = '<div class="empty-state">Carregando...</div>';
+    try {
+      const res = await fetch(`${API_URL}?action=list&tecnico=${encodeURIComponent(tecnico)}&data=${encodeURIComponent(data)}`);
+      currentItems = await res.json();
+      renderItems();
+    } catch(err){
+      itemsList.innerHTML = '<div class="empty-state">Erro ao carregar — confira a API_URL.</div>';
+    }
+  }
+
+  function renderItems(){
+    if (!currentItems.length){
+      itemsList.innerHTML = '<div class="empty-state">Nenhum item ainda hoje.</div>';
+      dayStats.textContent = '';
+      return;
+    }
+    const done = currentItems.filter(i => i.Status === 'Concluído').length;
+    dayStats.textContent = `${done}/${currentItems.length} concluídos`;
+
+    itemsList.innerHTML = currentItems.map(item => {
+      const statusClass = (item.Status || 'Programado').replace(/\s/g,'_');
+      let tags;
+      if (item.EhAtendimento === 'Sim'){
+        const finalidade = item.Finalidade === 'Outro' && item.FinalidadeDetalhe ? item.FinalidadeDetalhe : item.Finalidade;
+        tags = [finalidade, item.TipoAtendimento, item.Cliente, item.OrigemCanal].filter(Boolean);
+      } else {
+        tags = [item.Local].filter(Boolean);
+      }
+      return `
+        <div class="item-card status-${statusClass}">
+          <div class="item-top">
+            <div>
+              <div class="item-desc">${escapeHtml(item.Descricao)}</div>
+              <div class="item-tags">${tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
+            </div>
+            <span class="status-pill ${statusClass}">${escapeHtml(item.Status || 'Programado')}</span>
+          </div>
+          <div class="item-actions">
+            <button class="action-btn" data-id="${item.ID}" data-status="Em andamento">Em andamento</button>
+            <button class="action-btn" data-id="${item.ID}" data-status="Concluído">Concluído</button>
+            <button class="action-btn" data-id="${item.ID}" data-status="Não realizado">Não realizado</button>
+            <button class="action-btn" data-id="${item.ID}" data-status="Cancelado">Cancelado</button>
+            <button class="action-btn del" data-id="${item.ID}" data-action="delete">Excluir</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    itemsList.querySelectorAll('.action-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.dataset.action === 'delete') return handleDelete(btn.dataset.id);
+        handleStatusChange(btn.dataset.id, btn.dataset.status);
+      });
+    });
+  }
+
+  async function handleStatusChange(id, status){
+    let motivo = '';
+    if (status === 'Não realizado' || status === 'Cancelado'){
+      motivo = prompt('Motivo (opcional):') || '';
+    }
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'updateStatus', id, status, motivo })
+      });
+      loadItems();
+    } catch(err){
+      alert('Falha ao atualizar — confira sua conexão.');
+    }
+  }
+
+  async function handleDelete(id){
+    if (!confirm('Excluir este item?')) return;
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'delete', id })
+      });
+      loadItems();
+    } catch(err){
+      alert('Falha ao excluir — confira sua conexão.');
+    }
+  }
+
+  // ---------- ponto ----------
+  async function loadPonto(){
+    const tecnico = tecnicoSelect.value;
+    const data = dataInput.value;
+    if (!tecnico){
+      pontoInicioBadge.textContent = 'sem entrada';
+      pontoInicioBadge.classList.remove('set');
+      pontoFimBadge.textContent = 'sem saída';
+      pontoFimBadge.classList.remove('set');
+      btnEntrada.disabled = true;
+      btnSaida.disabled = true;
+      return;
+    }
+    btnEntrada.disabled = false;
+    btnSaida.disabled = false;
+    try {
+      const res = await fetch(`${API_URL}?action=ponto&tecnico=${encodeURIComponent(tecnico)}&data=${encodeURIComponent(data)}`);
+      const json = await res.json();
+      updatePontoBadges(json.inicio, json.fim);
+    } catch(err){
+      pontoMsg.textContent = 'Erro ao carregar ponto.';
+      pontoMsg.className = 'status-msg err';
+    }
+  }
+
+  function updatePontoBadges(inicio, fim){
+    pontoInicioBadge.textContent = inicio ? `⏰ entrada ${inicio}` : 'sem entrada';
+    pontoInicioBadge.classList.toggle('set', !!inicio);
+    pontoFimBadge.textContent = fim ? `⏰ saída ${fim}` : 'sem saída';
+    pontoFimBadge.classList.toggle('set', !!fim);
+  }
+
+  async function bater(tipo){
+    const tecnico = tecnicoSelect.value;
+    const data = dataInput.value;
+    if (!tecnico){ pontoMsg.textContent = 'Selecione o técnico primeiro.'; pontoMsg.className='status-msg err'; return; }
+    pontoMsg.textContent = 'Registrando...';
+    pontoMsg.className = 'status-msg';
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'bater', tipo, tecnico, data })
+      });
+      const json = await res.json();
+      if (json.ok){
+        pontoMsg.textContent = json.jaRegistrado ? `Já registrado às ${json.hora}.` : `✓ Registrado às ${json.hora}.`;
+        pontoMsg.className = 'status-msg ok';
+        loadPonto();
+      } else {
+        pontoMsg.textContent = 'Erro: ' + (json.error || 'desconhecido');
+        pontoMsg.className = 'status-msg err';
+      }
+    } catch(err){
+      pontoMsg.textContent = 'Falha de conexão.';
+      pontoMsg.className = 'status-msg err';
+    }
+  }
+  btnEntrada.addEventListener('click', () => bater('entrada'));
+  btnSaida.addEventListener('click', () => bater('saida'));
+
+  function escapeHtml(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  loadTechnicians();
+  loadPonto();
+})();
+</script>
+
+
+</body>
+</html>

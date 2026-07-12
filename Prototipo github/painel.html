@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script>
+function __toggleSwitcher(e){
+  if(e){e.stopPropagation();}
+  var m=document.getElementById('__sw-menu');
+  var b=document.getElementById('__sw-backdrop');
+  var open=m.classList.toggle('open');
+  b.classList.toggle('open', open);
+}
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel da Equipe — CRM/GQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF1F6;
+    --paper-dark:#DCE2ED;
+    --ink:#14274E;
+    --ink-soft:#51617E;
+    --card:#FFFFFF;
+    --line:#D2D9E6;
+    --done:#2F6B4F;
+    --done-bg:#E4EEE7;
+    --pending:#C81E2E;
+    --pending-bg:#FBE3E4;
+    --progress:#B0791F;
+    --progress-bg:#F5EBD6;
+    --neutral-mark:#98A2B3;
+    --highlight:#2E5AAC;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--paper-dark) 1px, transparent 1px),
+      linear-gradient(90deg, var(--paper-dark) 1px, transparent 1px);
+    background-size:28px 28px;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:0 0 60px;
+  }
+  header{padding:32px 20px 16px;max-width:1100px;margin:0 auto;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-soft);display:flex;align-items:center;gap:8px;
+  }
+  .eyebrow::before{content:"";width:8px;height:8px;background:var(--pending);display:inline-block;border-radius:1px;transform:rotate(45deg);}
+  h1{
+    font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(26px,4vw,36px);
+    letter-spacing:.01em;margin:8px 0 4px;text-transform:uppercase;
+  }
+  .sub{color:var(--ink-soft);font-size:14px;max-width:640px;line-height:1.5;}
+
+  main{max-width:1100px;margin:0 auto;padding:0 20px;}
+
+  .panel{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px;margin-bottom:20px;box-shadow:0 1px 0 rgba(20,39,78,.03);
+  }
+
+  .filters{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:14px;}
+  @media(max-width:640px){.filters{grid-template-columns:1fr;}}
+  label{
+    display:block;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--ink-soft);margin-bottom:6px;
+  }
+  select, input[type=date], input[type=text]{
+    width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:6px;
+    background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;
+  }
+  select:focus, input:focus{outline:2px solid var(--highlight);outline-offset:1px;}
+
+  .quickranges{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center;}
+  .qr-btn{
+    font-family:'JetBrains Mono',monospace;font-size:12px;padding:6px 10px;border-radius:20px;
+    border:1px solid var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;
+  }
+  .qr-btn:hover{border-color:var(--ink);color:var(--ink);}
+  .qr-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+
+  .refresh-info{
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);
+    margin-left:auto;display:flex;align-items:center;gap:10px;
+  }
+  .live-dot{width:8px;height:8px;border-radius:50%;background:var(--done);display:inline-block;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+  .activity-row{margin-top:16px;padding-top:16px;border-top:1px dashed var(--line);}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .chip{
+    font-family:'JetBrains Mono',monospace;font-size:12px;padding:5px 10px;border-radius:20px;
+    border:1px solid var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;
+  }
+  .chip:hover{border-color:var(--highlight);color:var(--ink);}
+  .chip.clear{color:var(--pending);border-color:var(--pending-bg);}
+  .chip.clear:hover{border-color:var(--pending);}
+
+  .summary{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:18px;}
+  .stamp{
+    border:2px solid var(--ink);border-radius:50%;width:88px;height:88px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    transform:rotate(-4deg);font-family:'Oswald',sans-serif;flex-shrink:0;
+  }
+  .stamp .n{font-size:24px;font-weight:700;line-height:1;}
+  .stamp .l{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-top:2px;}
+  .stamp.done{border-color:var(--done);color:var(--done);}
+  .stamp.pending{border-color:var(--pending);color:var(--pending);}
+  .summary-text{flex:1;min-width:200px;padding-top:4px;}
+  .summary-text .big{font-family:'Oswald',sans-serif;font-size:15px;text-transform:uppercase;letter-spacing:.03em;}
+  .summary-text .small{font-size:13px;color:var(--ink-soft);margin-top:4px;}
+
+  .breakdown{margin-bottom:20px;}
+  .breakdown h3{
+    font-family:'Oswald',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--ink-soft);margin:0 0 12px;
+  }
+  table.breakdown-table{width:100%;border-collapse:collapse;font-size:14px;}
+  table.breakdown-table th{
+    text-align:left;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;
+    letter-spacing:.06em;color:var(--ink-soft);padding:6px 8px;border-bottom:1px solid var(--line);
+  }
+  table.breakdown-table td{padding:8px;border-bottom:1px solid var(--line);}
+  table.breakdown-table tr:last-child td{border-bottom:none;}
+  table.breakdown-table td.num{font-family:'JetBrains Mono',monospace;text-align:right;}
+
+  .board{display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:16px;}
+
+  .tech-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;}
+  .tech-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px;}
+  .tech-name{font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;}
+  .tech-ponto{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+  .ponto-chip{
+    font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 9px;border-radius:20px;
+    background:var(--paper);border:1px solid var(--line);color:var(--ink-soft);
+  }
+  .ponto-chip.set{border-color:var(--highlight);color:var(--highlight);}
+
+  .mini-item{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:13px;}
+  .mini-item:first-child{border-top:none;}
+  .mini-desc{flex:1;}
+  .mini-tags{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-soft);margin-top:2px;}
+  .mini-pill{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:14px;white-space:nowrap;flex-shrink:0;}
+  .mini-pill.Programado{background:var(--paper-dark);color:var(--ink-soft);}
+  .mini-pill.Em_andamento{background:var(--progress-bg);color:var(--progress);}
+  .mini-pill.Concluído{background:var(--done-bg);color:var(--done);}
+  .mini-pill.Não_realizado, .mini-pill.Cancelado{background:var(--pending-bg);color:var(--pending);}
+
+  .tech-empty{font-size:12px;color:var(--ink-soft);font-style:italic;padding:6px 0;}
+  .tech-stats{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);}
+  .hidden-note{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-soft);margin-top:8px;}
+
+  .empty-state{text-align:center;padding:50px 20px;color:var(--ink-soft);grid-column:1/-1;}
+
+  .app-nav{
+    background:var(--ink);display:flex;justify-content:space-between;align-items:center;
+    padding:10px 20px;flex-wrap:wrap;gap:10px;font-family:'JetBrains Mono',monospace;font-size:12px;
+  }
+  .app-nav a{color:var(--paper);text-decoration:none;opacity:.75;}
+  .app-nav a:hover{opacity:1;}
+  .app-nav a.active{opacity:1;font-weight:600;border-bottom:2px solid var(--pending);padding-bottom:2px;}
+  .app-nav-links{display:flex;gap:18px;flex-wrap:wrap;}
+  .app-nav-home{font-weight:600;opacity:1 !important;}
+</style>
+<style id="app-switcher-css">
+.app-switcher{position:relative;display:inline-block;font-family:'Georgia',serif;}
+.app-switcher-btn{background:transparent;border:none;color:#fff;font-size:15px;font-weight:400;letter-spacing:.03em;cursor:pointer;display:flex;align-items:center;gap:7px;padding:0;font-family:inherit;}
+.app-switcher-btn .caret{font-size:10px;opacity:.7;}
+.app-switcher-menu{position:absolute;top:calc(100% + 8px);left:0;background:#fff;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.28);min-width:210px;z-index:9999;overflow:hidden;display:none;}
+.app-switcher-menu.open{display:block;}
+.app-switcher-menu a{display:flex;align-items:center;gap:10px;padding:11px 14px;color:#14274E;text-decoration:none;font-size:13px;font-family:'Inter',Arial,sans-serif;border-bottom:1px solid #eef1f6;}
+.app-switcher-menu a:last-child{border-bottom:none;}
+.app-switcher-menu a:hover{background:#EEF1F6;}
+.app-switcher-menu a.current{background:#14274E;color:#fff;font-weight:600;}
+.app-switcher-menu .ico{font-size:15px;width:20px;text-align:center;}
+.app-switcher-backdrop{position:fixed;inset:0;z-index:9998;display:none;}
+.app-switcher-backdrop.open{display:block;}
+</style>
+
+<style id="black-header-css">
+.crm-app-header{background:linear-gradient(120deg,#002D5B 0%,#0A4A8F 62%,#2E6DB4 100%);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;gap:10px;flex-wrap:wrap;border-bottom:4px solid #E30613;}
+.crm-brand-logos{display:flex;align-items:center;gap:14px;}
+.crm-brand-logos img{height:26px;width:auto;display:block;}
+.crm-logo-fallback{display:none;font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;letter-spacing:.08em;padding:4px 10px;border-radius:5px;}
+.crm-logo-fallback.jbs{background:#fff;color:#002D5B;}
+.crm-logo-fallback.friboi{background:#E30613;color:#fff;}
+</style>
+
+</head>
+<body>
+<div class="crm-app-header">
+  <div class="app-switcher">
+  <button class="app-switcher-btn" onclick="__toggleSwitcher(event)">Painel da Equipe <span class="caret">▼</span></button>
+  <div class="app-switcher-backdrop" id="__sw-backdrop" onclick="__toggleSwitcher(event)"></div>
+  <div class="app-switcher-menu" id="__sw-menu">
+    <a href="registro.html"><span class="ico">📋</span>Registro de Atendimentos</a>
+    <a href="painel.html" class="current"><span class="ico">📡</span>Painel da Equipe</a>
+    <a href="ato-entrega/index.html"><span class="ico">📦</span>Ato de Entrega</a>
+    <a href="posvenda/index.html"><span class="ico">🛒</span>Visita Pós-Venda</a>
+    <a href="index.html"><span class="ico">🏠</span>Todos os apps</a>
+  </div>
+</div>
+
+  <div class="crm-brand-logos">
+    <img src="img/logo-jbs.png" alt="JBS" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
+    <span class="crm-logo-fallback jbs">JBS</span>
+    <img src="img/logo-friboi.png" alt="Friboi" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
+    <span class="crm-logo-fallback friboi">FRIBOI</span>
+  </div>
+</div>
+
+<header>
+  <div class="eyebrow">CRM / GQ — Consultores Técnicos</div>
+  <h1>Painel da Equipe</h1>
+  <p class="sub">Programação, ponto e status de todos os técnicos — ao vivo hoje, ou filtrado por período e atividade para consultar o histórico.</p>
+</header>
+
+<main>
+
+  <div class="panel">
+    <div class="filters">
+      <div>
+        <label for="tecnicoSelect">Técnico</label>
+        <select id="tecnicoSelect"><option value="__all__">Todos</option></select>
+      </div>
+      <div>
+        <label for="dataDe">De</label>
+        <input type="date" id="dataDe">
+      </div>
+      <div>
+        <label for="dataAte">Até</label>
+        <input type="date" id="dataAte">
+      </div>
+    </div>
+    <div class="quickranges">
+      <button class="qr-btn" data-range="0">Hoje</button>
+      <button class="qr-btn" data-range="7">Últimos 7 dias</button>
+      <button class="qr-btn" data-range="30">Últimos 30 dias</button>
+      <button class="qr-btn" data-range="all">Tudo</button>
+      <div class="refresh-info">
+        <span class="live-dot" id="liveDot"></span>
+        <span id="lastUpdate">atualizando...</span>
+        <button class="qr-btn" id="refreshBtn">Atualizar agora</button>
+      </div>
+    </div>
+    <div class="activity-row">
+      <label for="activityInput">Atividade (opcional) — filtra por palavra-chave</label>
+      <input type="text" id="activityInput" placeholder="ex: visita de valor, ato de entrega, pós-venda...">
+      <div class="chips" id="activityChips">
+        <button class="chip" data-val="visita de valor">visita de valor</button>
+        <button class="chip" data-val="ato de entrega">ato de entrega</button>
+        <button class="chip" data-val="pós entrega">pós entrega</button>
+        <button class="chip" data-val="investigação">investigação</button>
+        <button class="chip" data-val="home office">home office</button>
+        <button class="chip" data-val="treinamento">treinamento</button>
+        <button class="chip clear" data-val="">limpar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="summaryWrap"></div>
+  <div id="breakdownWrap"></div>
+
+  <div class="board" id="board">
+    <div class="empty-state">Carregando programação...</div>
+  </div>
+</main>
+
+<script>
+(function(){
+  // ⚠️ mesma URL do Apps Script usada no Registro de Atendimentos
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxFtgcdxMIgwDk2Bf06CKXMWRLVlYibY112IanZ_dIzM7axA6t7ATexF4EF6-PEn3u9/exec';
+  const REFRESH_MS = 25000;
+
+  const tecnicoSelect = document.getElementById('tecnicoSelect');
+  const dataDe = document.getElementById('dataDe');
+  const dataAte = document.getElementById('dataAte');
+  const activityInput = document.getElementById('activityInput');
+  const board = document.getElementById('board');
+  const summaryWrap = document.getElementById('summaryWrap');
+  const breakdownWrap = document.getElementById('breakdownWrap');
+  const lastUpdate = document.getElementById('lastUpdate');
+  const liveDot = document.getElementById('liveDot');
+  const refreshBtn = document.getElementById('refreshBtn');
+
+  let allTechnicians = [];
+  let timer = null;
+
+  const today = new Date().toISOString().slice(0,10);
+  dataDe.value = today;
+  dataAte.value = today;
+
+  function normalize(s){
+    return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+  }
+
+  async function loadTechnicians(){
+    try{
+      const res = await fetch(`${API_URL}?action=technicians`);
+      allTechnicians = await res.json();
+      tecnicoSelect.innerHTML = '<option value="__all__">Todos</option>' +
+        allTechnicians.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+    } catch(err){
+      tecnicoSelect.innerHTML = '<option value="__all__">Erro ao carregar</option>';
+    }
+  }
+
+  tecnicoSelect.addEventListener('change', () => load(true));
+  dataDe.addEventListener('change', () => { markActiveRange(null); load(true); });
+  dataAte.addEventListener('change', () => { markActiveRange(null); load(true); });
+  activityInput.addEventListener('input', () => load(false));
+  refreshBtn.addEventListener('click', () => load(true));
+
+  document.querySelectorAll('.qr-btn[data-range]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const r = btn.dataset.range;
+      if (r === 'all'){
+        dataDe.value = '2020-01-01';
+        dataAte.value = today;
+      } else {
+        const from = new Date();
+        from.setDate(from.getDate() - parseInt(r,10));
+        dataDe.value = from.toISOString().slice(0,10);
+        dataAte.value = today;
+      }
+      markActiveRange(btn);
+      load(true);
+    });
+  });
+  function markActiveRange(activeBtn){
+    document.querySelectorAll('.qr-btn[data-range]').forEach(b => b.classList.toggle('active', b === activeBtn));
+  }
+
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      activityInput.value = chip.dataset.val;
+      load(false);
+    });
+  });
+
+  async function load(showLoading){
+    const tecnico = tecnicoSelect.value;
+    const de = dataDe.value;
+    const ate = dataAte.value;
+    if (showLoading) board.innerHTML = '<div class="empty-state">Carregando...</div>';
+    liveDot.style.display = (ate === today) ? 'inline-block' : 'none';
+
+    try {
+      let url = `${API_URL}?action=list&de=${encodeURIComponent(de)}&ate=${encodeURIComponent(ate)}`;
+      if (tecnico !== '__all__') url += `&tecnico=${encodeURIComponent(tecnico)}`;
+      const itemsPromise = fetch(url).then(r => r.json());
+
+      const singleDay = de === ate;
+      const pontoPromise = singleDay
+        ? fetch(`${API_URL}?action=listPonto&data=${encodeURIComponent(de)}`).then(r => r.json())
+        : Promise.resolve([]);
+
+      const [items, pontos] = await Promise.all([itemsPromise, pontoPromise]);
+      render(items, pontos, singleDay);
+      lastUpdate.textContent = 'atualizado às ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    } catch(err){
+      board.innerHTML = '<div class="empty-state">Erro ao carregar — confira a API_URL.</div>';
+      lastUpdate.textContent = 'falha na atualização';
+    }
+  }
+
+  function render(items, pontos, singleDay){
+    const activityRaw = activityInput.value.trim();
+    const activityNorm = activityRaw ? normalize(activityRaw) : '';
+
+    function itemMatches(item){
+      if (!activityNorm) return true;
+      const haystack = [item.Descricao, item.Cliente, item.Finalidade, item.FinalidadeDetalhe, item.Local].filter(Boolean).join(' ');
+        return normalize(haystack).includes(activityNorm);
+    }
+
+    const tecnico = tecnicoSelect.value;
+    const tecnicosToShow = tecnico === '__all__' ? allTechnicians : [tecnico];
+
+    const pontoByTec = {};
+    pontos.forEach(p => pontoByTec[p.Tecnico] = p);
+
+    const itemsByTec = {};
+    items.forEach(it => (itemsByTec[it.Tecnico] = itemsByTec[it.Tecnico] || []).push(it));
+
+    // ---------- summary ----------
+    let totalMatched = 0, doneMatched = 0;
+    const daySet = new Set();
+    const bySenderCount = {};
+
+    tecnicosToShow.forEach(nome => {
+      const seus = (itemsByTec[nome] || []).filter(itemMatches);
+      seus.forEach(it => {
+        totalMatched++;
+        if (it.Status === 'Concluído') doneMatched++;
+        daySet.add(nome + '|' + it.Data);
+        bySenderCount[nome] = bySenderCount[nome] || { total:0, done:0, pending:0 };
+        bySenderCount[nome].total++;
+        if (it.Status === 'Concluído') bySenderCount[nome].done++;
+        if (it.Status === 'Não realizado' || it.Status === 'Cancelado') bySenderCount[nome].pending++;
+      });
+    });
+
+    const pct = totalMatched ? Math.round(doneMatched / totalMatched * 100) : 0;
+
+    if (!totalMatched){
+      summaryWrap.innerHTML = '';
+      breakdownWrap.innerHTML = '';
+      board.innerHTML = `<div class="empty-state">${activityNorm ? `Nenhum item com "${escapeHtml(activityRaw)}" encontrado nesse filtro.` : 'Nenhum item registrado nesse período.'}</div>`;
+      return;
+    }
+
+    summaryWrap.innerHTML = `
+      <div class="panel">
+        <div class="summary">
+          <div class="stamp done"><span class="n">${daySet.size}</span><span class="l">registros-dia</span></div>
+          <div class="stamp ${pct>=70?'done':'pending'}"><span class="n">${pct}%</span><span class="l">concluído</span></div>
+          <div class="summary-text">
+            <div class="big">${totalMatched} ${activityNorm ? 'ocorrências de "' + escapeHtml(activityRaw) + '"' : 'itens'} no período</div>
+            <div class="small">${doneMatched} concluídos, ${totalMatched-doneMatched} pendentes, em andamento ou não realizados.</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    if (activityNorm && Object.keys(bySenderCount).length > 1){
+      const rows = Object.entries(bySenderCount).sort((a,b) => b[1].total - a[1].total);
+      breakdownWrap.innerHTML = `
+        <div class="panel breakdown">
+          <h3>Por técnico — "${escapeHtml(activityRaw)}"</h3>
+          <table class="breakdown-table">
+            <thead><tr><th>Técnico</th><th class="num">Ocorrências</th><th class="num">Concluídas</th><th class="num">Pendentes</th></tr></thead>
+            <tbody>
+              ${rows.map(([name, s]) => `
+                <tr><td>${escapeHtml(name)}</td><td class="num">${s.total}</td><td class="num">${s.done}</td><td class="num">${s.pending}</td></tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else {
+      breakdownWrap.innerHTML = '';
+    }
+
+    // ---------- board ----------
+    board.innerHTML = tecnicosToShow.map(nome => {
+      const todosDoTec = itemsByTec[nome] || [];
+      const matched = todosDoTec.filter(itemMatches);
+      const hidden = todosDoTec.length - matched.length;
+      const done = matched.filter(i => i.Status === 'Concluído').length;
+      const ponto = pontoByTec[nome];
+
+      const pontoHtml = singleDay ? `
+        <div class="tech-ponto">
+          <span class="ponto-chip ${ponto && ponto.HoraInicio ? 'set' : ''}">${ponto && ponto.HoraInicio ? '⏰ ' + escapeHtml(ponto.HoraInicio) : 'sem entrada'}</span>
+          <span class="ponto-chip ${ponto && ponto.HoraFim ? 'set' : ''}">${ponto && ponto.HoraFim ? '⏰ ' + escapeHtml(ponto.HoraFim) : 'sem saída'}</span>
+        </div>
+      ` : '';
+
+      const itemsHtml = matched.length
+        ? matched.map(item => {
+            const statusClass = (item.Status || 'Programado').replace(/\s/g,'_');
+            let tag;
+            if (item.EhAtendimento === 'Sim'){
+              const finalidade = item.Finalidade === 'Outro' && item.FinalidadeDetalhe ? item.FinalidadeDetalhe : item.Finalidade;
+              tag = [finalidade, item.TipoAtendimento].filter(Boolean).join(' · ');
+            } else {
+              tag = item.Local || '';
+            }
+            const dateTag = !singleDay ? formatDateBR(item.Data) + (tag ? ' · ' : '') : '';
+            return `
+              <div class="mini-item">
+                <div class="mini-desc">
+                  ${escapeHtml(item.Descricao)}
+                  <span class="mini-tags">${dateTag}${escapeHtml(tag)}</span>
+                </div>
+                <span class="mini-pill ${statusClass}">${escapeHtml(item.Status || 'Programado')}</span>
+              </div>
+            `;
+          }).join('')
+        : `<div class="tech-empty">${activityNorm ? 'Sem itens correspondentes.' : 'Sem itens registrados.'}</div>`;
+
+      return `
+        <div class="tech-card">
+          <div class="tech-head">
+            <div class="tech-name">${escapeHtml(nome)}</div>
+            <div class="tech-stats">${matched.length ? done + '/' + matched.length : ''}</div>
+          </div>
+          ${pontoHtml}
+          ${itemsHtml}
+          ${activityNorm && hidden > 0 ? `<div class="hidden-note">+${hidden} outro(s) item(ns) ocultos pelo filtro</div>` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  function formatDateBR(iso){
+    const [y,m,d] = String(iso).split('-');
+    return d && m ? `${d}/${m}` : iso;
+  }
+
+  function escapeHtml(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function startAutoRefresh(){
+    if (timer) clearInterval(timer);
+    timer = setInterval(() => load(false), REFRESH_MS);
+  }
+
+  (async function init(){
+    await loadTechnicians();
+    load(true);
+    startAutoRefresh();
+  })();
+})();
+</script>
+
+
+</body>
+</html>
