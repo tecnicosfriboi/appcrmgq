@@ -184,7 +184,12 @@ function __toggleSwitcher(e){
 </style>
 
 <style id="black-header-css">
-.crm-app-header{background:#14274E;color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;gap:10px;flex-wrap:wrap;}
+.crm-app-header{background:linear-gradient(120deg,#002D5B 0%,#0A4A8F 62%,#2E6DB4 100%);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;gap:10px;flex-wrap:wrap;border-bottom:4px solid #E30613;}
+.crm-brand-logos{display:flex;align-items:center;gap:14px;}
+.crm-brand-logos img{height:26px;width:auto;display:block;}
+.crm-logo-fallback{display:none;font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;letter-spacing:.08em;padding:4px 10px;border-radius:5px;}
+.crm-logo-fallback.jbs{background:#fff;color:#002D5B;}
+.crm-logo-fallback.friboi{background:#E30613;color:#fff;}
 </style>
 
 </head>
@@ -202,6 +207,12 @@ function __toggleSwitcher(e){
   </div>
 </div>
 
+  <div class="crm-brand-logos">
+    <img src="img/logo-jbs.png" alt="JBS" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
+    <span class="crm-logo-fallback jbs">JBS</span>
+    <img src="img/logo-friboi.png" alt="Friboi" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
+    <span class="crm-logo-fallback friboi">FRIBOI</span>
+  </div>
 </div>
 
 <header>

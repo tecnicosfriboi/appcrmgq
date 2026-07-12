@@ -10,6 +10,8 @@
   :root{
     --paper:#EEF1F6;--paper-dark:#DCE2ED;--ink:#14274E;--ink-soft:#51617E;
     --card:#FFFFFF;--line:#D2D9E6;--pending:#C81E2E;--highlight:#2E5AAC;--radius:10px;
+    /* Paleta do banner — ajuste para os tons oficiais do manual de marca */
+    --jbs-navy:#002D5B;--jbs-navy-claro:#0A4A8F;--azul-medio:#2E6DB4;--friboi-red:#E30613;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -18,18 +20,87 @@
     background-image:linear-gradient(var(--paper-dark) 1px, transparent 1px),linear-gradient(90deg, var(--paper-dark) 1px, transparent 1px);
     background-size:28px 28px;color:var(--ink);font-family:'Inter',sans-serif;min-height:100vh;padding:0 0 60px;
   }
-  header{padding:52px 20px 28px;max-width:960px;margin:0 auto;text-align:center;}
-  .eyebrow{
-    font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;
-    text-transform:uppercase;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;gap:8px;
-  }
-  .eyebrow::before,.eyebrow::after{content:"";width:8px;height:8px;background:var(--pending);display:inline-block;border-radius:1px;transform:rotate(45deg);}
-  h1{font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(28px,5vw,44px);letter-spacing:.01em;margin:10px 0 6px;text-transform:uppercase;}
-  .sub{color:var(--ink-soft);font-size:15px;max-width:520px;margin:0 auto;line-height:1.5;}
   main{max-width:960px;margin:0 auto;padding:0 20px;}
+
+  /* ============ BANNER DE BOAS-VINDAS ============ */
+  .hero{
+    max-width:960px;margin:20px auto 22px;padding:0 20px;
+  }
+  .hero-card{
+    background:linear-gradient(120deg, var(--jbs-navy) 0%, var(--jbs-navy-claro) 62%, var(--azul-medio) 100%);
+    color:#fff;border-radius:14px;padding:26px 26px 30px;position:relative;overflow:hidden;
+    box-shadow:0 6px 20px rgba(0,45,91,.28);
+  }
+  .hero-card::after{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:6px;
+    background:linear-gradient(90deg, var(--friboi-red) 0%, var(--friboi-red) 55%, var(--azul-medio) 100%);
+  }
+  .hero-inner{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;}
+  .hero-texto{flex:1 1 280px;min-width:0;}
+  .hero-eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;opacity:.75;margin-bottom:10px;
+  }
+  .hero-saudacao{
+    font-family:'Oswald',sans-serif;font-weight:600;font-size:clamp(24px,4.5vw,34px);
+    line-height:1.15;margin:0 0 8px;
+  }
+  .hero-mensagem{font-size:15px;line-height:1.5;margin:0;opacity:.95;max-width:520px;}
+  .hero-logos{display:flex;align-items:center;gap:20px;flex:0 0 auto;}
+  .hero-logos img{height:42px;width:auto;display:block;}
+  .logo-fallback{
+    display:none;font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;
+    letter-spacing:.08em;padding:7px 14px;border-radius:6px;
+  }
+  .logo-fallback.jbs{background:#fff;color:var(--jbs-navy);}
+  .logo-fallback.friboi{background:var(--friboi-red);color:#fff;}
+
+  @media (prefers-reduced-motion: no-preference){
+    .hero-texto{animation:fadeUp .5s ease-out;}
+    .insight-card{animation:fadeUp .6s ease-out;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  }
+
+  /* Seletor de demonstração (remover antes de publicar em produção) */
+  .demo-hora{
+    position:absolute;top:10px;right:12px;font-family:'JetBrains Mono',monospace;
+    font-size:10px;opacity:.6;
+  }
+  .demo-hora select{font-size:10px;border:none;border-radius:4px;padding:2px 4px;}
+
+  /* ============ CARD DE INSIGHT ============ */
+  .insight-card{
+    background:var(--card);border:1px solid var(--line);border-left:5px solid var(--insight-cor,var(--ink));
+    border-radius:var(--radius);padding:18px 20px;margin:0 0 26px;
+    display:flex;align-items:flex-start;gap:14px;box-shadow:0 1px 0 rgba(20,39,78,.04);
+  }
+  .insight-icone{
+    width:42px;height:42px;flex:0 0 42px;border-radius:9px;font-size:20px;
+    display:flex;align-items:center;justify-content:center;
+    background:color-mix(in srgb, var(--insight-cor,var(--ink)) 12%, #fff);
+  }
+  .insight-corpo{flex:1;min-width:0;}
+  .insight-categoria{
+    font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;
+    letter-spacing:.09em;color:var(--insight-cor,var(--ink));margin:0 0 5px;font-weight:600;
+  }
+  .insight-frase{font-size:14px;line-height:1.55;margin:0;color:var(--ink);}
+  .insight-refresh{
+    flex:0 0 auto;align-self:center;font-family:'JetBrains Mono',monospace;font-size:11px;
+    background:transparent;border:1px solid var(--line);color:var(--ink-soft);
+    border-radius:20px;padding:6px 12px;cursor:pointer;white-space:nowrap;
+  }
+  .insight-refresh:hover{border-color:var(--ink);color:var(--ink);}
+
+  /* ============ CARDS DAS FERRAMENTAS ============ */
+  .secao-titulo{
+    font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-soft);margin:0 0 14px;display:flex;align-items:center;gap:8px;
+  }
+  .secao-titulo::before{content:"";width:8px;height:8px;background:var(--friboi-red);display:inline-block;border-radius:1px;transform:rotate(45deg);}
   .cards{display:grid;grid-template-columns:repeat(auto-fit, minmax(230px, 1fr));gap:18px;}
   a.tool-card{
-    display:block;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--ink);
+    display:block;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--jbs-navy);
     border-radius:var(--radius);padding:26px 24px;text-decoration:none;color:var(--ink);
     transition:transform .15s, box-shadow .15s;
   }
@@ -42,20 +113,60 @@
   .tool-card p{font-size:13px;color:var(--ink-soft);line-height:1.55;margin:0 0 14px;}
   .tool-tag{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--highlight);}
   .tool-tag::after{content:" →";}
-  .card-live{border-left-color:var(--pending);}
-  .card-live .tool-tag{color:var(--pending);}
+  .card-live{border-left-color:var(--friboi-red);}
+  .card-live .tool-tag{color:var(--friboi-red);}
   footer{max-width:960px;margin:36px auto 0;padding:0 20px;font-size:12px;color:var(--ink-soft);font-family:'JetBrains Mono',monospace;text-align:center;}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="eyebrow">CRM / GQ — Consultores Técnicos</div>
-  <h1>Painel de Ferramentas</h1>
-  <p class="sub">Registro, acompanhamento, entrega e pós-venda — tudo num só lugar.</p>
-</header>
+<!-- ============ BANNER DE BOAS-VINDAS ============ -->
+<section class="hero">
+  <div class="hero-card">
+    <!-- Seletor só para demonstração à gestão: apague este bloco em produção -->
+    <div class="demo-hora">
+      demo:
+      <select id="demoHora" onchange="atualizarBanner()">
+        <option value="">hora real</option>
+        <option value="7">07h · manhã</option>
+        <option value="11">11h · meio da manhã</option>
+        <option value="13">13h · almoço</option>
+        <option value="15">15h · tarde</option>
+        <option value="18">18h · fim de tarde</option>
+        <option value="21">21h · noite</option>
+      </select>
+    </div>
+
+    <div class="hero-inner">
+      <div class="hero-texto">
+        <div class="hero-eyebrow">CRM / GQ — Consultores Técnicos</div>
+        <h1 class="hero-saudacao" id="heroSaudacao">Bem-vindo(a)!</h1>
+        <p class="hero-mensagem" id="heroMensagem">Registro, acompanhamento, entrega e pós-venda — tudo num só lugar.</p>
+      </div>
+      <div class="hero-logos">
+        <img src="img/logo-jbs.png" alt="JBS"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
+        <span class="logo-fallback jbs">JBS</span>
+        <img src="img/logo-friboi.png" alt="Friboi"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
+        <span class="logo-fallback friboi">FRIBOI</span>
+      </div>
+    </div>
+  </div>
+</section>
 
 <main>
+  <!-- ============ INSIGHT DO MOMENTO ============ -->
+  <div class="insight-card" id="insightCard">
+    <div class="insight-icone" id="insightIcone">💡</div>
+    <div class="insight-corpo">
+      <p class="insight-categoria" id="insightCategoria">Insight GQ</p>
+      <p class="insight-frase" id="insightFrase"></p>
+    </div>
+    <button class="insight-refresh" onclick="novaFrase()" title="Mostrar outra frase">↻ nova frase</button>
+  </div>
+
+  <p class="secao-titulo">Ferramentas</p>
   <div class="cards">
     <a class="tool-card" href="registro.html">
       <div class="tool-icon">📋</div>
@@ -88,6 +199,245 @@
 </main>
 
 <footer>CRM/GQ · Consultores Técnicos</footer>
+
+<script>
+/* ==================== MENSAGENS POR HORÁRIO ==================== */
+var MENSAGENS = {
+  manha: [ // 05h às 10h
+    "☀️ Bom dia! Que seu dia seja produtivo e seguro.",
+    "👋 Bom dia! Já conferiu sua programação de hoje?",
+    "📅 Não se esqueça de atualizar sua programação antes de iniciar as visitas.",
+    "🚗 Um bom planejamento economiza tempo e evita imprevistos.",
+    "🎯 Hoje é mais uma oportunidade de fazer a diferença no cliente.",
+    "📍 Confira seus compromissos e tenha um excelente dia!",
+    "💪 Bora começar? Organização é o primeiro passo para um ótimo atendimento.",
+    "✅ Antes de sair, confirme se todas as informações das visitas estão atualizadas."
+  ],
+  meioManha: [ // 10h às 12h
+    "😊 Como está o andamento das visitas?",
+    "📲 Lembre-se de registrar os atendimentos realizados.",
+    "📝 Informação registrada hoje evita retrabalho amanhã.",
+    "🚀 Pequenas atualizações fazem uma grande diferença.",
+    "🤝 Cada atendimento fortalece a confiança do cliente."
+  ],
+  almoco: [ // 12h às 14h
+    "🍴 Hora de recarregar as energias! Bom almoço!",
+    "☕ Aproveite a pausa para descansar um pouco.",
+    "😊 Uma mente descansada toma melhores decisões.",
+    "🌞 Desejamos uma ótima continuação de dia!"
+  ],
+  tarde: [ // 14h às 17h
+    "📋 Ainda há visitas para hoje? Não esqueça dos registros.",
+    "📝 Finalize os atendimentos assim que possível.",
+    "🚚 Cada ato de entrega registrado ajuda toda a equipe.",
+    "🤝 Seu trabalho faz a diferença para nossos clientes.",
+    "⭐ Obrigado pelo comprometimento de sempre!"
+  ],
+  fimTarde: [ // 17h às 19h
+    "📅 Antes de encerrar, já programou o dia de amanhã?",
+    "✅ Confira se todos os atos de entrega foram enviados.",
+    "📌 Não deixe pendências para amanhã.",
+    "🎉 Mais um dia concluído. Parabéns pelo seu trabalho!",
+    "🙌 Obrigado por fazer parte da Garantia da Qualidade."
+  ],
+  noite: [ // 19h às 05h
+    "🌙 Bom descanso! Amanhã tem mais.",
+    "✅ Tudo registrado? Então missão cumprida por hoje.",
+    "🙌 Obrigado por fazer parte da Garantia da Qualidade.",
+    "📅 Que tal já deixar a programação de amanhã pronta?"
+  ]
+};
+
+var MSG_PRIMEIRO_ACESSO = "📅 Não se esqueça de colocar a programação do dia antes de iniciar as visitas!";
+
+/* ==================== INSIGHTS POR CATEGORIA ==================== */
+var CATEGORIAS_INSIGHT = [
+  { nome:"Cliente em Primeiro Lugar", icone:"🤝", cor:"#2E5AAC", frases:[
+    "Cliente bem atendido lembra da experiência, não apenas do produto.",
+    "Todo atendimento é uma oportunidade de fortalecer a confiança.",
+    "Escutar primeiro é o melhor caminho para encontrar a solução.",
+    "Empatia transforma reclamações em oportunidades.",
+    "Um retorno rápido demonstra respeito pelo cliente.",
+    "Clareza na comunicação evita mal-entendidos.",
+    "A qualidade também está na forma como nos comunicamos.",
+    "Cada visita representa a JBS diante do cliente.",
+    "Resolver é importante. Explicar também.",
+    "A confiança é construída em cada atendimento."
+  ]},
+  { nome:"Foco do Dia", icone:"🎯", cor:"#B0791F", frases:[
+    "Cinco minutos de organização podem economizar horas depois.",
+    "Programação atualizada é sinônimo de produtividade.",
+    "O melhor momento para registrar uma visita é logo após realizá-la.",
+    "Pendências pequenas tendem a crescer quando são adiadas.",
+    "Informação registrada hoje evita retrabalho amanhã.",
+    "Organização reduz imprevistos.",
+    "Um bom planejamento facilita um excelente atendimento.",
+    "Atualizar o sistema faz parte do atendimento.",
+    "Um registro completo vale mais do que vários incompletos.",
+    "Informação de qualidade gera decisões melhores."
+  ]},
+  { nome:"Insight GQ", icone:"💡", cor:"#14274E", frases:[
+    "Qualidade é fazer certo, mesmo quando ninguém está olhando.",
+    "Cada registro contribui para uma visão mais completa do negócio.",
+    "A qualidade começa antes da visita ao cliente.",
+    "Um detalhe observado hoje pode evitar um problema amanhã.",
+    "Prevenção sempre custa menos que correção.",
+    "A excelência está nos detalhes.",
+    "Toda melhoria começa com uma boa observação.",
+    "Registrar evidências fortalece nossas decisões.",
+    "Bons processos tornam excelentes resultados repetíveis.",
+    "A qualidade é construída todos os dias."
+  ]},
+  { nome:"Qualidade em Ação", icone:"🛡️", cor:"#C81E2E", frases:[
+    "Segurança dos alimentos é responsabilidade de todos.",
+    "Cada procedimento seguido protege milhares de consumidores.",
+    "Segurança nunca deve ser negociada.",
+    "O compromisso com a qualidade começa na origem.",
+    "Um processo bem executado gera confiança em toda a cadeia.",
+    "Cuidar dos detalhes é cuidar das pessoas.",
+    "Qualidade e segurança caminham juntas.",
+    "Cada etapa importa.",
+    "Boas práticas fazem a diferença todos os dias.",
+    "A excelência começa na execução correta."
+  ]},
+  { nome:"Juntos Somos Mais", icone:"👥", cor:"#0A4A8F", frases:[
+    "Compartilhar conhecimento fortalece toda a equipe.",
+    "Grandes resultados são construídos em conjunto.",
+    "Quando um cresce, toda a equipe evolui.",
+    "Colaboração reduz obstáculos.",
+    "Respeito fortalece qualquer equipe.",
+    "Bons resultados começam com boa comunicação.",
+    "O conhecimento compartilhado multiplica resultados.",
+    "Sempre há algo novo para aprender.",
+    "Juntos entregamos mais valor ao cliente.",
+    "Uma equipe alinhada trabalha com mais eficiência."
+  ]},
+  { nome:"Evoluindo Sempre", icone:"🌱", cor:"#2F6B4F", frases:[
+    "Cada desafio é uma oportunidade de aprender.",
+    "Evoluir um pouco todos os dias faz grande diferença ao longo do tempo.",
+    "Perguntar também é sinal de competência.",
+    "Aprender nunca sai de moda.",
+    "Buscar melhoria contínua faz parte da nossa cultura.",
+    "Experiência cresce quando compartilhada.",
+    "Feedback é ferramenta de evolução.",
+    "O conhecimento é um dos nossos maiores ativos.",
+    "Melhorar é um processo constante.",
+    "A curiosidade impulsiona a inovação."
+  ]},
+  { nome:"Protagonismo", icone:"🚀", cor:"#E30613", frases:[
+    "Quem antecipa soluções gera mais valor.",
+    "Seja protagonista do seu dia.",
+    "Pequenas atitudes fazem grandes diferenças.",
+    "A iniciativa abre caminhos.",
+    "O melhor momento para agir é agora.",
+    "Assumir responsabilidade fortalece a confiança.",
+    "Excelência é hábito.",
+    "O resultado começa nas pequenas escolhas.",
+    "Cada ação contribui para o sucesso da equipe.",
+    "Faça hoje o que facilitará o trabalho de amanhã."
+  ]},
+  { nome:"Mensagem do Dia", icone:"❤️", cor:"#A32638", frases:[
+    "Seu trabalho impacta diretamente nossos clientes.",
+    "Cada atendimento conta.",
+    "Fazer o básico bem feito já é um diferencial.",
+    "O sucesso é construído diariamente.",
+    "Pequenos avanços também são conquistas.",
+    "Consistência gera confiança.",
+    "O compromisso de hoje constrói os resultados de amanhã.",
+    "Orgulho é entregar um trabalho bem feito.",
+    "A dedicação aparece nos detalhes.",
+    "O cliente percebe quando há comprometimento."
+  ]},
+  { nome:"Momento Leve", icone:"☕", cor:"#51617E", frases:[
+    "☕ Já tomou água hoje?",
+    "🌱 Um dia de cada vez.",
+    "😊 Um sorriso também faz parte do atendimento.",
+    "🚗 Dirija com segurança.",
+    "🌞 Aproveite o dia!",
+    "👏 Parabéns pelo empenho!",
+    "💚 Obrigado por fazer parte da Garantia da Qualidade.",
+    "🎯 Foque em uma tarefa de cada vez.",
+    "📍 Confira sua programação antes da próxima visita.",
+    "🚀 Que seja um excelente dia!"
+  ]}
+];
+
+/* ==================== LÓGICA DO BANNER ==================== */
+function faixaHoraria(h){
+  if (h >= 5  && h < 10) return "manha";
+  if (h >= 10 && h < 12) return "meioManha";
+  if (h >= 12 && h < 14) return "almoco";
+  if (h >= 14 && h < 17) return "tarde";
+  if (h >= 17 && h < 19) return "fimTarde";
+  return "noite";
+}
+function saudacaoBase(h){
+  if (h >= 5 && h < 12) return "Bom dia";
+  if (h >= 12 && h < 18) return "Boa tarde";
+  return "Boa noite";
+}
+function emojiFaixa(f){
+  return {manha:"🌅",meioManha:"🌤",almoco:"🍽",tarde:"🌇",fimTarde:"🌆",noite:"🌙"}[f] || "👋";
+}
+function hojeStr(){
+  var d = new Date();
+  return d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate();
+}
+
+function atualizarBanner(){
+  var demo = document.getElementById("demoHora");
+  var horaDemo = demo && demo.value !== "" ? parseInt(demo.value,10) : null;
+  var hora = horaDemo !== null ? horaDemo : new Date().getHours();
+
+  var faixa = faixaHoraria(hora);
+  var lista = MENSAGENS[faixa];
+
+  // Nome do técnico salvo pelo Registro de Atendimentos (mesmo aparelho)
+  var nome = "";
+  try { nome = localStorage.getItem("registro_tecnico") || ""; } catch(e){}
+  var primeiroNome = nome ? nome.trim().split(" ")[0] : "";
+  var saudacao = saudacaoBase(hora) + (primeiroNome ? ", " + primeiroNome : "") + "! " + emojiFaixa(faixa);
+
+  // Primeiro acesso do dia → lembrete fixo da programação
+  // (no modo demo não gasta o "primeiro acesso")
+  var primeiroAcesso = false;
+  if (horaDemo === null){
+    try {
+      if (localStorage.getItem("gq_ultimo_acesso") !== hojeStr()){
+        primeiroAcesso = true;
+        localStorage.setItem("gq_ultimo_acesso", hojeStr());
+      }
+    } catch(e){}
+  }
+
+  var mensagem = primeiroAcesso ? MSG_PRIMEIRO_ACESSO
+                                : lista[Math.floor(Math.random()*lista.length)];
+
+  document.getElementById("heroSaudacao").textContent = saudacao;
+  document.getElementById("heroMensagem").textContent = mensagem;
+}
+
+/* ==================== LÓGICA DO INSIGHT ==================== */
+var ultimaFrase = "";
+function novaFrase(){
+  var cat, frase, tentativas = 0;
+  do {
+    cat = CATEGORIAS_INSIGHT[Math.floor(Math.random()*CATEGORIAS_INSIGHT.length)];
+    frase = cat.frases[Math.floor(Math.random()*cat.frases.length)];
+    tentativas++;
+  } while (frase === ultimaFrase && tentativas < 5);
+  ultimaFrase = frase;
+
+  var card = document.getElementById("insightCard");
+  card.style.setProperty("--insight-cor", cat.cor);
+  document.getElementById("insightIcone").textContent = cat.icone;
+  document.getElementById("insightCategoria").textContent = cat.nome;
+  document.getElementById("insightFrase").textContent = frase;
+}
+
+atualizarBanner();
+novaFrase();
+</script>
 
 </body>
 </html>
