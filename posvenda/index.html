@@ -241,13 +241,21 @@ td{padding:8px 6px;border-bottom:1px solid var(--border);color:var(--text)}
         <div class="field"><label>Data da visita</label><input type="date" id="v-data"></div>
         <div class="field"><label>Data da reclamação</label><input type="date" id="v-data-reclamacao" oninput="salvarRascunho()"></div>
       </div>
-      <div class="field"><label>Modalidade</label>
-        <select id="v-modalidade" onchange="toggleModalidade()">
-          <option>VISITA</option>
-          <option>INVESTIGAÇÃO</option>
-          <option>VISITA + INVESTIGAÇÃO</option>
-          <option>VISITA DE VALOR</option>
-        </select>
+      <div class="row2">
+        <div class="field"><label>Modalidade</label>
+          <select id="v-modalidade" onchange="toggleModalidade()">
+            <option>VISITA</option>
+            <option>INVESTIGAÇÃO</option>
+            <option>VISITA + INVESTIGAÇÃO</option>
+            <option>VISITA DE VALOR</option>
+          </select>
+        </div>
+        <div class="field"><label>Acompanhamento</label>
+          <select id="v-acompanhamento" onchange="salvarRascunho()">
+            <option>Presencial</option>
+            <option>Remoto</option>
+          </select>
+        </div>
       </div>
       <div class="row2">
       <div class="row2">
@@ -2197,9 +2205,9 @@ async function registrar(){
     id:Date.now(),
     data:g('v-data'),dataReclamacao:g('v-data-reclamacao')||g('v-data'),
     tecnico:g('v-tecnico'),cliente:g('v-cliente'),codterceiro:g('v-codterceiro'),cidade:g('v-cidade'),
-    acomp:g('v-acomp'),acompCargo:g('v-acomp-cargo'),motivo:motivoCompleto,motivoCod,detalheCod,detalheNome,modalidade:g('v-modalidade'),
+    acomp:g('v-acomp'),acompCargo:g('v-acomp-cargo'),motivo:motivoCompleto,motivoCod,detalheCod,detalheNome,modalidade:g('v-modalidade'),acompanhamento:g('v-acompanhamento'),
     vacuoMantido:g('v-vacuo-mantido'),
-    codTerceiro:g('v-cod-terceiro'),projeto:g('v-projeto'),
+    codTerceiro:g('v-codterceiro'),projeto:g('v-projeto'),
     tipoEntrega:g('v-tipo-entrega'),tipoConf:g('v-tipo-conf'),
     nfs,nf:p.num,dataNF:p.data,placa:p.placa,transp:p.transp,
     carga:p.carga,dataChegada:p.chegada,dataEntrega:p.entrega,
@@ -2603,7 +2611,10 @@ function gerarWhats(e){
   const dataRefW=e.dataReclamacao||e.data||new Date().toISOString().split('T')[0];
   const _loteWhats=(l)=>{
     const diasProd=l.fab?diffDias(l.fab,dataRefW):'—';
-    const share=l.shelf&&diasProd!=='—'?((diasProd/l.shelf)*100).toFixed(0)+'%':'—';
+    // Posição no shelf em terços (1/3, 2/3, 3/3) — mesma regra usada no laudo.
+    const _t3=l.shelf>0?Math.round(l.shelf/3):null;
+    const _pos=l.fracao?parseInt(l.fracao):(_t3&&diasProd!=='—'&&diasProd>0?Math.ceil(diasProd/_t3):null);
+    const fracao=l.fracao||(_pos?`${_pos}/3`:'—');
     const _volTot=(numBR(l.volFech)||0)+(numBR(l.volAb)||0);
     const volRecl=l.recl?l.recl+' kg':(_volTot?kgBR(_volTot)+' kg':'—');
     const visNCs=Object.entries(l.incsVis||{}).filter(([,v])=>v&&v!=='0.0%').map(([k,v])=>`${k}: ${v}`).join(' | ');
@@ -2617,7 +2628,8 @@ function gerarWhats(e){
 *Unid. prod.:* ${l.uprod} (SIF ${l.sifUprod}) | *Abate:* ${l.uabate} (SIF ${l.sifUabate})
 *Volume:* fechado ${l.volFech} ${l.volFechUnid} | aberto ${l.volAb} ${l.volAbUnid}
 *Vol. total reclamado:* ${volRecl}
-*Shelf:* ${l.shelf}d | produzido há ${diasProd}d | share: ${share}
+*Fabricação:* ${fmt(l.fab)} | *Validade:* ${fmt(l.val)}
+*Shelf:* ${l.shelf}d | produzido há ${diasProd}d | posição: ${fracao}
 *Visual:* ${visNCs||'—'}${(l.visOutros&&l.visOutros.length)?' | '+l.visOutros.map(o=>o.desc+': '+(o.inc||'')).join(' | '):''}
 *Análise sensorial:* ${descreverSensorial(l)}
 *Borracheiro:* ${l.borrRealiz==='Sim'?`${l.borrVaz||0} vaz. em ${l.borrQtd||0} pç (${l.borrInc||'—'}) — ${l.borrLocal||'—'}`:'Não realizado'}`;
@@ -2628,12 +2640,13 @@ function gerarWhats(e){
     return cab+g.lotes.map(_loteWhats).join('\n\n');
   }).join('\n\n');
   const alerta=e.tempAlta?'\n⚠️ *TEMPERATURAS ELEVADAS* — possível improcedência.':
-    e.loteImprocShelf&&e.loteImprocShelf.length?'\n⚠️ *PRODUTO ACIMA DE 2/3 DA VIDA ÚTIL* — possível improcedência.':'';
+    e.loteImprocShelf&&e.loteImprocShelf.length?'\n⚠️ *PRODUTO EM 3/3 DA VIDA ÚTIL* — possível improcedência.':'';
   return `🔔 *Escalonamento Pós-Venda*
 
 *Cliente:* ${e.cliente} — ${e.cidade}
 *NF:* ${e.nf} | *Placa:* ${e.placa}
 *Data visita:* ${fmt(e.data)}
+*Acompanhamento:* ${e.acompanhamento||'—'}
 *Acompanhante:* ${e.acomp}
 
 ${lotesTxt}
@@ -2912,6 +2925,7 @@ function gerarEmail(e){
     ${sec('Identificação da Ocorrência')}
     ${row('Empresa NF',nf1.unid||'—')}
     ${row('Cliente',e.cliente||'—',{bold:true})}
+    ${row('Código de terceiro',e.codterceiro||'—')}
     ${row('UF',e.cidade||'—')}
     ${row('Local da entrega',e.tipoEntrega||'—')}
     ${row('Nota Fiscal Unidade',nf1.unid&&nf1.num?nf1.num:e.nf||'—')}
@@ -2921,6 +2935,7 @@ function gerarEmail(e){
     ${row('Motivo',e.motivo||'—',{red:true})}
     ${row('Data da visita / reclamação',fmt(e.data))}
     ${row('Tratativa',e.modalidade||'—')}
+    ${row('Acompanhamento',e.acompanhamento||'—')}
     ${row('Volume total da reclamação (kg)',e.lotes&&e.lotes[0]?e.lotes[0].recl||'—':'—',{bold:true})}
     ${e.chamado?row('Número do chamado',e.chamado):''}
     ${row('Técnico responsável',e.tecnico||'—')}
@@ -3070,6 +3085,7 @@ IDENTIFICAÇÃO DA OCORRÊNCIA
 ${sep}
 ${lin('Empresa NF',nf1.unid||'—')}
 ${lin('Cliente',e.cliente||'—')}
+${lin('Código de terceiro',e.codterceiro||'—')}
 ${lin('UF',e.cidade||'—')}
 ${lin('Local da entrega',e.tipoEntrega||'—')}
 ${lin('Nota Fiscal',e.nf||'—')}
@@ -3078,6 +3094,7 @@ ${lin('Data da entrega',fmt(nf1.entrega||'')||'—')}
 ${lin('Motivo',e.motivo||'—')}
 ${lin('Data da visita / reclamação',fmt(e.data))}
 ${lin('Tratativa',e.modalidade||'—')}
+${lin('Acompanhamento',e.acompanhamento||'—')}
 ${lin('Volume total reclamado',e.lotes&&e.lotes[0]?(e.lotes[0].recl||'—')+' kg':'—')}
 ${e.chamado?lin('Número do chamado',e.chamado):''}
 ${lin('Técnico responsável',e.tecnico||'—')}
@@ -4516,9 +4533,11 @@ async function gerarLaudoWord(){
           sec('1. Identificação da Visita'),
           new Table({width:{size:W,type:WidthType.DXA},columnWidths:[2200,2753,2200,2753],rows:[
             new TableRow({children:[cL('Cliente:',2200),cSpan([p([tb(e.cliente||'—')])],7706,3)]}),
+            new TableRow({children:[cL('Código de terceiro:',2200),cSpan([p([tb(e.codterceiro||'—')])],7706,3)]}),
             new TableRow({children:[cL('Cidade / UF:',2200),cV(`${e.cidade||'—'} / ${e.estado||'—'}`,2753),cL('Data da visita:',2200),cV(fmt(e.data),2753)]}),
             new TableRow({children:[cL('Acompanhante:',2200),cSpan([p([t((e.acomp||'—')+(e.acompCargo?'  —  Cargo/Função: '+e.acompCargo:''))])],7706,3)]}),
             new TableRow({children:[cL('Motivo:',2200),cV(e.motivo||'—',2753),cL('Modalidade:',2200),cV(e.modalidade||'—',2753)]}),
+            new TableRow({children:[cL('Acompanhamento:',2200),cSpan([p([tb(e.acompanhamento||'—')])],7706,3)]}),
             new TableRow({children:[cL('Tipo de entrega:',2200),cV(e.tipoEntrega||'—',2753),cL('Tipo de conferência:',2200),cV(e.tipoConf||'—',2753)]}),
           ]}),
 
