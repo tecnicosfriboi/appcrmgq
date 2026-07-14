@@ -147,19 +147,35 @@ function __toggleSwitcher(e){
 
   .setup-note{font-size:12px;color:var(--ink-soft);line-height:1.5;margin-top:6px;}
 
-  .ponto-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-  .ponto-badge{
-    font-family:'JetBrains Mono',monospace;font-size:13px;
-    background:var(--paper);border:1px solid var(--line);border-radius:20px;
-    padding:6px 14px;flex:1;text-align:center;min-width:120px;
+  .ponto-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:520px){.ponto-grid{grid-template-columns:1fr;}}
+  .ponto-col label{margin-bottom:6px;}
+  .ponto-input-row{display:flex;gap:6px;align-items:center;}
+  .ponto-input-row input[type=time]{
+    flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:6px;
+    background:var(--paper);color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:14px;
+    margin-bottom:0;
   }
-  .ponto-badge.set{border-color:var(--highlight);color:#1d3f7a;font-weight:600;}
-  .ponto-btn{
-    font-family:'JetBrains Mono',monospace;font-size:12px;padding:8px 14px;border-radius:20px;
-    border:1px solid var(--ink);background:var(--ink);color:var(--paper);cursor:pointer;flex:1;
-    white-space:nowrap;
+  .ponto-input-row input[type=time]:focus{outline:2px solid var(--highlight);outline-offset:1px;}
+  .ponto-now{
+    font-family:'JetBrains Mono',monospace;font-size:11px;padding:9px 12px;border-radius:6px;
+    border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);cursor:pointer;white-space:nowrap;
   }
-  .ponto-btn:disabled{opacity:.45;cursor:not-allowed;background:var(--paper-dark);color:var(--ink-soft);border-color:var(--line);}
+  .ponto-now:hover{border-color:var(--ink);color:var(--ink);}
+
+  /* modo edição */
+  .editing-banner{
+    display:none;background:var(--progress-bg);border:1px solid var(--progress);color:var(--progress);
+    border-radius:6px;padding:10px 12px;margin-bottom:14px;font-size:13px;
+    align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  }
+  .editing-banner.show{display:flex;}
+  .editing-banner button{
+    font-family:'JetBrains Mono',monospace;font-size:11px;padding:5px 10px;border-radius:20px;
+    border:1px solid var(--progress);background:transparent;color:var(--progress);cursor:pointer;
+  }
+  .item-card.is-editing{border-left-color:var(--progress);background:var(--progress-bg);}
+  .action-btn.edit{color:var(--highlight);}
 
   .app-nav{
     background:var(--ink);display:flex;justify-content:space-between;align-items:center;
@@ -232,19 +248,33 @@ function __toggleSwitcher(e){
 
   <div class="panel" id="pontoPanel">
     <h2>Ponto do dia</h2>
-    <div class="ponto-row">
-      <div class="ponto-badge" id="pontoInicioBadge">sem entrada</div>
-      <div class="ponto-badge" id="pontoFimBadge">sem saída</div>
+    <div class="ponto-grid">
+      <div class="ponto-col">
+        <label for="pontoInicioInput">Entrada</label>
+        <div class="ponto-input-row">
+          <input type="time" id="pontoInicioInput">
+          <button class="ponto-now" id="btnEntradaAgora" title="Usar hora atual">agora</button>
+        </div>
+      </div>
+      <div class="ponto-col">
+        <label for="pontoFimInput">Saída</label>
+        <div class="ponto-input-row">
+          <input type="time" id="pontoFimInput">
+          <button class="ponto-now" id="btnSaidaAgora" title="Usar hora atual">agora</button>
+        </div>
+      </div>
     </div>
-    <div class="ponto-row" style="margin-top:10px;">
-      <button class="ponto-btn" id="btnEntrada">Bater entrada</button>
-      <button class="ponto-btn" id="btnSaida">Bater saída</button>
-    </div>
+    <button class="btn" id="btnSalvarPonto" style="margin-top:12px;">Salvar ponto</button>
     <div class="status-msg" id="pontoMsg"></div>
   </div>
 
   <div class="panel" id="formPanel">
-    <h2>Novo item da programação</h2>
+    <h2 id="formTitle">Novo item da programação</h2>
+
+    <div class="editing-banner" id="editingBanner">
+      <span>✏️ Editando um item existente</span>
+      <button type="button" id="cancelEditBtn">Cancelar edição</button>
+    </div>
 
     <label for="descInput">Descrição</label>
     <input type="text" id="descInput" placeholder="ex: Ato de entrega remoto Carrefour">
@@ -357,15 +387,20 @@ function __toggleSwitcher(e){
   const formMsg = document.getElementById('formMsg');
   const itemsList = document.getElementById('itemsList');
   const dayStats = document.getElementById('dayStats');
+  const formTitle = document.getElementById('formTitle');
+  const editingBanner = document.getElementById('editingBanner');
+  const cancelEditBtn = document.getElementById('cancelEditBtn');
 
-  const pontoInicioBadge = document.getElementById('pontoInicioBadge');
-  const pontoFimBadge = document.getElementById('pontoFimBadge');
-  const btnEntrada = document.getElementById('btnEntrada');
-  const btnSaida = document.getElementById('btnSaida');
+  const pontoInicioInput = document.getElementById('pontoInicioInput');
+  const pontoFimInput = document.getElementById('pontoFimInput');
+  const btnEntradaAgora = document.getElementById('btnEntradaAgora');
+  const btnSaidaAgora = document.getElementById('btnSaidaAgora');
+  const btnSalvarPonto = document.getElementById('btnSalvarPonto');
   const pontoMsg = document.getElementById('pontoMsg');
 
   let ehAtendimento = true;
   let currentItems = [];
+  let editingId = null;   // id do item em edição (null = criando um novo)
 
   // ---------- setup: técnico + data ----------
   const today = new Date().toISOString().slice(0,10);
@@ -395,6 +430,9 @@ function __toggleSwitcher(e){
   dataInput.addEventListener('change', refreshDay);
 
   function refreshDay(){
+    // Trocar de técnico/dia cancela qualquer edição em andamento,
+    // para nunca salvar alterações no item errado.
+    if (editingId) sairModoEdicao();
     loadItems();
     loadPonto();
   }
@@ -423,7 +461,7 @@ function __toggleSwitcher(e){
   origemTipoSelect.addEventListener('change', renderCanais);
   renderCanais();
 
-  // ---------- salvar novo item ----------
+  // ---------- salvar item (novo ou edição) ----------
   salvarBtn.addEventListener('click', async () => {
     const tecnico = tecnicoSelect.value;
     const data = dataInput.value;
@@ -433,11 +471,13 @@ function __toggleSwitcher(e){
     if (!descricao){ showMsg('Descreva o item.', true); return; }
 
     const payload = {
-      action: 'add',
+      action: editingId ? 'update' : 'add',
       tecnico, data, descricao,
-      ehAtendimento,
-      status: 'Programado'
+      ehAtendimento
     };
+    if (editingId) payload.id = editingId;
+    else payload.status = 'Programado';
+
     if (ehAtendimento){
       payload.cliente = clienteInput.value.trim();
       payload.finalidade = finalidadeSelect.value;
@@ -459,10 +499,8 @@ function __toggleSwitcher(e){
       });
       const json = await res.json();
       if (json.ok){
-        showMsg('✓ Adicionado.', false, true);
-        descInput.value = '';
-        clienteInput.value = '';
-        finalidadeOutroInput.value = '';
+        showMsg(editingId ? '✓ Alterações salvas.' : '✓ Adicionado.', false, true);
+        sairModoEdicao();
         await loadItems();
       } else {
         showMsg('Erro: ' + (json.error || 'desconhecido'), true);
@@ -471,6 +509,48 @@ function __toggleSwitcher(e){
       showMsg('Falha de conexão — confira a API_URL.', true);
     }
     salvarBtn.disabled = false;
+  });
+
+  // ---------- modo edição ----------
+  function entrarModoEdicao(item){
+    editingId = item.ID;
+    descInput.value = item.Descricao || '';
+    setAtendimento(item.EhAtendimento === 'Sim');
+
+    if (item.EhAtendimento === 'Sim'){
+      clienteInput.value = item.Cliente || '';
+      finalidadeSelect.value = item.Finalidade || 'Ato de Entrega';
+      blocoFinalidadeOutro.classList.toggle('show', finalidadeSelect.value === 'Outro');
+      finalidadeOutroInput.value = item.FinalidadeDetalhe || '';
+      tipoSelect.value = item.TipoAtendimento || 'Presencial';
+      origemTipoSelect.value = item.OrigemTipo || 'Cliente Externo';
+      renderCanais();
+      if (item.OrigemCanal) origemCanalSelect.value = item.OrigemCanal;
+    } else {
+      localSelect.value = item.Local || 'Home Office';
+    }
+
+    formTitle.textContent = 'Editando item';
+    editingBanner.classList.add('show');
+    salvarBtn.textContent = 'Salvar alterações';
+    renderItems();
+    formTitle.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function sairModoEdicao(){
+    editingId = null;
+    descInput.value = '';
+    clienteInput.value = '';
+    finalidadeOutroInput.value = '';
+    formTitle.textContent = 'Novo item da programação';
+    editingBanner.classList.remove('show');
+    salvarBtn.textContent = 'Adicionar à programação';
+  }
+
+  cancelEditBtn.addEventListener('click', () => {
+    sairModoEdicao();
+    showMsg('', false);
+    renderItems();
   });
 
   function showMsg(text, isErr, isOk){
@@ -516,7 +596,7 @@ function __toggleSwitcher(e){
         tags = [item.Local].filter(Boolean);
       }
       return `
-        <div class="item-card status-${statusClass}">
+        <div class="item-card status-${statusClass}${item.ID === editingId ? ' is-editing' : ''}">
           <div class="item-top">
             <div>
               <div class="item-desc">${escapeHtml(item.Descricao)}</div>
@@ -525,6 +605,7 @@ function __toggleSwitcher(e){
             <span class="status-pill ${statusClass}">${escapeHtml(item.Status || 'Programado')}</span>
           </div>
           <div class="item-actions">
+            <button class="action-btn edit" data-id="${item.ID}" data-action="edit">✏️ Editar</button>
             <button class="action-btn" data-id="${item.ID}" data-status="Em andamento">Em andamento</button>
             <button class="action-btn" data-id="${item.ID}" data-status="Concluído">Concluído</button>
             <button class="action-btn" data-id="${item.ID}" data-status="Não realizado">Não realizado</button>
@@ -538,6 +619,11 @@ function __toggleSwitcher(e){
     itemsList.querySelectorAll('.action-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         if (btn.dataset.action === 'delete') return handleDelete(btn.dataset.id);
+        if (btn.dataset.action === 'edit'){
+          const item = currentItems.find(i => i.ID === btn.dataset.id);
+          if (item) entrarModoEdicao(item);
+          return;
+        }
         handleStatusChange(btn.dataset.id, btn.dataset.status);
       });
     });
@@ -579,24 +665,27 @@ function __toggleSwitcher(e){
     const tecnico = tecnicoSelect.value;
     const data = dataInput.value;
     if (!tecnico){
-      pontoInicioBadge.textContent = 'sem entrada';
-      pontoInicioBadge.classList.remove('set');
-      pontoFimBadge.textContent = 'sem saída';
-      pontoFimBadge.classList.remove('set');
-      btnEntrada.disabled = true;
-      btnSaida.disabled = true;
+      pontoInicioInput.value = '';
+      pontoFimInput.value = '';
+      setPontoEnabled(false);
       return;
     }
-    btnEntrada.disabled = false;
-    btnSaida.disabled = false;
+    setPontoEnabled(true);
     try {
       const res = await fetch(`${API_URL}?action=ponto&tecnico=${encodeURIComponent(tecnico)}&data=${encodeURIComponent(data)}`);
       const json = await res.json();
-      updatePontoBadges(json.inicio, json.fim);
+      pontoInicioInput.value = soHora(json.inicio);
+      pontoFimInput.value = soHora(json.fim);
+      pontoMsg.textContent = '';
+      pontoMsg.className = 'status-msg';
     } catch(err){
       pontoMsg.textContent = 'Erro ao carregar ponto.';
       pontoMsg.className = 'status-msg err';
     }
+  }
+
+  function setPontoEnabled(on){
+    [pontoInicioInput, pontoFimInput, btnEntradaAgora, btnSaidaAgora, btnSalvarPonto].forEach(el => el.disabled = !on);
   }
 
   // Rede de segurança: se vier um timestamp completo (ex: "1899-12-30T15:44:28.000Z"),
@@ -607,45 +696,60 @@ function __toggleSwitcher(e){
     const iso = s.match(/T(\d{2}:\d{2})/);
     if (iso) return iso[1];
     const hm = s.match(/^(\d{1,2}:\d{2})/);
-    return hm ? hm[1] : s;
+    if (!hm) return '';
+    // input[type=time] exige HH:mm com dois dígitos na hora
+    const [h, m] = hm[1].split(':');
+    return h.padStart(2, '0') + ':' + m;
   }
 
-  function updatePontoBadges(inicio, fim){
-    const i = soHora(inicio), f = soHora(fim);
-    pontoInicioBadge.textContent = i ? `⏰ entrada ${i}` : 'sem entrada';
-    pontoInicioBadge.classList.toggle('set', !!i);
-    pontoFimBadge.textContent = f ? `⏰ saída ${f}` : 'sem saída';
-    pontoFimBadge.classList.toggle('set', !!f);
+  function horaAgora(){
+    const d = new Date();
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
   }
 
-  async function bater(tipo){
+  btnEntradaAgora.addEventListener('click', () => { pontoInicioInput.value = horaAgora(); });
+  btnSaidaAgora.addEventListener('click', () => { pontoFimInput.value = horaAgora(); });
+
+  btnSalvarPonto.addEventListener('click', async () => {
     const tecnico = tecnicoSelect.value;
     const data = dataInput.value;
     if (!tecnico){ pontoMsg.textContent = 'Selecione o técnico primeiro.'; pontoMsg.className='status-msg err'; return; }
-    pontoMsg.textContent = 'Registrando...';
+
+    const inicio = pontoInicioInput.value;
+    const fim = pontoFimInput.value;
+    if (!inicio && !fim){ pontoMsg.textContent = 'Informe pelo menos um horário.'; pontoMsg.className='status-msg err'; return; }
+    if (inicio && fim && fim < inicio){
+      pontoMsg.textContent = 'A saída não pode ser antes da entrada.';
+      pontoMsg.className = 'status-msg err';
+      return;
+    }
+
+    btnSalvarPonto.disabled = true;
+    pontoMsg.textContent = 'Salvando...';
     pontoMsg.className = 'status-msg';
     try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'bater', tipo, tecnico, data })
-      });
-      const json = await res.json();
-      if (json.ok){
-        pontoMsg.textContent = json.jaRegistrado ? `Já registrado às ${soHora(json.hora)}.` : `✓ Registrado às ${soHora(json.hora)}.`;
-        pontoMsg.className = 'status-msg ok';
-        loadPonto();
-      } else {
-        pontoMsg.textContent = 'Erro: ' + (json.error || 'desconhecido');
-        pontoMsg.className = 'status-msg err';
-      }
+      if (inicio) await enviarPonto('entrada', inicio, tecnico, data);
+      if (fim) await enviarPonto('saida', fim, tecnico, data);
+      pontoMsg.textContent = '✓ Ponto salvo.';
+      pontoMsg.className = 'status-msg ok';
+      await loadPonto();
     } catch(err){
-      pontoMsg.textContent = 'Falha de conexão.';
+      pontoMsg.textContent = 'Falha ao salvar o ponto.';
       pontoMsg.className = 'status-msg err';
     }
+    btnSalvarPonto.disabled = false;
+  });
+
+  async function enviarPonto(tipo, hora, tecnico, data){
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'bater', tipo, hora, tecnico, data })
+    });
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || 'erro');
+    return json;
   }
-  btnEntrada.addEventListener('click', () => bater('entrada'));
-  btnSaida.addEventListener('click', () => bater('saida'));
 
   function escapeHtml(s){
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

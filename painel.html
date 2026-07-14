@@ -88,10 +88,11 @@
   .chip{
     font-family:'JetBrains Mono',monospace;font-size:12px;padding:5px 10px;border-radius:20px;
     border:1px solid var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;
+    transition:background .12s,border-color .12s,color .12s;
   }
   .chip:hover{border-color:var(--highlight);color:var(--ink);}
-  .chip.clear{color:var(--pending);border-color:var(--pending-bg);}
-  .chip.clear:hover{border-color:var(--pending);}
+  .chip.active{background:var(--ink);border-color:var(--ink);color:var(--paper);font-weight:600;}
+  .chip.todos.active{background:var(--highlight);border-color:var(--highlight);}
 
   .summary{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:18px;}
   .stamp{
@@ -204,17 +205,17 @@
       </div>
     </div>
     <div class="activity-row">
-      <label for="activityInput">Atividade (opcional) — filtra por palavra-chave</label>
-      <input type="text" id="activityInput" placeholder="ex: visita de valor, ato de entrega, pós-venda...">
+      <label for="activityInput">Atividades — clique para selecionar (pode marcar várias)</label>
       <div class="chips" id="activityChips">
+        <button class="chip todos active" data-val="__all__">Todas</button>
         <button class="chip" data-val="visita de valor">visita de valor</button>
         <button class="chip" data-val="ato de entrega">ato de entrega</button>
         <button class="chip" data-val="pós entrega">pós entrega</button>
         <button class="chip" data-val="investigação">investigação</button>
         <button class="chip" data-val="home office">home office</button>
         <button class="chip" data-val="treinamento">treinamento</button>
-        <button class="chip clear" data-val="">limpar</button>
       </div>
+      <input type="text" id="activityInput" placeholder="ou digite outra palavra-chave..." style="margin-top:10px;">
     </div>
   </div>
 
@@ -268,7 +269,7 @@
   tecnicoSelect.addEventListener('change', () => load(true));
   dataDe.addEventListener('change', () => { markActiveRange(null); load(true); });
   dataAte.addEventListener('change', () => { markActiveRange(null); load(true); });
-  activityInput.addEventListener('input', () => load(false));
+  activityInput.addEventListener('input', () => { syncChips(); load(false); });
   refreshBtn.addEventListener('click', () => load(true));
 
   document.querySelectorAll('.qr-btn[data-range]').forEach(btn => {
@@ -291,12 +292,33 @@
     document.querySelectorAll('.qr-btn[data-range]').forEach(b => b.classList.toggle('active', b === activeBtn));
   }
 
+  // Atividades selecionadas (multi-seleção). Vazio = "Todas".
+  let atividadesSel = [];
+
   document.querySelectorAll('.chip').forEach(chip => {
     chip.addEventListener('click', () => {
-      activityInput.value = chip.dataset.val;
+      const val = chip.dataset.val;
+      if (val === '__all__'){
+        atividadesSel = [];
+        activityInput.value = '';
+      } else {
+        const i = atividadesSel.indexOf(val);
+        if (i >= 0) atividadesSel.splice(i, 1);
+        else atividadesSel.push(val);
+      }
+      syncChips();
       load(false);
     });
   });
+
+  function syncChips(){
+    const temTexto = activityInput.value.trim() !== '';
+    const nenhuma = atividadesSel.length === 0 && !temTexto;
+    document.querySelectorAll('.chip').forEach(c => {
+      if (c.dataset.val === '__all__') c.classList.toggle('active', nenhuma);
+      else c.classList.toggle('active', atividadesSel.includes(c.dataset.val));
+    });
+  }
 
   async function load(showLoading){
     const tecnico = tecnicoSelect.value;
@@ -325,14 +347,26 @@
   }
 
   function render(items, pontos, singleDay){
-    const activityRaw = activityInput.value.trim();
-    const activityNorm = activityRaw ? normalize(activityRaw) : '';
+    // Termos ativos = chips selecionados + texto livre digitado.
+    // Um item entra se casar com QUALQUER um deles (lógica "ou").
+    const textoLivre = activityInput.value.trim();
+    const termos = atividadesSel.slice();
+    if (textoLivre) termos.push(textoLivre);
+    const termosNorm = termos.map(normalize);
+    const filtroAtivo = termosNorm.length > 0;
+    const rotuloFiltro = termos.join(', ');
 
     function itemMatches(item){
-      if (!activityNorm) return true;
-      const haystack = [item.Descricao, item.Cliente, item.Finalidade, item.FinalidadeDetalhe, item.Local].filter(Boolean).join(' ');
-        return normalize(haystack).includes(activityNorm);
+      if (!filtroAtivo) return true;
+      const haystack = normalize(
+        [item.Descricao, item.Cliente, item.Finalidade, item.FinalidadeDetalhe, item.Local].filter(Boolean).join(' ')
+      );
+      return termosNorm.some(t => haystack.includes(t));
     }
+
+    // mantém o resto da função funcionando com os nomes antigos
+    const activityNorm = filtroAtivo ? 'x' : '';
+    const activityRaw = rotuloFiltro;
 
     const tecnico = tecnicoSelect.value;
     const tecnicosToShow = tecnico === '__all__' ? allTechnicians : [tecnico];
