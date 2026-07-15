@@ -4247,9 +4247,20 @@ function importarRascunho(input){
       const dt=r._data||'';
       const cli=r._cliente||'';
       if(!confirm(`Carregar rascunho${cli?' de "'+cli+'"':''}${dt?' ('+dt+')':''}?\n\nOs dados atuais serão substituídos.`))return;
-      localStorage.setItem(DRAFT_KEY,JSON.stringify(r));
-      // Restaura as fotos (que viajam no arquivo) para o armazenamento local
-      window._fotos=(r&&r._fotos)||{};
+      // As fotos viajam no arquivo, mas NÃO cabem no localStorage (limite ~5 MB).
+      // Separa as fotos: elas vão só para o IndexedDB; o localStorage guarda o resto.
+      const fotosDoArquivo=(r&&r._fotos)||{};
+      const rSemFotos=Object.assign({},r);
+      delete rSemFotos._fotos;
+      try{
+        localStorage.setItem(DRAFT_KEY,JSON.stringify(rSemFotos));
+      }catch(errQuota){
+        alert('Não foi possível importar: o rascunho é grande demais para o armazenamento do navegador. '+
+              'Tente fechar outras abas deste site ou limpar rascunhos antigos e importe novamente.');
+        return;
+      }
+      // Restaura as fotos (que viajam no arquivo) para o armazenamento local (IndexedDB)
+      window._fotos=fotosDoArquivo;
       idbSalvarFotos().finally(()=>location.reload());
       return;
     }catch(e){alert('Erro ao importar: '+e.message);}
