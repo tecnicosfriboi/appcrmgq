@@ -107,7 +107,8 @@ input[readonly]{background:var(--surface2)!important;color:var(--text2)!importan
     <a href="../painel.html"><span class="ico">📡</span>Painel da Equipe</a>
     <a href="../ato-entrega/index.html" class="current"><span class="ico">📦</span>Ato de Entrega</a>
     <a href="../posvenda/index.html"><span class="ico">🛒</span>Visita Pós-Venda</a>
-    <a href="../index.html"><span class="ico">🏠</span>Todos os apps</a>
+    <a href="../links.html"><span class="ico">🔗</span>Links Úteis</a>
+      <a href="../index.html"><span class="ico">🏠</span>Todos os apps</a>
   </div>
 </div>
 
@@ -1423,7 +1424,6 @@ function gerarTexto(e){
       +(e.devSemCortes?'\n_Sem análise corte a corte._':'')
       +(e.volNF?'\nVolume: *'+e.volNF.toLocaleString('pt-BR')+' kg*':'')
       +(e.devTotalMotivos&&e.devTotalMotivos.length?'\nMotivo(s) gerais:\n'+motLinhas(e.devTotalMotivos):'')
-      +(e.devTotalProc?'\nDevolução: *'+e.devTotalProc+'*':'')
       +(e.devList&&e.devList.length?'\n\n'+e.devList.map(devProd).join('\n\n'):'')
     :(e.devList&&e.devList.length
     ?e.devList.map(devProd).join('\n\n')
@@ -1455,8 +1455,8 @@ function gerarTexto(e){
     +'\nNF: '+e.nf
     +'\nPlaca: '+e.placa
     +'\nLocal: '+(e.local||'—')
-    +'\nTermógrafo '+e.termnum+': '+(e.termtemp||'--')
-    +'\nTemperatura dos produtos: '+(e.prodtemp!==null&&e.prodtemp!==undefined&&e.prodtemp!==''?e.prodtemp:'--')+'°C'
+    +'\nTermógrafo '+e.termnum+': '+tempC(e.termtemp)
+    +'\nTemperatura dos produtos: '+tempC(e.prodtemp)
     +'\nTipo de carga: '+e.tipo
     +'\n'+pres
     +'\n\n🚫 *Devoluções:*\n'+devTxt
@@ -1498,15 +1498,30 @@ function gerarPanorama(e){
   return t;
 }
 
+// Formata temperatura acrescentando °C — só quando há valor de fato.
+// Evita gerar "--°C" e garante o °C também no termógrafo.
+function tempC(v){
+  if(v===null||v===undefined||String(v).trim()===''||String(v).trim()==='--') return '--';
+  const s=String(v).trim();
+  return /°\s*C/i.test(s) ? s : s+'°C';
+}
+
 function gerarAlerta(e){
   const volTon=((e.volDev||0)/1000).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+  // Bloco de um corte individual (produto + motivos + volume)
+  const corteLinha=d=>{
+    const motTxt=d.motivosArr&&d.motivosArr.length?motLinhas(d.motivosArr).replace(/\n/g,' | '):(d.motivo||'—');
+    return '*'+d.produto+'*\n   SIF: '+d.sif+' | Motivo: '+motTxt+'\n   Volume: '+d.caixas+' cx — '+d.kg+' kg | Inc: *'+d.incidencia+'*';
+  };
   const cortes=e.devTotalNF
-    ?'*DEVOLUÇÃO TOTAL DA NF*'+(e.volNF?'\n   Volume NF: '+e.volNF.toLocaleString('pt-BR')+' kg':'')+'\n   Motivo(s): '+fmtMotivos(e.devTotalMotivos)+(e.devTotalProc?'\n   Devolução: *'+e.devTotalProc+'*':'')
+    ?'*DEVOLUÇÃO TOTAL DA NF*'
+      +(e.volNF?'\n   Volume NF: '+e.volNF.toLocaleString('pt-BR')+' kg':'')
+      +(e.devTotalMotivos&&e.devTotalMotivos.length?'\n   Motivo(s) gerais: '+fmtMotivos(e.devTotalMotivos):'')
+      +(e.devTotalProc?'\n   Devolução: *'+e.devTotalProc+'*':'')
+      // Mesmo em devolução total, mostra os cortes analisados (é onde ficam os motivos)
+      +(e.devList&&e.devList.length?'\n\n'+e.devList.map(corteLinha).join('\n\n'):'')
     :(e.devList&&e.devList.length
-    ?e.devList.map(d=>{
-        const motTxt=d.motivosArr&&d.motivosArr.length?motLinhas(d.motivosArr).replace(/\n/g,' | '):(d.motivo||'—');
-        return '*'+d.produto+'*\n   SIF: '+d.sif+' | Motivo: '+motTxt+'\n   Volume: '+d.caixas+' cx — '+d.kg+' kg | Inc: *'+d.incidencia+'*';
-      }).join('\n\n')
+    ?e.devList.map(corteLinha).join('\n\n')
     :'Não especificado');
   let t='🔴🔄 *DEVOLUÇÃO DE ALTO VOLUME (Acima de 3 tons)* 🔄🔴'
     +'\n*Data:* '+fmt(e.data)
@@ -1516,8 +1531,8 @@ function gerarAlerta(e){
     +'\n*Corte(s):*\n'+cortes
     +'\n---------------------'
     +'\n*Volume total:* '+volTon+' ton'
-    +'\n*Temperatura produtos:* '+(e.prodtemp!==null&&e.prodtemp!==undefined&&e.prodtemp!==''?e.prodtemp:'--')+'°C'
-    +'\n*Temperatura Termógrafo:* '+(e.termtemp||'--')
+    +'\n*Temperatura produtos:* '+tempC(e.prodtemp)
+    +'\n*Temperatura Termógrafo:* '+tempC(e.termtemp)
     +'\n*Acompanhamento:* '+(e.presencial?'Presencial':'Remoto');
   if(e.obs){
     t+='\n═════════════════════'
