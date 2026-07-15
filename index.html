@@ -61,12 +61,6 @@
     @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
   }
 
-  /* Seletor de demonstração (remover antes de publicar em produção) */
-  .demo-hora{
-    position:absolute;top:10px;right:12px;font-family:'JetBrains Mono',monospace;
-    font-size:10px;opacity:.6;
-  }
-  .demo-hora select{font-size:10px;border:none;border-radius:4px;padding:2px 4px;}
 
   /* ============ CARD DE INSIGHT ============ */
   .insight-card{
@@ -123,20 +117,6 @@
 <!-- ============ BANNER DE BOAS-VINDAS ============ -->
 <section class="hero">
   <div class="hero-card">
-    <!-- Seletor só para demonstração à gestão: apague este bloco em produção -->
-    <div class="demo-hora">
-      demo:
-      <select id="demoHora" onchange="atualizarBanner()">
-        <option value="">hora real</option>
-        <option value="7">07h · manhã</option>
-        <option value="11">11h · meio da manhã</option>
-        <option value="13">13h · almoço</option>
-        <option value="15">15h · tarde</option>
-        <option value="18">18h · fim de tarde</option>
-        <option value="21">21h · noite</option>
-      </select>
-    </div>
-
     <div class="hero-inner">
       <div class="hero-texto">
         <div class="hero-eyebrow">CRM / GQ — Consultores Técnicos</div>
@@ -392,9 +372,7 @@ function hojeStr(){
 }
 
 function atualizarBanner(){
-  var demo = document.getElementById("demoHora");
-  var horaDemo = demo && demo.value !== "" ? parseInt(demo.value,10) : null;
-  var hora = horaDemo !== null ? horaDemo : new Date().getHours();
+  var hora = new Date().getHours();
 
   var faixa = faixaHoraria(hora);
   var lista = MENSAGENS[faixa];
@@ -406,16 +384,13 @@ function atualizarBanner(){
   var saudacao = saudacaoBase(hora) + (primeiroNome ? ", " + primeiroNome : "") + "! " + emojiFaixa(faixa);
 
   // Primeiro acesso do dia → lembrete fixo da programação
-  // (no modo demo não gasta o "primeiro acesso")
   var primeiroAcesso = false;
-  if (horaDemo === null){
-    try {
-      if (localStorage.getItem("gq_ultimo_acesso") !== hojeStr()){
-        primeiroAcesso = true;
-        localStorage.setItem("gq_ultimo_acesso", hojeStr());
-      }
-    } catch(e){}
-  }
+  try {
+    if (localStorage.getItem("gq_ultimo_acesso") !== hojeStr()){
+      primeiroAcesso = true;
+      localStorage.setItem("gq_ultimo_acesso", hojeStr());
+    }
+  } catch(e){}
 
   var mensagem = primeiroAcesso ? MSG_PRIMEIRO_ACESSO
                                 : lista[Math.floor(Math.random()*lista.length)];
