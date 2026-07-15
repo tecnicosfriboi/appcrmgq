@@ -217,7 +217,8 @@ function __toggleSwitcher(e){
     <a href="painel.html"><span class="ico">📡</span>Painel da Equipe</a>
     <a href="ato-entrega/index.html"><span class="ico">📦</span>Ato de Entrega</a>
     <a href="posvenda/index.html"><span class="ico">🛒</span>Visita Pós-Venda</a>
-    <a href="index.html"><span class="ico">🏠</span>Todos os apps</a>
+    <a href="links.html"><span class="ico">🔗</span>Links Úteis</a>
+      <a href="index.html"><span class="ico">🏠</span>Todos os apps</a>
   </div>
 </div>
 
@@ -569,7 +570,7 @@ function __toggleSwitcher(e){
     }
     itemsList.innerHTML = '<div class="empty-state">Carregando...</div>';
     try {
-      const res = await fetch(`${API_URL}?action=list&tecnico=${encodeURIComponent(tecnico)}&data=${encodeURIComponent(data)}`);
+      const res = await fetch(`${API_URL}?action=list&tecnico=${encodeURIComponent(tecnico)}&data=${encodeURIComponent(data)}&_=${Date.now()}`, { cache: 'no-store' });
       currentItems = await res.json();
       renderItems();
     } catch(err){
@@ -634,15 +635,22 @@ function __toggleSwitcher(e){
     if (status === 'Não realizado' || status === 'Cancelado'){
       motivo = prompt('Motivo (opcional):') || '';
     }
+    showMsg('Atualizando status...', false);
     try {
-      await fetch(API_URL, {
+      const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action: 'updateStatus', id, status, motivo })
       });
-      loadItems();
+      const json = await res.json();
+      if (!json.ok){
+        showMsg('Erro ao atualizar: ' + (json.error || 'desconhecido'), true);
+        return;
+      }
+      showMsg('✓ Status atualizado.', false, true);
+      await loadItems();
     } catch(err){
-      alert('Falha ao atualizar — confira sua conexão.');
+      showMsg('Falha ao atualizar — confira sua conexão.', true);
     }
   }
 
@@ -672,7 +680,7 @@ function __toggleSwitcher(e){
     }
     setPontoEnabled(true);
     try {
-      const res = await fetch(`${API_URL}?action=ponto&tecnico=${encodeURIComponent(tecnico)}&data=${encodeURIComponent(data)}`);
+      const res = await fetch(`${API_URL}?action=ponto&tecnico=${encodeURIComponent(tecnico)}&data=${encodeURIComponent(data)}&_=${Date.now()}`, { cache: 'no-store' });
       const json = await res.json();
       pontoInicioInput.value = soHora(json.inicio);
       pontoFimInput.value = soHora(json.fim);

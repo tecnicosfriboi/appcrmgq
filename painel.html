@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script>
+function __toggleSwitcher(e){
+  if(e){e.stopPropagation();}
+  var m=document.getElementById('__sw-menu');
+  var b=document.getElementById('__sw-backdrop');
+  var open=m.classList.toggle('open');
+  b.classList.toggle('open', open);
+}
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Painel da Equipe — CRM/GQ</title>
@@ -159,14 +168,35 @@
   .app-nav a.active{opacity:1;font-weight:600;border-bottom:2px solid var(--pending);padding-bottom:2px;}
   .app-nav-links{display:flex;gap:18px;flex-wrap:wrap;}
   .app-nav-home{font-weight:600;opacity:1 !important;}
+
+  .app-switcher{position:relative;display:inline-block;}
+  .app-switcher-btn{background:transparent;border:none;color:#fff;font-size:15px;font-weight:400;letter-spacing:.03em;cursor:pointer;display:flex;align-items:center;gap:7px;padding:0;font-family:'Oswald',sans-serif;text-transform:uppercase;}
+  .app-switcher-btn .caret{font-size:10px;opacity:.7;}
+  .app-switcher-menu{position:absolute;top:calc(100% + 8px);left:0;background:#fff;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.28);min-width:210px;z-index:9999;overflow:hidden;display:none;}
+  .app-switcher-menu.open{display:block;}
+  .app-switcher-menu a{display:flex;align-items:center;gap:10px;padding:11px 14px;color:#14274E;text-decoration:none;font-size:13px;font-family:'Inter',sans-serif;border-bottom:1px solid #eef1f6;}
+  .app-switcher-menu a:last-child{border-bottom:none;}
+  .app-switcher-menu a:hover{background:#EEF1F6;}
+  .app-switcher-menu a.current{background:#14274E;color:#fff;font-weight:600;}
+  .app-switcher-menu .ico{font-size:15px;width:20px;text-align:center;}
+  .app-switcher-backdrop{position:fixed;inset:0;z-index:9998;display:none;}
+  .app-switcher-backdrop.open{display:block;}
+  .crm-app-header{background:#14274E;color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;gap:10px;flex-wrap:wrap;}
 </style>
 </head>
 <body>
-<nav class="app-nav">
-  <a href="index.html" class="app-nav-home">🏠 CRM/GQ</a>
-  <div class="app-nav-links">
-    <a href="registro_chamados.html">Registro</a>
-    <a href="painel_equipe.html" class="active">Painel da Equipe</a>
+<nav class="crm-app-header">
+  <div class="app-switcher">
+    <button class="app-switcher-btn" onclick="__toggleSwitcher(event)">Painel da Equipe <span class="caret">▼</span></button>
+    <div class="app-switcher-backdrop" id="__sw-backdrop" onclick="__toggleSwitcher(event)"></div>
+    <div class="app-switcher-menu" id="__sw-menu">
+      <a href="registro.html"><span class="ico">📋</span>Registro de Atendimentos</a>
+      <a href="painel.html" class="current"><span class="ico">📡</span>Painel da Equipe</a>
+      <a href="ato-entrega/index.html"><span class="ico">📦</span>Ato de Entrega</a>
+      <a href="posvenda/index.html"><span class="ico">🛒</span>Visita Pós-Venda</a>
+      <a href="links.html"><span class="ico">🔗</span>Links Úteis</a>
+      <a href="index.html"><span class="ico">🏠</span>Todos os apps</a>
+    </div>
   </div>
 </nav>
 
@@ -328,13 +358,13 @@
     liveDot.style.display = (ate === today) ? 'inline-block' : 'none';
 
     try {
-      let url = `${API_URL}?action=list&de=${encodeURIComponent(de)}&ate=${encodeURIComponent(ate)}`;
+      let url = `${API_URL}?action=list&de=${encodeURIComponent(de)}&ate=${encodeURIComponent(ate)}&_=${Date.now()}`;
       if (tecnico !== '__all__') url += `&tecnico=${encodeURIComponent(tecnico)}`;
-      const itemsPromise = fetch(url).then(r => r.json());
+      const itemsPromise = fetch(url, { cache: 'no-store' }).then(r => r.json());
 
       const singleDay = de === ate;
       const pontoPromise = singleDay
-        ? fetch(`${API_URL}?action=listPonto&data=${encodeURIComponent(de)}`).then(r => r.json())
+        ? fetch(`${API_URL}?action=listPonto&data=${encodeURIComponent(de)}&_=${Date.now()}`, { cache: 'no-store' }).then(r => r.json())
         : Promise.resolve([]);
 
       const [items, pontos] = await Promise.all([itemsPromise, pontoPromise]);
