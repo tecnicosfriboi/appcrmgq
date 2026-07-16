@@ -606,7 +606,7 @@ td{padding:8px 6px;border-bottom:1px solid var(--border);color:var(--text)}
       </div>
     </div>
     </div>
-    <button class="btn-green" id="btn-registrar" onclick="registrar()">Registrar e gerar resumos</button>
+    <button class="btn-green" id="btn-registrar" onclick="onClickRegistrar()">Registrar e gerar resumos</button>
     <button class="btn-outline" onclick="isVisitaValor()?irPasso(4):irPasso(5)" style="margin-top:8px">← Voltar</button>
   </div>
 </div>
@@ -624,60 +624,7 @@ td{padding:8px 6px;border-bottom:1px solid var(--border);color:var(--text)}
     <div style="font-size:16px;font-weight:bold;color:#1a1a18;margin-bottom:4px">📊 Finalizar e Enviar para Sheets</div>
     <div id="mpf-resumo" style="font-size:12px;color:var(--text2);margin-bottom:16px"></div>
 
-    <div class="field"><label>Parecer final</label>
-      <select id="mpf-parecer">
-        <option value="">Selecione...</option>
-        <option>PROCEDENTE</option>
-        <option>IMPROCEDENTE</option>
-        <option>AGUARDANDO</option>
-      </select>
-    </div>
-    <div class="field"><label>Motivo do parecer final</label>
-      <select id="mpf-motivo">
-        <option value="">Selecione...</option>
-        <option>Reclamação pontual frente ao volume entregue</option>
-        <option>Sem desvios na unidade e sem RAs relacionados</option>
-        <option>Reclamação fora do prazo (3/3)</option>
-        <option>Temperaturas elevadas no cliente</option>
-        <option>Sem produto disponível para avaliação</option>
-        <option>Produto conforme</option>
-        <option>Produto vencido</option>
-        <option>Produto não conforme</option>
-        <option>Dentro do prazo de retirada do projeto</option>
-        <option>Dentro do prazo de retirada pelo CD</option>
-        <option>Recebido com restrição</option>
-        <option>Veículo aguardando no cliente para descarregar por mais de 5 dias</option>
-      </select>
-    </div>
-    <div class="field"><label>Enviado para fábrica?</label>
-      <select id="mpf-enviado">
-        <option value="">Selecione...</option>
-        <option>SIM</option>
-        <option>NÃO</option>
-      </select>
-    </div>
-    <div class="field"><label>Data envio para fábrica</label>
-      <input type="date" id="mpf-data-envio">
-    </div>
-    <div class="field"><label>Data parecer final</label>
-      <input type="date" id="mpf-data-parecer">
-    </div>
-    <div class="field"><label>Área de aprovação</label>
-      <select id="mpf-area">
-        <option value="">Selecione...</option>
-        <option>COMERCIAL</option>
-        <option>QUALIDADE</option>
-        <option>LOGÍSTICA</option>
-        <option>DIRETORIA</option>
-        <option>GI</option>
-      </select>
-    </div>
-    <div class="field"><label>Nome do aprovador</label>
-      <input type="text" id="mpf-aprovador" placeholder="ex: Márcio Silveira">
-    </div>
-    <div class="field"><label>Data que recebeu todas as informações corretas</label>
-      <input type="date" id="mpf-data-infos">
-    </div>
+    <div id="mpf-lotes-container"></div>
 
     <div style="display:flex;gap:8px;margin-top:16px">
       <button onclick="confirmarEnvioSheets()" style="flex:1;padding:14px;background:#1F3864;color:#fff;border:none;border-radius:10px;font-size:14px;cursor:pointer;font-family:Georgia,serif">📊 Enviar para Sheets</button>
@@ -2075,6 +2022,23 @@ async function enviarSheets(e){
 }
 
 // ─── REGISTRAR ──────────────────────────────────────────────────────────────
+// Impede que um toque duplo (comum com sinal fraco em campo) no botão
+// "Registrar e gerar resumos" crie DOIS registros da mesma visita no Histórico.
+async function onClickRegistrar(){
+  const btn=document.getElementById('btn-registrar');
+  if(btn&&btn.disabled)return;
+  const textoOriginal=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='Registrando...';}
+  try{
+    await registrar();
+  }catch(ex){
+    console.error('Erro ao registrar:',ex);
+    alert('Ocorreu um erro ao registrar. Tente novamente.\n\n'+(ex&&ex.message?ex.message:''));
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent=textoOriginal;}
+  }
+}
+
 async function registrar(){
   // Antes de tudo: reconstrói os campos dinâmicos do passo 3 a partir do localStorage
   // para garantir que getSensorial/getVisual/getBorracheiro encontrem os dados
@@ -2246,7 +2210,7 @@ async function registrar(){
       const antigo=dados[idx];
       e.id=antigo.id; // mantém o mesmo registro
       // Preserva os metadados de parecer/envio já existentes
-      ['_sheetsEnviado','_pendenteSheets','_parecerFinal','_motivoParecer','_enviadoFabrica','_dataEnvioFabrica','_dataParecerFinal','_areaAprovacao','_nomeAprovador','_dataInfosCompletas'].forEach(k=>{ if(antigo[k]!==undefined) e[k]=antigo[k]; });
+      ['_sheetsEnviado','_pendenteSheets','_parecerFinal','_motivoParecer','_enviadoFabrica','_dataEnvioFabrica','_dataParecerFinal','_areaAprovacao','_nomeAprovador','_dataInfosCompletas','_pareceresPorLote'].forEach(k=>{ if(antigo[k]!==undefined) e[k]=antigo[k]; });
       dados[idx]=e;
     } else {
       dados.push(e);
@@ -2257,6 +2221,11 @@ async function registrar(){
     dados.push(e);
   }
   save(dados);
+  // Este registro já foi gravado no Histórico — apaga o rascunho ativo para que
+  // o app não volte a oferecer "continuar de onde parou" para uma visita que já
+  // está salva (isso é o que causava registros duplicados no Histórico).
+  try{ localStorage.removeItem(DRAFT_KEY); }catch(ex){}
+  try{ localStorage.removeItem(EDITANDO_KEY); }catch(ex){}
   document.getElementById('res-checklist').style.display='block';
 
   // VISITA DE VALOR — mostra apenas e-mail e laudo simplificados, sem parecer
@@ -3452,24 +3421,63 @@ function renderHist(){
 function verWhats(id){const e=getData().find(x=>x.id===id);if(e)abrirModal(gerarWhats(e));}
 function verEmail(id){const e=getData().find(x=>x.id===id);if(e){window._emailHtml=gerarEmail(e);window._ultimaVisita=e;showView('form',document.querySelector('.nav-btn'));setTimeout(()=>{document.getElementById('res-email').style.display='block';const iframe=document.getElementById('txt-email');if(iframe){iframe.srcdoc='';setTimeout(()=>{iframe.srcdoc=window._emailHtml;},50);}document.getElementById('res-email').scrollIntoView({behavior:'smooth'});},100);}}
 
+// ─── PARECER FINAL POR LOTE (tela "Finalizar e Enviar para Sheets") ─────────
+// Cada lote da visita ganha seu próprio conjunto de campos, pois um lote pode
+// ser PROCEDENTE e outro IMPROCEDENTE na mesma visita — e isso precisa ir
+// separado para o Sheets (é de lá que saem os indicadores).
+const MPF_LISTAS={
+  parecer:['PROCEDENTE','IMPROCEDENTE','AGUARDANDO'],
+  enviado:['SIM','NÃO'],
+  area:['COMERCIAL','QUALIDADE','LOGÍSTICA','DIRETORIA','GI'],
+  motivo:['Reclamação pontual frente ao volume entregue','Sem desvios na unidade e sem RAs relacionados','Reclamação fora do prazo (3/3)','Temperaturas elevadas no cliente','Sem produto disponível para avaliação','Produto conforme','Produto vencido','Produto não conforme','Dentro do prazo de retirada do projeto','Dentro do prazo de retirada pelo CD','Recebido com restrição','Veículo aguardando no cliente para descarregar por mais de 5 dias']
+};
+function _mpfSelect(id,list,sel){
+  return `<select id="${id}"><option value="">Selecione...</option>`+
+    list.map(o=>`<option ${o===sel?'selected':''}>${o}</option>`).join('')+
+    `</select>`;
+}
+function _mpfBlocoLote(loteId,label,v){
+  v=v||{};
+  return `<div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px 12px;margin-bottom:14px;background:#f9fafb">
+    ${label?`<div style="font-size:13px;font-weight:bold;color:#1F3864;margin-bottom:10px">📦 ${label}</div>`:''}
+    <div class="field"><label>Parecer final</label>${_mpfSelect('mpf-parecer-'+loteId,MPF_LISTAS.parecer,v.parecer)}</div>
+    <div class="field"><label>Motivo do parecer final</label>${_mpfSelect('mpf-motivo-'+loteId,MPF_LISTAS.motivo,v.motivo)}</div>
+    <div class="field"><label>Enviado para fábrica?</label>${_mpfSelect('mpf-enviado-'+loteId,MPF_LISTAS.enviado,v.enviado)}</div>
+    <div class="field"><label>Data envio para fábrica</label><input type="date" id="mpf-data-envio-${loteId}" value="${v.dataEnvio||''}"></div>
+    <div class="field"><label>Data parecer final</label><input type="date" id="mpf-data-parecer-${loteId}" value="${v.dataParecer||''}"></div>
+    <div class="field"><label>Área de aprovação</label>${_mpfSelect('mpf-area-'+loteId,MPF_LISTAS.area,v.area)}</div>
+    <div class="field"><label>Nome do aprovador</label><input type="text" id="mpf-aprovador-${loteId}" placeholder="ex: Márcio Silveira" value="${v.aprovador||''}"></div>
+    <div class="field"><label>Data que recebeu todas as informações corretas</label><input type="date" id="mpf-data-infos-${loteId}" value="${v.dataInfos||''}"></div>
+  </div>`;
+}
+
 let _mpfId=null;
 function abrirParecerFinal(id){
   const e=getData().find(x=>x.id===id);
   if(!e)return;
   _mpfId=id;
   const nf1=e.nfs&&e.nfs[0]||{};
-  const l1=e.lotes&&e.lotes[0]||{};
+  const lotes=(e.lotes&&e.lotes.length>0)?e.lotes:[{id:'unico',produto:''}];
+  const multi=lotes.length>1;
   document.getElementById('mpf-resumo').textContent=
-    `${e.cliente||'—'} · NF ${nf1.num||e.nf||'—'} · ${fmt(e.data)} · ${l1.produto||'—'}`;
-  // Preenche com valores já salvos se houver
-  document.getElementById('mpf-parecer').value=e._parecerFinal||'';
-  document.getElementById('mpf-motivo').value=e._motivoParecer||'';
-  document.getElementById('mpf-enviado').value=e._enviadoFabrica||'';
-  document.getElementById('mpf-data-envio').value=e._dataEnvioFabrica||'';
-  document.getElementById('mpf-data-parecer').value=e._dataParecerFinal||'';
-  document.getElementById('mpf-area').value=e._areaAprovacao||'';
-  document.getElementById('mpf-aprovador').value=e._nomeAprovador||'';
-  document.getElementById('mpf-data-infos').value=e._dataInfosCompletas||'';
+    `${e.cliente||'—'} · NF ${nf1.num||e.nf||'—'} · ${fmt(e.data)} · ${lotes.length} lote(s)`;
+
+  const salvos=e._pareceresPorLote||{};
+  const html=lotes.map((l,idx)=>{
+    const loteId=l.id!=null?l.id:'unico';
+    let v=salvos[loteId];
+    // Compatibilidade com registros feitos antes desta atualização: se ainda
+    // não existe nada salvo por lote, aproveita os campos únicos antigos no
+    // primeiro lote (assim nada se perde de registros anteriores).
+    if(!v&&!Object.keys(salvos).length&&idx===0){
+      v={parecer:e._parecerFinal||'',motivo:e._motivoParecer||'',enviado:e._enviadoFabrica||'',
+         dataEnvio:e._dataEnvioFabrica||'',dataParecer:e._dataParecerFinal||'',area:e._areaAprovacao||'',
+         aprovador:e._nomeAprovador||'',dataInfos:e._dataInfosCompletas||''};
+    }
+    const label=multi?`Lote ${idx+1} — ${l.produto||'sem produto'}`:'';
+    return _mpfBlocoLote(loteId,label,v);
+  }).join('');
+  document.getElementById('mpf-lotes-container').innerHTML=html;
   document.getElementById('mpf-status').textContent='';
   document.getElementById('modal-parecer-final').style.display='flex';
 }
@@ -3480,25 +3488,46 @@ async function confirmarEnvioSheets(){
   if(!e)return;
   const nf1=e.nfs&&e.nfs[0]||{};
   const statusEl=document.getElementById('mpf-status');
+  const lotes=(e.lotes&&e.lotes.length>0)?e.lotes:[{id:'unico'}];
 
-  // Salva parecer no registro local
-  e._parecerFinal=document.getElementById('mpf-parecer').value;
-  e._motivoParecer=document.getElementById('mpf-motivo').value;
-  e._enviadoFabrica=document.getElementById('mpf-enviado').value;
-  e._dataEnvioFabrica=document.getElementById('mpf-data-envio').value;
-  e._dataParecerFinal=document.getElementById('mpf-data-parecer').value;
-  e._areaAprovacao=document.getElementById('mpf-area').value;
-  e._nomeAprovador=document.getElementById('mpf-aprovador').value;
-  e._dataInfosCompletas=document.getElementById('mpf-data-infos').value;
+  // Lê os campos preenchidos em CADA bloco de lote e guarda por lote
+  const g2=(pref,loteId)=>{const el=document.getElementById(pref+'-'+loteId);return el?el.value:'';};
+  const pareceresPorLote={};
+  for(const l of lotes){
+    const loteId=l.id!=null?l.id:'unico';
+    pareceresPorLote[loteId]={
+      parecer:g2('mpf-parecer',loteId), motivo:g2('mpf-motivo',loteId),
+      enviado:g2('mpf-enviado',loteId), dataEnvio:g2('mpf-data-envio',loteId),
+      dataParecer:g2('mpf-data-parecer',loteId), area:g2('mpf-area',loteId),
+      aprovador:g2('mpf-aprovador',loteId), dataInfos:g2('mpf-data-infos',loteId)
+    };
+  }
+  e._pareceresPorLote=pareceresPorLote;
+
+  // Mantém campos "resumo" (compatibilidade com o badge do Histórico e com
+  // registros antigos): se todos os lotes tiverem o mesmo parecer, usa ele;
+  // se os lotes divergirem (ex: 1 procedente + 1 improcedente), marca MISTO.
+  const todosPareceres=[...new Set(Object.values(pareceresPorLote).map(p=>p.parecer).filter(Boolean))];
+  e._parecerFinal=todosPareceres.length===1?todosPareceres[0]:(todosPareceres.length>1?'MISTO':'');
+  const primeiraChave=lotes[0].id!=null?lotes[0].id:'unico';
+  const p0=pareceresPorLote[primeiraChave]||{};
+  e._motivoParecer=p0.motivo||'';
+  e._enviadoFabrica=p0.enviado||'';
+  e._dataEnvioFabrica=p0.dataEnvio||'';
+  e._dataParecerFinal=p0.dataParecer||'';
+  e._areaAprovacao=p0.area||'';
+  e._nomeAprovador=p0.aprovador||'';
+  e._dataInfosCompletas=p0.dataInfos||'';
 
   statusEl.textContent='Enviando...';
 
   try{
     const hoje=new Date().toISOString().split('T')[0];
-    const lotes=e.lotes&&e.lotes.length>0?e.lotes:[{}];
     const rowsParaEnviar=[];
 
     for(const l of lotes){
+      const loteId=l.id!=null?l.id:'unico';
+      const pl=pareceresPorLote[loteId]||{};
       const diasProd=l.fab?diffDias(l.fab,e.dataReclamacao||e.data||hoje):null;
       const diasAposLoja=nf1.entrega&&(e.dataReclamacao||e.data)?diffDias(nf1.entrega,e.dataReclamacao||e.data):null;
       const diasAposCD=nf1.chegada&&(e.dataReclamacao||e.data)?diffDias(nf1.chegada,e.dataReclamacao||e.data):null;
@@ -3534,7 +3563,7 @@ async function confirmarEnvioSheets(){
         DATA_ENTREGA_CD:    fmt(nf1.chegada)||'',
         DATA_ENTREGA_LOJA:  fmt(nf1.entrega)||'',
         DATA_RECLAMACAO:    fmt(e.dataReclamacao)||fmt(e.data)||'',
-        DATA_RECEBEU_INFOS: fmt(e._dataInfosCompletas)||'',
+        DATA_RECEBEU_INFOS: fmt(pl.dataInfos)||'',
         TRATATIVA:          e.modalidade||'',
         DATA_VISITA:        fmt(e.data)||'',
         NOME_TECNICO:       e.tecnico||'',
@@ -3548,13 +3577,13 @@ async function confirmarEnvioSheets(){
         PRECO_PRODUTO:      '',
         RECEBIMENTO_RESTRICAO: '',
         MOTIVO_RESTRICAO:   '',
-        PARECER_FINAL:      e._parecerFinal||'',
-        MOTIVO_PARECER_FINAL: e._motivoParecer||'',
-        ENVIADO_FABRICA:    e._enviadoFabrica||'',
-        DATA_ENVIO_FABRICA: fmt(e._dataEnvioFabrica)||'',
-        DATA_PARECER_FINAL: fmt(e._dataParecerFinal)||'',
-        AREA_APROVACAO:     e._areaAprovacao||'',
-        NOME_APROVADOR:     e._nomeAprovador||'',
+        PARECER_FINAL:      pl.parecer||'',
+        MOTIVO_PARECER_FINAL: pl.motivo||'',
+        ENVIADO_FABRICA:    pl.enviado||'',
+        DATA_ENVIO_FABRICA: fmt(pl.dataEnvio)||'',
+        DATA_PARECER_FINAL: fmt(pl.dataParecer)||'',
+        AREA_APROVACAO:     pl.area||'',
+        NOME_APROVADOR:     pl.aprovador||'',
       };
 
       rowsParaEnviar.push(row);
@@ -3688,6 +3717,7 @@ function editarVisita(id){
   }
   if(!confirm('Abrir esta visita no formulário para edição?\n\nQualquer preenchimento ainda NÃO finalizado que esteja no formulário agora será substituído por esta visita.')) return;
   _editandoId=id;
+  try{ localStorage.setItem(EDITANDO_KEY,String(id)); }catch(ex){}
   // Carrega o espelho como rascunho ativo e aplica ao formulário
   try{ localStorage.setItem(DRAFT_KEY,JSON.stringify(e._draft)); }catch(ex){}
   showView('form',document.querySelector('.nav-btn'));
@@ -3707,6 +3737,7 @@ function mostrarBannerEdicao(e){
 }
 function cancelarEdicao(){
   _editandoId=null;
+  try{ localStorage.removeItem(EDITANDO_KEY); }catch(ex){}
   const b=document.getElementById('banner-edicao');
   if(b)b.style.display='none';
   if(confirm('Edição cancelada. Deseja limpar o formulário e começar uma visita nova?')){
@@ -3721,6 +3752,11 @@ addLote();
 
 // ─── RASCUNHO AUTOMÁTICO ─────────────────────────────────────────────────────
 const DRAFT_KEY='visita_rascunho_v1';
+// Guarda em disco (não só em memória) qual visita está sendo editada. Sem isso,
+// se o app fechasse/recarregasse no meio de uma edição (comum em campo, com
+// sinal fraco), ao voltar o app "esquecia" que estava editando e criava um
+// registro NOVO em vez de atualizar o existente — duplicando no Histórico.
+const EDITANDO_KEY='visita_editando_id_v1';
 
 function salvarRascunho(){
   if(_suspendSave)return; // não salvar enquanto restaura/recria campos das análises
@@ -3825,12 +3861,31 @@ function restaurarRascunho(){
     if(!confirm(`Rascunho encontrado (salvo ${tempoStr}).\n\nDeseja continuar de onde parou?`)){
       // Começou uma visita nova: descarta rascunho e APAGA as fotos da visita anterior
       try{localStorage.removeItem(DRAFT_KEY);}catch(e){}
+      try{localStorage.removeItem(EDITANDO_KEY);}catch(e){}
       window._fotos={};
       try{idbSalvarFotos();}catch(e){}
       try{repintarFotos();}catch(e){}
       return false;
     }
-    return _aplicarRascunho(r);
+    const ok=_aplicarRascunho(r);
+    // Se este rascunho é de uma visita já registrada que estava sendo EDITADA
+    // (o app fechou/recarregou no meio da edição), retoma o modo de edição.
+    // Sem isso, ao finalizar o app criaria um registro novo em vez de atualizar
+    // o existente, duplicando-o no Histórico.
+    try{
+      const idSalvo=localStorage.getItem(EDITANDO_KEY);
+      if(idSalvo){
+        const idNum=Number(idSalvo);
+        const reg=getData().find(x=>x.id===idNum);
+        if(reg){
+          _editandoId=idNum;
+          setTimeout(()=>mostrarBannerEdicao(reg),150);
+        } else {
+          localStorage.removeItem(EDITANDO_KEY);
+        }
+      }
+    }catch(e){}
+    return ok;
   }catch(e){console.warn('Erro ao restaurar rascunho:',e);return false;}
 }
 

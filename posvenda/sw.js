@@ -2,7 +2,7 @@
    Faz o app abrir sem internet e mantém as bibliotecas (Excel/Word) em cache.
    Sempre que publicar uma versão nova do index.html, troque o número do CACHE
    (ex.: posvenda-v2) para forçar a atualização nos aparelhos. */
-const CACHE = 'posvenda-v26';
+const CACHE = 'posvenda-v27';
 
 // Arquivos do próprio app (mesma pasta). São pré-carregados na instalação.
 const SHELL = [
