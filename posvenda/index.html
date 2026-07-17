@@ -268,9 +268,13 @@ td{padding:8px 6px;border-bottom:1px solid var(--border);color:var(--text)}
         <div class="field"><label>Cidade / UF</label><input type="text" id="v-cidade" placeholder="ex: São Paulo / SP"></div>
       </div>
       <div class="row2">
-        <div class="field"><label>Acompanhante da visita</label><input type="text" id="v-acomp" placeholder="ex: Sr. Juscelino" oninput="salvarRascunho()"></div>
-        <div class="field"><label>Cargo / função do acompanhante</label><input type="text" id="v-acomp-cargo" placeholder="ex: Chefe do açougue" oninput="salvarRascunho()"></div>
+      <div id="acomp-lista">
+        <div class="row2 acomp-item">
+          <div class="field"><label>Acompanhante da visita</label><input type="text" class="acomp-nome" placeholder="ex: Sr. Juscelino" oninput="salvarRascunho()"></div>
+          <div class="field"><label>Cargo / função do acompanhante</label><input type="text" class="acomp-cargo" placeholder="ex: Chefe do açougue" oninput="salvarRascunho()"></div>
+        </div>
       </div>
+      <button type="button" onclick="addAcompanhante()" style="background:transparent;border:1px dashed var(--line,#D2D9E6);color:var(--ink,#14274E);padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;margin-top:2px">+ Adicionar acompanhante</button>
     </div>
 
     <div id="sec-motivo">
@@ -316,6 +320,7 @@ td{padding:8px 6px;border-bottom:1px solid var(--border);color:var(--text)}
           <option value="">Selecione...</option>
           <option>SIM</option>
           <option>NÃO</option>
+          <option>NÃO INFORMADO</option>
           <option>NA</option>
         </select>
       </div>
@@ -463,10 +468,14 @@ td{padding:8px 6px;border-bottom:1px solid var(--border);color:var(--text)}
   <div class="form-step" id="step4">
     <div class="section">
       <div class="sec-lbl">Temperaturas</div>
-      <div class="field"><label>Temp. interna do produto (°C) <span>pode informar intervalo ou múltiplas</span></label>
+      <div class="field"><label id="lbl-temp-produto">Temp. interna do produto (°C) <span>pode informar intervalo ou múltiplas</span></label>
         <textarea id="v-temp-produto" rows="2" placeholder="ex: 4,2 / 5,1 / 3,8 ou 3,5 a 5,2°C"></textarea>
       </div>
-      <div class="foto-inline" data-fkey="temp-prod" data-flabel="Temperatura interna dos produtos"></div>
+      <div class="foto-inline" data-fkey="temp-prod" data-flabel="Temperatura interna dos produtos" id="foto-temp-prod-wrap"></div>
+      <div id="wrap-temp-manip" style="display:none">
+        <div class="field"><label>Temp. da área de manipulação (°C)</label><input type="text" id="v-temp-manip" placeholder="ex: 10,5" oninput="salvarRascunho()"></div>
+        <div class="foto-inline" data-fkey="temp-manip" data-flabel="Área de manipulação"></div>
+      </div>
       <div class="field"><label>Temp. câmara (°C)</label><input type="text" id="v-temp-camara" placeholder="ex: 4,8"></div>
       <div class="foto-inline" data-fkey="temp-camara" data-flabel="Câmara de armazenamento (ambiente)"></div>
       <div id="wrap-temp-pdv-unica">
@@ -940,6 +949,79 @@ function irPassoValor(){
 function toggleCodTerceiro(){toggleModalidade();}
 function isVisitaValor(){return g('v-modalidade')==='VISITA DE VALOR';}
 
+// Texto de acompanhante(s) para exibição em relatórios, a partir de um registro
+// salvo. Usa a lista nova (acompanhantes/acompTexto) e, para registros antigos,
+// cai para os campos únicos acomp/acompCargo.
+function acompTextoDe(e){
+  if(e && e.acompTexto) return e.acompTexto;
+  if(e && e.acompanhantes && e.acompanhantes.length){
+    return e.acompanhantes.map(a=>a.nome+(a.cargo?' ('+a.cargo+')':'')).join('; ');
+  }
+  const nome=(e&&e.acomp)||'';
+  const cargo=(e&&e.acompCargo)||'';
+  return nome ? (nome+(cargo?' ('+cargo+')':'')) : '—';
+}
+
+// ── Acompanhantes (múltiplos, com botão +) ──────────────────────────────────
+function addAcompanhante(nome, cargo){
+  const lista=document.getElementById('acomp-lista');
+  if(!lista)return;
+  const div=document.createElement('div');
+  div.className='row2 acomp-item';
+  div.innerHTML=
+    '<div class="field"><label>Acompanhante da visita</label><input type="text" class="acomp-nome" placeholder="ex: Sr. Juscelino" oninput="salvarRascunho()"></div>'+
+    '<div class="field"><label>Cargo / função do acompanhante</label>'+
+      '<div style="display:flex;gap:6px;align-items:stretch">'+
+        '<input type="text" class="acomp-cargo" placeholder="ex: Chefe do açougue" oninput="salvarRascunho()" style="flex:1">'+
+        '<button type="button" onclick="this.closest(\'.acomp-item\').remove();salvarRascunho()" title="Remover" style="background:transparent;border:1px solid var(--line,#D2D9E6);color:var(--pending,#C81E2E);border-radius:8px;padding:0 12px;cursor:pointer;font-size:16px;line-height:1">×</button>'+
+      '</div>'+
+    '</div>';
+  lista.appendChild(div);
+  if(nome!==undefined){ div.querySelector('.acomp-nome').value=nome||''; }
+  if(cargo!==undefined){ div.querySelector('.acomp-cargo').value=cargo||''; }
+  salvarRascunho();
+}
+
+// Lê todos os pares nome+cargo preenchidos, na ordem da tela.
+function getAcompanhantes(){
+  const out=[];
+  document.querySelectorAll('#acomp-lista .acomp-item').forEach(item=>{
+    const nome=(item.querySelector('.acomp-nome')||{}).value||'';
+    const cargo=(item.querySelector('.acomp-cargo')||{}).value||'';
+    if(nome.trim()||cargo.trim()) out.push({nome:nome.trim(),cargo:cargo.trim()});
+  });
+  return out;
+}
+
+// Texto combinado de todos os acompanhantes, ex: "Sr. Juscelino (Chefe do açougue); Maria (Qualidade)"
+function acompanhantesTexto(arr){
+  arr=arr||getAcompanhantes();
+  return arr.map(a=>a.nome+(a.cargo?' ('+a.cargo+')':'')).join('; ');
+}
+
+// Restaura a lista de acompanhantes a partir de um array salvo (edição/rascunho).
+function setAcompanhantes(arr){
+  const lista=document.getElementById('acomp-lista');
+  if(!lista)return;
+  lista.innerHTML='';
+  if(!arr||!arr.length){ addAcompanhante('',''); return; }
+  arr.forEach((a,i)=>{
+    if(i===0){
+      // primeira linha sem botão remover (padrão da tela)
+      const div=document.createElement('div');
+      div.className='row2 acomp-item';
+      div.innerHTML=
+        '<div class="field"><label>Acompanhante da visita</label><input type="text" class="acomp-nome" placeholder="ex: Sr. Juscelino" oninput="salvarRascunho()"></div>'+
+        '<div class="field"><label>Cargo / função do acompanhante</label><input type="text" class="acomp-cargo" placeholder="ex: Chefe do açougue" oninput="salvarRascunho()"></div>';
+      lista.appendChild(div);
+      div.querySelector('.acomp-nome').value=a.nome||'';
+      div.querySelector('.acomp-cargo').value=a.cargo||'';
+    } else {
+      addAcompanhante(a.nome||'', a.cargo||'');
+    }
+  });
+}
+
 function toggleModalidade(){
   const mod=g('v-modalidade');
   const isValor=mod==='VISITA DE VALOR';
@@ -973,6 +1055,24 @@ function toggleModalidade(){
   const wrapValor=document.getElementById('wrap-temp-pdv-valor');
   if(wrapUnica)wrapUnica.style.display=isValor?'none':'block';
   if(wrapValor)wrapValor.style.display=isValor?'block':'none';
+
+  // Temperatura do produto: só na Visita de Valor o rótulo perde o "interna".
+  const lblProd=document.getElementById('lbl-temp-produto');
+  if(lblProd){
+    lblProd.innerHTML = isValor
+      ? 'Temp. do produto (°C) <span>pode informar intervalo ou múltiplas</span>'
+      : 'Temp. interna do produto (°C) <span>pode informar intervalo ou múltiplas</span>';
+  }
+  const fotoProd=document.getElementById('foto-temp-prod-wrap');
+  if(fotoProd){
+    fotoProd.setAttribute('data-flabel', isValor?'Temperatura dos produtos':'Temperatura interna dos produtos');
+  }
+
+  // Temperatura da área de manipulação: exclusiva da Visita de Valor.
+  const wrapManip=document.getElementById('wrap-temp-manip');
+  if(wrapManip)wrapManip.style.display=isValor?'block':'none';
+
+  if(isValor)try{repintarFotos();}catch(e){}
 }
 
 // ─── MOTIVO + DETALHE ───────────────────────────────────────────────────────
@@ -2172,7 +2272,7 @@ async function registrar(){
     id:Date.now(),
     data:g('v-data'),dataReclamacao:g('v-data-reclamacao')||g('v-data'),
     tecnico:g('v-tecnico'),cliente:g('v-cliente'),codterceiro:g('v-codterceiro'),cidade:g('v-cidade'),
-    acomp:g('v-acomp'),acompCargo:g('v-acomp-cargo'),motivo:motivoCompleto,motivoCod,detalheCod,detalheNome,modalidade:g('v-modalidade'),acompanhamento:g('v-acompanhamento'),
+    acomp:(getAcompanhantes()[0]||{}).nome||'',acompCargo:(getAcompanhantes()[0]||{}).cargo||'',acompanhantes:getAcompanhantes(),acompTexto:acompanhantesTexto(),motivo:motivoCompleto,motivoCod,detalheCod,detalheNome,modalidade:g('v-modalidade'),acompanhamento:g('v-acompanhamento'),
     vacuoMantido:g('v-vacuo-mantido'),
     codTerceiro:g('v-codterceiro'),projeto:g('v-projeto'),
     tipoEntrega:g('v-tipo-entrega'),tipoConf:g('v-tipo-conf'),
@@ -2180,7 +2280,7 @@ async function registrar(){
     carga:p.carga,dataChegada:p.chegada,dataEntrega:p.entrega,
     dataCD:p.cd,qtdNF:p.qtd,
     lotes,
-    tempProduto:g('v-temp-produto'),tempCamara:g('v-temp-camara'),tempPdv:g('v-temp-pdv'),tempGanch:g('v-temp-ganch'),
+    tempProduto:g('v-temp-produto'),tempManip:g('v-temp-manip'),tempCamara:g('v-temp-camara'),tempPdv:g('v-temp-pdv'),tempGanch:g('v-temp-ganch'),
     tempPdvResf:g('v-temp-pdv-resf'),tempPdvCong:g('v-temp-pdv-cong'),
     tempReceb:g('v-temp-receb'),refrig:g('v-refrig'),fifo:g('v-fifo'),etiq:g('v-etiq'),
     ctrlFifo:g('v-ctrl-fifo'),estocagem:g('v-estocagem'),regTemp:g('v-reg-temp'),regTempDesc:g('v-reg-temp-desc'),
@@ -2619,7 +2719,7 @@ function gerarWhats(e){
 *NF:* ${e.nf} | *Placa:* ${e.placa}
 *Data visita:* ${fmt(e.data)}
 *Acompanhamento:* ${e.acompanhamento||'—'}
-*Acompanhante:* ${e.acomp}
+*Acompanhante:* ${acompTextoDe(e)}
 
 ${lotesTxt}
 
@@ -2961,7 +3061,7 @@ function abrirNoAppEmail(){
   const t3=shelf?Math.round(shelf/3):null;
   const pos=diasProd&&t3?Math.ceil(diasProd/t3):null;
   const acoesTxt=(e.acoes||[]).map(a=>'  > '+a).join('\n');
-  const corpo=`VISITA TÉCNICA PÓS-VENDA — ${fmt(e.data)}\n${'─'.repeat(48)}\n\nCLIENTE: ${e.cliente||'—'}\nCIDADE/UF: ${e.cidade||'—'}\nACOMPANHANTE: ${e.acomp||'—'}\nNOTA FISCAL: ${e.nf||'—'} | PLACA: ${e.placa||'—'}\nMOTIVO: ${e.motivo||'—'} | VOL. RECLAMADO: ${e.qtdRecl||'—'} kg\nDATA ENTREGA: ${fmt(e.dataEntrega||'')} | MODALIDADE: ${e.modalidade||'—'}\nTEMPERATURAS: Câmara ${e.tempCamara||'—'}°C | PDV ${e.tempPdv||'—'}°C${pos?`\nSHELF LIFE: ${diasProd} dias — ${pos}º terço${pos>=3?' ⚠️ IMPROCEDENTE':''}`:''}\n\n${'─'.repeat(48)}\n${acoesTxt?`AÇÃO NECESSÁRIA:\n${acoesTxt}\n\n${'─'.repeat(48)}\n\n`:''}\n${lotesTxt}\n\n${'─'.repeat(48)}\nCONCLUSÃO: ${e.conclusao||'Aguardando parecer da unidade.'}\n${e.obs?'\nOBSERVAÇÕES: '+e.obs:''}\n\nAtenciosamente,\n${e.tecnico||'—'}\nGarantia da Qualidade — CRM Friboi`;
+  const corpo=`VISITA TÉCNICA PÓS-VENDA — ${fmt(e.data)}\n${'─'.repeat(48)}\n\nCLIENTE: ${e.cliente||'—'}\nCIDADE/UF: ${e.cidade||'—'}\nACOMPANHANTE: ${acompTextoDe(e)}\nNOTA FISCAL: ${e.nf||'—'} | PLACA: ${e.placa||'—'}\nMOTIVO: ${e.motivo||'—'} | VOL. RECLAMADO: ${e.qtdRecl||'—'} kg\nDATA ENTREGA: ${fmt(e.dataEntrega||'')} | MODALIDADE: ${e.modalidade||'—'}\nTEMPERATURAS: Câmara ${e.tempCamara||'—'}°C | PDV ${e.tempPdv||'—'}°C${pos?`\nSHELF LIFE: ${diasProd} dias — ${pos}º terço${pos>=3?' ⚠️ IMPROCEDENTE':''}`:''}\n\n${'─'.repeat(48)}\n${acoesTxt?`AÇÃO NECESSÁRIA:\n${acoesTxt}\n\n${'─'.repeat(48)}\n\n`:''}\n${lotesTxt}\n\n${'─'.repeat(48)}\nCONCLUSÃO: ${e.conclusao||'Aguardando parecer da unidade.'}\n${e.obs?'\nOBSERVAÇÕES: '+e.obs:''}\n\nAtenciosamente,\n${e.tecnico||'—'}\nGarantia da Qualidade — CRM Friboi`;
   const assunto=`Visita Técnica Pós-Venda — ${e.cliente||''} — NF ${e.nf||''} — ${fmt(e.data)}`;
   window.location.href='mailto:?subject='+encodeURIComponent(assunto)+'&body='+encodeURIComponent(corpo);
 }
@@ -3839,6 +3939,7 @@ function salvarRascunho(){
     const rascunho={
       // camposPrev primeiro: preserva o que não está no DOM agora
       campos:{...camposPrev,...campos,...visuais,...sensoriais,...borracheiro},
+      acompanhantes:getAcompanhantes(),
       curStep,
       loteIds:[...loteIds],
       loteCnt,
@@ -3913,6 +4014,9 @@ function _aplicarRascunho(r){
 
     // Restaura campos após DOM estar pronto
     setTimeout(()=>{
+      // 0) Restaura lista de acompanhantes (não têm IDs fixos)
+      try{ if(r.acompanhantes) setAcompanhantes(r.acompanhantes); }catch(e){}
+
       // 1) Restaura todos os campos simples
       Object.entries(r.campos||{}).forEach(([id,val])=>{
         const el=document.getElementById(id);
@@ -4336,7 +4440,7 @@ async function gerarDossieValorPPT(){
     // ─── SLIDE 1 — Identificação / Temperaturas / Armazenamento ─────────────
     const s1=pptx.addSlide();
     addHeader(s1,'1. Identificação da visita');
-    const acompTxt=(e.acomp||'—')+(e.acompCargo?' ('+e.acompCargo+')':'');
+    const acompTxt=acompTextoDe(e);
     const rows1=[
       [cellLbl('Cliente:'), cellVal(e.cliente,{colspan:3,bold:true})],
       [cellLbl('Código de terceiro:'), cellVal(e.codterceiro,{colspan:3})],
@@ -4386,7 +4490,12 @@ async function gerarDossieValorPPT(){
     addFooter(s1);
 
     // ─── SLIDE(S) 2 — Fotos da visita (colagem no estilo do modelo) ─────────
-    const fotos=(window._fotos&&window._fotos['vv-fotos'])||[];
+    // Junta as fotos gerais da visita (vv-fotos) com as fotos de temperatura
+    // tiradas nos campos (produto e área de manipulação), para que TODAS saiam no PPT.
+    const fotosGerais=(window._fotos&&window._fotos['vv-fotos'])||[];
+    const fotosProd=(window._fotos&&window._fotos['temp-prod'])||[];
+    const fotosManip=(window._fotos&&window._fotos['temp-manip'])||[];
+    const fotos=[].concat(fotosGerais,fotosProd,fotosManip);
     const slots=[
       {x:0.31,y:0.76,w:3.92,h:1.68},{x:4.36,y:0.76,w:4.48,h:1.68},{x:8.95,y:0.76,w:4.06,h:1.68},
       {x:0.30,y:2.56,w:3.92,h:1.68},{x:4.34,y:2.56,w:4.49,h:1.68},{x:8.96,y:2.56,w:4.06,h:1.68},
@@ -4411,8 +4520,21 @@ async function gerarDossieValorPPT(){
     // ─── SLIDE 3 — Anotações complementares ──────────────────────────────────
     const s3=pptx.addSlide();
     addHeader(s3,'5. Anotações complementares');
-    s3.addShape(pptx.ShapeType.rect,{x:0.3,y:0.86,w:12.73,h:3.0,fill:{color:WHITE},line:{color:'C0C0C0',width:0.75}});
-    s3.addText((e.vv&&e.vv.obs)?e.vv.obs:'—',{x:0.5,y:0.98,w:12.33,h:2.76,align:'left',valign:'top',fontSize:14,color:TXT,fontFace:FONT});
+    s3.addShape(pptx.ShapeType.rect,{x:0.3,y:0.86,w:12.73,h:2.1,fill:{color:WHITE},line:{color:'C0C0C0',width:0.75}});
+    s3.addText((e.vv&&e.vv.obs)?e.vv.obs:'—',{x:0.5,y:0.98,w:12.33,h:1.86,align:'left',valign:'top',fontSize:14,color:TXT,fontFace:FONT});
+
+    // Temperaturas registradas nesta Visita de Valor (produto e área de manipulação)
+    const tProdTxt=e.tempProduto?String(e.tempProduto):'—';
+    const tManipTxt=e.tempManip?(e.tempManip+'°C'):'—';
+    const rowsTV=[
+      [cellLbl('Temp. do produto (°C):'), cellVal(tProdTxt), cellLbl('Temp. área de manipulação (°C):'), cellVal(tManipTxt)],
+    ];
+    s3.addTable(rowsTV,{x:0.3,y:3.08,w:12.73,colW:[3.0,3.36,3.6,2.77],rowH:0.4,border:tblBorder,autoPage:false});
+
+    // Ações acordadas com o cliente — sempre no ÚLTIMO slide
+    addHeader(s3,'6. Ações acordadas com o cliente',3.72);
+    s3.addShape(pptx.ShapeType.rect,{x:0.3,y:4.16,w:12.73,h:1.7,fill:{color:LBG},line:{color:'C0C0C0',width:0.75}});
+    s3.addText((e.vv&&e.vv.acoes)?e.vv.acoes:'—',{x:0.5,y:4.28,w:12.33,h:1.46,align:'left',valign:'top',fontSize:14,color:TXT,fontFace:FONT,bold:false});
     addFooter(s3);
 
     await pptx.writeFile({fileName:`dossie_visita_valor_${(e.cliente||'cliente').replace(/[^a-zA-Z0-9]+/g,'_')}_${(e.data||new Date().toISOString().slice(0,10))}.pptx`});
@@ -5003,7 +5125,7 @@ tr:nth-child(even) td{background:#f5f7ff;}
 <div class="f"><label>Data</label><span>${fmt(e.data)||'—'}</span></div>
 <div class="f"><label>Bandeira/Rede</label><span>${e.cliente||'—'}</span></div>
 <div class="f"><label>Cidade/UF</label><span>${e.cidade||'—'}</span></div>
-<div class="f"><label>Acompanhante(s)</label><span>${e.acomp||'—'}</span></div>
+<div class="f"><label>Acompanhante(s)</label><span>${acompTextoDe(e)}</span></div>
 </div>
 <div class="grid g4">
 <div class="f"><label>Solicitante</label><span>${e.modalidade||'—'}</span></div>
