@@ -1,0 +1,3448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script>
+function __toggleSwitcher(e){
+  if(e){e.stopPropagation();}
+  var m=document.getElementById('__sw-menu');
+  var b=document.getElementById('__sw-backdrop');
+  var open=m.classList.toggle('open');
+  b.classList.toggle('open', open);
+}
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Ato de Entrega</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#EEF1F6;--surface:#fff;--surface2:#DCE2ED;--border:#D2D9E6;--text:#14274E;--text2:#51617E;--text3:#8493AD;--green:#2d6a4f;--green-bg:#d8f3dc;--green-text:#1b4332;--amber:#b45309;--amber-bg:#fef3c7;--amber-text:#78350f;--red:#C81E2E;--red-bg:#FBE3E4;--red-text:#7f1d1d;--radius:10px;--radius-sm:6px;font-family:'Inter',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);min-height:100vh}
+.app-header{background:#14274E;color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.app-header h1{font-size:15px;font-weight:600;letter-spacing:.03em;font-family:'Oswald',sans-serif;text-transform:uppercase}
+.header-nav{display:flex;gap:4px}
+.nav-btn{background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 10px;border-radius:20px;font-size:11px;cursor:pointer;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.02em}
+.nav-btn.active{background:#fff;color:#14274E}
+.view{display:none;padding:16px;max-width:600px;margin:0 auto;padding-bottom:40px}
+.view.active{display:block}
+.section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.sec-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:12px;font-family:'JetBrains Mono',monospace}
+.field{margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px}
+input[type=text],input[type=date],input[type=number],select,textarea{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:'Inter',sans-serif;background:var(--surface);color:var(--text);outline:none;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{border-color:#14274E}
+textarea{resize:vertical;min-height:64px;line-height:1.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.check-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.check-row input[type=checkbox]{width:16px;height:16px;accent-color:#14274E}
+.check-row label{margin:0;font-size:13px;color:var(--text)}
+.btn-primary{width:100%;padding:13px;background:#14274E;color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.03em;cursor:pointer;margin-top:4px}
+.btn-outline{width:100%;padding:10px;background:transparent;color:var(--text);border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'Inter',sans-serif;cursor:pointer;margin-top:8px}
+.btn-add{width:100%;padding:8px;background:transparent;color:var(--text2);border:1px dashed var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;margin-top:8px}
+.btn-green{background:var(--green);color:#fff;border:none;border-radius:var(--radius);padding:13px;font-size:14px;font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.03em;cursor:pointer;width:100%;margin-top:4px}
+.dev-item{background:var(--surface2);border-radius:var(--radius-sm);padding:10px;margin-top:8px;position:relative}
+.dev-remove{position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;padding:0 4px}
+.res-box{background:var(--surface2);border:2px solid var(--green);border-radius:var(--radius);padding:16px;margin-bottom:16px;display:none}
+.res-texto{font-family:'Courier New',monospace;font-size:12px;line-height:1.65;white-space:pre-wrap;word-break:break-word;color:var(--text)}
+.btn-copy{width:100%;padding:10px;background:var(--green-bg);color:var(--green-text);border:1px solid #a7f3d0;border-radius:var(--radius-sm);font-size:13px;font-family:'Inter',sans-serif;cursor:pointer;margin-top:10px}
+.alerta-box{background:var(--red-bg);border:2px solid var(--red);border-radius:var(--radius);padding:16px;margin-bottom:16px;display:none}
+.alert-banner{background:var(--amber-bg);border:1px solid #fcd34d;border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:var(--amber-text);margin-bottom:10px;display:none}
+.form-step{display:none}
+.form-step.active{display:block}
+.progress-bar{height:3px;background:var(--border);border-radius:2px;margin-bottom:16px;overflow:hidden}
+.progress-fill{height:100%;background:#14274E;border-radius:2px;transition:width .3s}
+.step-indicator{display:flex;justify-content:center;gap:6px;margin-bottom:16px}
+.step-dot{width:8px;height:8px;border-radius:50%;background:var(--border)}
+.step-dot.active{background:#14274E}
+.step-dot.done{background:var(--green)}
+.search-wrapper{position:relative}
+.search-results{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);z-index:50;max-height:200px;overflow-y:auto;display:none}
+.search-item{padding:8px 11px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border)}
+.search-item:last-child{border-bottom:none}
+.search-item:hover{background:var(--surface2)}
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 12px}
+.metric-label{font-size:11px;color:var(--text3);margin-bottom:4px}
+.metric-value{font-size:24px;color:var(--text)}
+.chart-wrap{position:relative;width:100%;height:200px;margin:8px 0}
+.chart-wrap-tall{position:relative;width:100%;margin:8px 0}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px}
+.badge-warn{background:var(--amber-bg);color:var(--amber-text)}
+.badge-danger{background:var(--red-bg);color:var(--red-text)}
+.badge-ok{background:var(--green-bg);color:var(--green-text)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border);color:var(--text3);font-weight:400;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+td{padding:8px 6px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top}
+tr:last-child td{border-bottom:none}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px}
+.filter-row{display:flex;gap:8px;margin-bottom:12px}
+.filter-row select{flex:1}
+input[readonly]{background:var(--surface2)!important;color:var(--text2)!important}
+</style>
+<style id="app-switcher-css">
+.app-switcher{position:relative;display:inline-block;font-family:'Inter',sans-serif;}
+.app-switcher-btn{background:transparent;border:none;color:#fff;font-size:15px;font-weight:400;letter-spacing:.03em;cursor:pointer;display:flex;align-items:center;gap:7px;padding:0;font-family:inherit;}
+.app-switcher-btn .caret{font-size:10px;opacity:.7;}
+.app-switcher-menu{position:absolute;top:calc(100% + 8px);left:0;background:#fff;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.28);min-width:210px;z-index:9999;overflow:hidden;display:none;}
+.app-switcher-menu.open{display:block;}
+.app-switcher-menu a{display:flex;align-items:center;gap:10px;padding:11px 14px;color:#14274E;text-decoration:none;font-size:13px;font-family:'Inter',Arial,sans-serif;border-bottom:1px solid #eef1f6;}
+.app-switcher-menu a:last-child{border-bottom:none;}
+.app-switcher-menu a:hover{background:#EEF1F6;}
+.app-switcher-menu a.current{background:#14274E;color:#fff;font-weight:600;}
+.app-switcher-menu .ico{font-size:15px;width:20px;text-align:center;}
+.app-switcher-backdrop{position:fixed;inset:0;z-index:9998;display:none;}
+.app-switcher-backdrop.open{display:block;}
+</style>
+
+</head>
+<body>
+<div class="app-header">
+  <div class="app-switcher">
+  <button class="app-switcher-btn" onclick="__toggleSwitcher(event)">Ato de Entrega <span class="caret">▼</span></button>
+  <div class="app-switcher-backdrop" id="__sw-backdrop" onclick="__toggleSwitcher(event)"></div>
+  <div class="app-switcher-menu" id="__sw-menu">
+    <a href="../registro.html"><span class="ico">📋</span>Programações Técnicos</a>
+    <a href="../painel.html"><span class="ico">📡</span>Painel de Programações</a>
+    <a href="../ato-entrega/index.html" class="current"><span class="ico">📦</span>Ato de Entrega</a>
+    <a href="../posvenda/index.html"><span class="ico">🛒</span>Visita Pós-Venda</a>
+    <a href="../links.html"><span class="ico">🔗</span>Links Úteis</a>
+      <a href="../index.html"><span class="ico">🏠</span>Todos os apps</a>
+  </div>
+</div>
+
+  <div class="header-nav">
+    <button class="nav-btn active" onclick="showView('form',this)">Registro</button>
+    <button class="nav-btn" onclick="showView('laudo',this)">📄 Laudo PDF</button>
+    <button class="nav-btn" onclick="showView('dash',this)">Painel</button>
+    <button class="nav-btn" onclick="showView('quebra',this)">Quebra de peso</button>
+    <button class="nav-btn" onclick="showView('hist',this)">Histórico</button>
+    <button class="nav-btn" onclick="showView('admin',this)">⚙️</button>
+  </div>
+</div>
+
+<div id="view-form" class="view active">
+  <!-- RESULTADO APARECE AQUI -->
+  <div class="res-box" id="res-box">
+    <div class="sec-lbl" style="margin-bottom:8px;color:var(--green-text)">✅ Resumo gerado — copie para o WhatsApp</div>
+    <div class="res-texto" id="res-texto"></div>
+    <button class="btn-copy" id="btn-copy-resumo" onclick="copiar('res-texto','btn-copy-resumo')">Copiar resumo para WhatsApp</button>
+  </div>
+  <div class="alerta-box" id="alerta-box">
+    <div style="font-size:11px;font-weight:500;color:var(--red-text);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">⚠️ Alerta — Devolução acima de 3 toneladas</div>
+    <div class="res-texto" id="alerta-texto"></div>
+    <button class="btn-copy" id="btn-copy-alerta" onclick="copiar('alerta-texto','btn-copy-alerta')" style="background:var(--red-bg);color:var(--red-text);border-color:#fca5a5">Copiar alerta para WhatsApp</button>
+  </div>
+  <div class="res-box" id="panorama-box" style="border-color:#b45309">
+    <div class="sec-lbl" style="margin-bottom:8px;color:var(--amber-text)">📋 Panorama gerado — copie para o WhatsApp</div>
+    <div class="res-texto" id="panorama-texto"></div>
+    <button class="btn-copy" id="btn-copy-panorama" onclick="copiar('panorama-texto','btn-copy-panorama')" style="background:var(--amber-bg);color:var(--amber-text);border-color:#fcd34d">Copiar panorama para WhatsApp</button>
+  </div>
+
+  <!-- PERGUNTA QUEBRA DE PESO (aparece após registrar) -->
+  <div class="res-box" id="quebra-prompt-box" style="border-color:#1f3a5f">
+    <div class="sec-lbl" style="margin-bottom:8px;color:#1f3a5f">⚖️ Quebra de peso</div>
+    <div class="field" style="margin-bottom:8px">
+      <label>Houve quebra de peso nesta entrega?</label>
+      <select id="quebra-prompt-sel" onchange="qPromptToggle()">
+        <option value="">Selecione...</option>
+        <option value="Sim">Sim</option>
+        <option value="Não">Não</option>
+      </select>
+    </div>
+    <button class="btn-primary" id="quebra-prompt-btn" style="display:none;background:#1f3a5f" onclick="qIrComDados()">Ir para Quebra de Peso →</button>
+  </div>
+
+  <div class="progress-bar"><div class="progress-fill" id="prog" style="width:25%"></div></div>
+  <div class="step-indicator">
+    <div class="step-dot active" id="dot0"></div>
+    <div class="step-dot" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-dot" id="dot3"></div>
+  </div>
+
+  <!-- PASSO 1 -->
+  <div class="form-step active" id="step0">
+    <div class="section">
+      <div class="sec-lbl">Identificação</div>
+      <div class="field"><label>Técnico responsável <span style="color:var(--red);font-size:11px">*obrigatório</span></label>
+        <select id="f-tecnico" onchange="document.getElementById('tec-aviso').style.display='none';this.style.borderColor=''">
+          <option value="">Selecione...</option>
+          <option>Adil Oliveira De Aguiar</option><option>Aline Martins Pereira Nunes</option>
+          <option>Barbara Del Corso Pileckas</option>
+          <option>Cileia Sommer Bulling</option><option>Douglas Vinicius Silva de Sá</option>
+          <option>Evaristo Yoshinobo Kanashiro Junior</option><option>Ewerton Oliveira das Chagas</option>
+          <option>Fernanda Xavier Bassa</option><option>Fernando Sergio de Almeida Silva</option>
+          <option>Jackeline Prates Soledade</option><option>Janmille Monteiro Marcelo</option>
+          <option>Lais Alonso De Souza</option><option>Lorena Borges Fiuza</option>
+          <option>Matheus Bizzari</option><option>Melina Cecília de Oliveira Rizzato</option>
+          <option>Nívea Maria Carneiro</option><option>Pollyanna De Freitas Guerra</option>
+          <option>Rayane Guimaraes Vasconcelos</option><option>Thais Barbosa</option>
+        </select>
+        <div id="tec-aviso" style="display:none;background:var(--red-bg);border:1px solid var(--red);border-radius:var(--radius-sm);padding:8px 10px;font-size:12px;color:var(--red-text);margin-top:6px">⚠️ <strong>Técnico obrigatório.</strong> Selecione o técnico responsável.</div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>CD / Cliente <span style="color:var(--red);font-size:11px">*obrigatório</span></label><input type="text" id="f-cliente" placeholder="ex: CD Guanabara – Rio de Janeiro – RJ" oninput="document.getElementById('cli-aviso').style.display='none';this.style.borderColor=''"><div id="cli-aviso" style="display:none;background:var(--red-bg);border:1px solid var(--red);border-radius:var(--radius-sm);padding:8px 10px;font-size:12px;color:var(--red-text);margin-top:6px">⚠️ <strong>Cliente obrigatório.</strong> Preencha o CD / Cliente.</div></div>
+        <div class="field"><label>Código de terceiro</label><input type="number" id="f-codterceiro" placeholder="ex: 3974833"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Data</label><input type="date" id="f-data"></div>
+        <div class="field"><label>Tipo de carga</label>
+          <select id="f-tipo">
+            <option value="Resfriada">Resfriada</option>
+            <option value="Congelada">Congelada</option>
+            <option value="Seca">Seca</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Unidade emissora da NF (sigla) <span style="color:var(--red);font-size:11px">*obrigatória</span></label>
+        <input type="text" id="f-sif-unid" placeholder="ex: MZL" maxlength="5" style="max-width:160px" oninput="this.value=this.value.toUpperCase();document.getElementById('sif-aviso').style.display='none';this.style.borderColor=''">
+        <div id="sif-aviso" style="display:none;background:var(--red-bg);border:1px solid var(--red);border-radius:var(--radius-sm);padding:8px 10px;font-size:12px;color:var(--red-text);margin-top:6px">⚠️ <strong>Unidade emissora obrigatória.</strong> Preencha a sigla da unidade (ex: MZL).</div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="irPasso(1)">Próximo →</button>
+  </div>
+
+  <!-- PASSO 2 -->
+  <div class="form-step" id="step2">
+    <div class="section">
+      <div class="sec-lbl">Dados da carga</div>
+      <div class="row2">
+        <div class="field"><label>Nota Fiscal <span style="color:var(--red);font-size:11px">*obrigatória</span></label><input type="text" id="f-nf" placeholder="ex: 241713" oninput="document.getElementById('nf-aviso').style.display='none';this.style.borderColor=''"><div id="nf-aviso" style="display:none;background:var(--red-bg);border:1px solid var(--red);border-radius:var(--radius-sm);padding:8px 10px;font-size:12px;color:var(--red-text);margin-top:6px">⚠️ <strong>Nota Fiscal obrigatória.</strong> Preencha a NF para registrar. Você pode copiar os resumos de WhatsApp normalmente.</div></div>
+        <div class="field"><label>Placa</label><input type="text" id="f-placa" placeholder="ex: FKE6087"></div>
+      </div>
+      <div class="field"><label>Nº do lacre</label><input type="text" id="f-lacre" placeholder="ex: 0123456" style="max-width:200px"></div>
+      <div class="row2">
+        <div class="field"><label>Nº Termógrafo</label><input type="text" id="f-termnum" placeholder="ex: 12755336"></div>
+        <div class="field"><label>Temp. termógrafo</label><input type="text" id="f-termtemp" placeholder="ex: 0 a 2°C, pico 20°C"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Temp. produto (°C)</label><input type="text" id="f-prodtemp" placeholder="ex: -0,4 a 1,6 ou 2,7"></div>
+        <div class="field"><label>Padrão máx.</label>
+          <select id="f-padrao">
+            <option value="7">7°C — Resfriado</option>
+            <option value="-12">-12°C — Congelado</option>
+            <option value="30">Ambiente</option>
+          </select>
+        </div>
+      </div>
+      <div class="check-row"><input type="checkbox" id="f-presencial"><label for="f-presencial">DESCARGA ACOMPANHADA REMOTAMENTE</label></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-outline" onclick="irPasso(0)" style="margin-top:0">← Voltar</button>
+      <button class="btn-primary" onclick="irPasso(2)" style="margin-top:0">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- PASSO 3 -->
+  <div class="form-step" id="step3">
+    <div class="section">
+      <div class="sec-lbl">Abrangência</div>
+      <div class="row2">
+        <div class="field"><label>Devolução</label>
+          <select id="f-abr-dev" onchange="toggleAbrangencia('dev')">
+            <option value="na">Não houve</option>
+            <option value="parcial">Parcial — corte a corte</option>
+            <option value="total">Total da NF</option>
+          </select>
+        </div>
+        <div class="field"><label>Restrição</label>
+          <select id="f-abr-rest" onchange="toggleAbrangencia('rest')">
+            <option value="na">Não houve</option>
+            <option value="parcial">Parcial — corte a corte</option>
+            <option value="total">Total da NF</option>
+          </select>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text3)"><b>Devolução total da NF</b>: o volume devolvido será o total da NF — lance os cortes com os motivos e a incidência. <b>Restrição total</b>: informe apenas o(s) motivo(s) e se é procedente.</div>
+    </div>
+    <div class="section" id="sec-dev" style="display:none">
+      <div class="sec-lbl">Devoluções</div>
+      <div id="dev-parcial-bloco">
+        <div id="dev-lista"></div>
+        <button class="btn-add" onclick="addItem('dev-lista','dev')">+ Adicionar devolução</button>
+      </div>
+      <div id="dev-total-bloco" style="display:none">
+        <div style="background:var(--red-bg);color:var(--red-text);border-radius:var(--radius-sm);padding:8px 10px;font-size:12px;margin-bottom:10px">🚫 <b>Devolução TOTAL da NF</b> — o volume devolvido será igual ao volume total da NF.</div>
+        <div class="check-row" style="margin-bottom:10px"><input type="checkbox" id="f-dev-sem-cortes" onchange="toggleAbrangencia('dev')"><label for="f-dev-sem-cortes">Sem análise corte a corte <span style="font-size:10px;color:var(--text3)">(ex.: temperatura de transporte, erro comercial, sinistro)</span></label></div>
+        <div id="dev-total-motivos-wrap" style="display:none"><div class="field"><label>Motivo(s) da devolução total</label><div id="dev-total-motivos"></div></div></div>
+        <div class="field"><label>Devolução procedente?</label>
+          <select id="f-devtot-proc">
+            <option value="">N/A</option>
+            <option value="Procedente">Procedente</option>
+            <option value="Improcedente">Improcedente</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="section" id="sec-rest" style="display:none">
+      <div class="sec-lbl">Recebimento com restrição</div>
+      <div id="rest-parcial-bloco">
+        <div id="rest-lista"></div>
+        <button class="btn-add" onclick="addItem('rest-lista','rest')">+ Adicionar restrição</button>
+      </div>
+      <div id="rest-total-bloco" style="display:none">
+        <div style="background:var(--amber-bg);color:var(--amber-text);border-radius:var(--radius-sm);padding:8px 10px;font-size:12px;margin-bottom:10px">‼️ <b>Restrição TOTAL da NF</b> — não é preciso lançar corte a corte.</div>
+        <div class="field"><label>Motivo(s) da restrição total</label><div id="rest-total-motivos"></div></div>
+        <div class="field"><label>Restrição procedente?</label>
+          <select id="f-resttot-proc">
+            <option value="">N/A</option>
+            <option value="Procedente">Procedente</option>
+            <option value="Improcedente">Improcedente</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="sec-lbl">Recebido conforme (sem não conformidade)</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Opcional — registre cortes recebidos normalmente, sem não conformidade.</div>
+      <div id="ok-lista"></div>
+      <button class="btn-add" onclick="addItemOk()">+ Adicionar corte recebido conforme</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn-outline" onclick="irPasso(1)" style="margin-top:0">← Voltar</button>
+      <button class="btn-primary" onclick="irPasso(3)" style="margin-top:0">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- PASSO 4 -->
+  <div class="form-step" id="step4">
+    <div class="section">
+      <div class="sec-lbl">Percepção técnica</div>
+      <div class="field"><label>Local de entrega</label>
+        <select id="f-local">
+          <option value="CD">CD (Centro de Distribuição)</option>
+          <option value="Loja">Loja</option>
+        </select>
+      </div>
+      <div class="field"><label>Status geral dos produtos</label>
+        <select id="f-status">
+          <option value="🟢 Boa qualidade dos produtos na entrega">🟢 Boa qualidade</option>
+          <option value="🟡 Qualidade regular na entrega">🟡 Qualidade regular</option>
+          <option value="🔴 Qualidade insatisfatória na entrega">🔴 Insatisfatória</option>
+        </select>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Tipo de atendimento</label>
+          <select id="f-atendimento">
+            <option value="Presencial">Presencial</option>
+            <option value="Remoto">Remoto</option>
+          </select>
+        </div>
+        <div class="field"><label>Data de produção</label>
+          <input type="text" id="f-dataprod" placeholder="ex: 11/05/2026 ou 01 a 05/05">
+        </div>
+      </div>
+      <div class="field"><label>Observações (quebras, faltas etc.)</label>
+        <textarea id="f-obs" placeholder="ex: Quebras de peso na balança do cliente..."></textarea>
+      </div>
+      <div class="check-row"><input type="checkbox" id="f-email" checked><label for="f-email">E-mail com resumo será enviado posteriormente</label></div>
+    </div>
+
+    <div class="section">
+      <div class="sec-lbl">Dados do cliente (painel)</div>
+      <div class="row2">
+        <div class="field"><label>Estado do cliente</label>
+          <input type="text" id="f-estado-cliente" placeholder="ex: SP" maxlength="30">
+        </div>
+        <div class="field"><label>Cidade do cliente</label>
+          <input type="text" id="f-cidade-cliente" placeholder="ex: São Paulo">
+        </div>
+      </div>
+      <div class="field"><label>Local da reclamação — nome</label>
+        <input type="text" id="f-local-reclamacao" placeholder="ex: Loja Guanabara Centro">
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-lbl">Volumes e valores da NF</div>
+      <div class="row2">
+        <div class="field"><label>Vol. total da NF (kg)</label><input type="text" inputmode="text" id="f-vol-nf" placeholder="ex: 30.000" oninput="calcVolumes()" onblur="fmtKgInput(this);calcVolumes()"></div>
+        <div class="field"><label>Valor total da NF (R$)</label><input type="text" id="f-val-nf" placeholder="ex: 150.000,00" oninput="fmtValor(this)"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Vol. devolvido (kg) <span style="font-size:10px;color:var(--text3)">automático</span></label>
+          <input type="text" id="f-vol-dev" placeholder="0" readonly></div>
+        <div class="field"><label>Devolução</label>
+          <select id="f-devprocedente">
+            <option value="Não se aplica">Não se aplica</option>
+            <option value="Procedente">Procedente</option>
+            <option value="Improcedente">Improcedente</option>
+          </select>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Vol. recebido (kg) <span style="font-size:10px;color:var(--text3)">NF − dev.</span></label>
+          <input type="text" id="f-vol-rec" placeholder="0" readonly></div>
+        <div class="field"><label>Vol. revertido (kg)</label><input type="text" inputmode="text" id="f-vol-rev" placeholder="ex: 0" onblur="fmtKgInput(this)"></div>
+      </div>
+      <div class="field"><label>Vol. restrição (kg) <span style="font-size:10px;color:var(--text3)">automático</span></label>
+        <input type="text" id="f-vol-rest" placeholder="0" readonly style="max-width:200px"></div>
+      <div class="field"><label>Reversão</label>
+        <select id="f-reversao" onchange="toggleReversaoCortes()">
+          <option value="">Não se aplica</option>
+          <option value="PROCEDENTE">Procedente</option>
+          <option value="IMPROCEDENTE">Improcedente</option>
+          <option value="RESTRIÇÃO PROCEDENTE">Restrição procedente</option>
+          <option value="REVERSÃO SEM RESTRIÇÃO">Reversão sem restrição</option>
+        </select>
+      </div>
+      <div class="field" id="campo-reversao-cortes" style="display:none">
+        <label>Cortes e motivos</label>
+        <textarea id="f-reversao-cortes" placeholder="Descreva os cortes realizados e os motivos"></textarea>
+      </div>
+    </div>
+    <div class="alert-banner" id="alerta-volume">⚠️ Volume devolvido acima de 3.000 kg — alerta será gerado automaticamente.</div>
+    <button class="btn-green" id="btn-registrar" onclick="registrar()">Registrar e gerar resumo</button>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn-outline" onclick="irPasso(2)" style="margin-top:0">← Voltar</button>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<!-- LAUDO PDF -->
+<div id="view-laudo" class="view">
+  <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;font-size:12px;color:var(--text2);line-height:1.6">
+    <b style="color:var(--text)">📄 Leitura de laudo do cliente (PariPassu/Clicq)</b><br>
+    Selecione um ou mais PDFs da <b>mesma entrega</b>. O sistema lê os dados e preenche o formulário de Registro automaticamente.<br>
+    A <b>Nota Fiscal</b> ficará em branco — preencha-a no Registro antes de enviar ao Sheets.
+  </div>
+
+  <!-- ÁREA DE UPLOAD -->
+  <div id="laudo-drop-area" style="border:2px dashed var(--border);border-radius:var(--radius);padding:28px 16px;text-align:center;cursor:pointer;margin-bottom:12px;background:var(--surface);transition:border-color .2s"
+    onclick="document.getElementById('laudo-file-input').click()"
+    ondragover="event.preventDefault();this.style.borderColor='var(--green)'"
+    ondragleave="this.style.borderColor=''"
+    ondrop="event.preventDefault();this.style.borderColor='';laudoHandleFiles(event.dataTransfer.files)">
+    <div style="font-size:28px;margin-bottom:8px">📂</div>
+    <div style="font-weight:500;color:var(--text)">Clique ou arraste os PDFs aqui</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px">Vários arquivos da mesma entrega são aceitos</div>
+    <input type="file" id="laudo-file-input" accept=".pdf" multiple style="display:none" onchange="laudoHandleFiles(this.files)">
+  </div>
+
+  <!-- LISTA DE ARQUIVOS SELECIONADOS -->
+  <div id="laudo-file-list" style="margin-bottom:12px"></div>
+
+  <!-- BOTÃO PROCESSAR -->
+  <button class="btn-green" id="laudo-btn-processar" onclick="laudoProcessar()" style="display:none">
+    🔍 Ler e preencher formulário
+  </button>
+
+  <!-- PROGRESSO / STATUS -->
+  <div id="laudo-status" style="margin-top:12px"></div>
+
+  <!-- PRÉVIA DOS DADOS EXTRAÍDOS -->
+  <div id="laudo-previa" style="display:none;margin-top:16px">
+    <div class="sec-lbl" style="margin-bottom:8px">Dados extraídos — confira antes de importar</div>
+    <div id="laudo-previa-conteudo" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-size:12px;line-height:1.7"></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn-green" onclick="laudoImportar()">✅ Importar para o Registro</button>
+      <button class="btn-outline" onclick="laudoLimpar()" style="color:var(--red)">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="view-dash" class="view">
+  <div class="filter-row">
+    <select id="dash-periodo" onchange="renderDash()">
+      <option value="7">Últimos 7 dias</option>
+      <option value="30" selected>Últimos 30 dias</option>
+      <option value="90">Últimos 90 dias</option>
+      <option value="0">Tudo</option>
+    </select>
+    <button class="btn-outline" onclick="exportarExcel()" style="width:auto;padding:8px 14px;margin:0;white-space:nowrap">Exportar Excel</button>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-card"><div class="metric-label">Total de registros</div><div class="metric-value" id="m-total">0</div></div>
+    <div class="metric-card"><div class="metric-label">Vol. devolvido total</div><div class="metric-value" id="m-vol">0 kg</div></div>
+    <div class="metric-card"><div class="metric-label">Temp. fora do padrão</div><div class="metric-value" id="m-temp">0</div></div>
+    <div class="metric-card"><div class="metric-label">Alertas &gt; 3 ton</div><div class="metric-value" id="m-alertas">0</div></div>
+  </div>
+  <div class="section"><div class="sec-lbl">Volume devolvido por dia (kg)</div>
+    <div class="chart-wrap"><canvas id="chart-vol"></canvas></div></div>
+  <div class="section"><div class="sec-lbl">Ranking de motivos</div>
+    <div id="chart-motivos-wrap" class="chart-wrap-tall"><canvas id="chart-motivos"></canvas></div>
+    <div id="sem-motivos" class="empty-state" style="display:none">Sem dados ainda</div></div>
+  <div class="section"><div class="sec-lbl">Incidência por corte (%)</div><div id="tbl-cortes"></div></div>
+  <div class="section"><div class="sec-lbl">Por técnico</div><div id="tbl-tecnicos"></div></div>
+  <div class="section"><div class="sec-lbl">Por cliente / CD</div><div id="tbl-clientes"></div></div>
+</div>
+
+<!-- ADMIN -->
+<div id="view-admin" class="view">
+  <div class="section">
+    <div class="sec-lbl">Adicionar produto no Sheets</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Produtos adicionados aqui ficam disponíveis para <strong>toda a equipe</strong> automaticamente.</p>
+    <div class="field"><label>Código</label><input type="text" id="adm-cod" placeholder="ex: 12345"></div>
+    <div class="field"><label>Nome do produto</label><input type="text" id="adm-nome" placeholder="ex: ALCATRA BOV RESF"></div>
+    <button class="btn-primary" id="adm-btn" onclick="admAddProduto()" style="margin-top:4px">Adicionar no Sheets</button>
+    <button class="btn-outline" id="adm-btn-cancel" onclick="admCancelarEdicao()" style="margin-top:8px;display:none">Cancelar edição</button>
+  </div>
+  <div class="section">
+    <div class="sec-lbl">Produtos no Sheets <span id="adm-count" style="color:var(--text3)"></span></div>
+    <div id="adm-lista"><div class="empty-state" style="padding:20px 0">Carregando...</div></div>
+  </div>
+</div>
+
+<!-- HISTÓRICO -->
+<div id="view-hist" class="view">
+  <div class="field" style="margin-bottom:12px"><input type="text" id="hist-busca" placeholder="🔎 Buscar por NF, SIF, cliente ou técnico..." oninput="renderHist()" autocomplete="off"></div>
+  <div id="hist-lista"><div class="empty-state">Nenhum registro ainda.</div></div>
+  <button class="btn-outline" onclick="limpar()" style="margin-top:12px;color:var(--red)">Limpar todos os registros</button>
+</div>
+
+<!-- QUEBRA DE PESO -->
+<div id="view-quebra" class="view">
+  <!-- RESULTADOS -->
+  <div class="res-box" id="q-res-box">
+    <div class="sec-lbl" style="margin-bottom:8px;color:var(--green-text)">✅ Resumo gerado — copie para o WhatsApp</div>
+    <div class="res-texto" id="q-res-texto"></div>
+    <button class="btn-copy" id="q-btn-copy-resumo" onclick="copiar('q-res-texto','q-btn-copy-resumo')">Copiar resumo para WhatsApp</button>
+  </div>
+  <div class="res-box" id="q-email-box" style="border-color:#1f3a5f">
+    <div class="sec-lbl" style="margin-bottom:8px;color:#1f3a5f">📧 E-mail para a Unidade</div>
+    <div class="res-texto" id="q-email-texto"></div>
+    <button class="btn-copy" id="q-btn-copy-email" onclick="copiar('q-email-texto','q-btn-copy-email')" style="background:#e8eef5;color:#1f3a5f;border-color:#b9c9dc">Copiar e-mail</button>
+  </div>
+
+  <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;font-size:12px;color:var(--text2);line-height:1.55">
+    <b style="color:var(--text)">Quebra / Falta de peso (POP-04).</b> Ocorre quando o peso líquido faturado na NF diverge do peso líquido conferido pelo cliente. Os achados desta análise <b>não se somam</b> aos do ato de entrega — são descritos separadamente.
+  </div>
+
+  <div style="background:var(--amber-bg);border:1px solid #fcd34d;border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;font-size:12px;color:var(--amber-text);line-height:1.55">
+    📋 <b>Acompanhou a entrega?</b> Preencha também a aba <b>Registro</b>. Os dados de acompanhamento da entrega só vão para o Sheets por lá. Esta aba de quebra de peso <b>não envia nada ao Sheets</b> — gera apenas o resumo e o e-mail.
+  </div>
+
+  <div id="q-preenchido-banner" style="display:none;background:var(--green-bg);border:1px solid #a7f3d0;border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--green-text)">
+    ✅ Identificação preenchida automaticamente a partir do ato de entrega que você acabou de registrar. Confira e complete o restante.
+  </div>
+
+  <!-- 1. IDENTIFICAÇÃO -->
+  <div class="section">
+    <div class="sec-lbl">1 · Identificação</div>
+    <div class="field"><label>Técnico responsável <span style="color:var(--red);font-size:11px">*</span></label>
+      <select id="q-tecnico"><option value="">Selecione...</option></select>
+    </div>
+    <div class="row2">
+      <div class="field"><label>CD / Cliente <span style="color:var(--red);font-size:11px">*</span></label><input type="text" id="q-cliente" placeholder="ex: CD Guanabara – RJ"></div>
+      <div class="field"><label>Código de terceiro</label><input type="number" id="q-codterceiro" placeholder="ex: 3974833"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Data</label><input type="date" id="q-data"></div>
+      <div class="field"><label>Placa</label><input type="text" id="q-placa" placeholder="ex: FKE6087"></div>
+    </div>
+    <div class="field"><label>Nº do lacre</label><input type="text" id="q-lacre" placeholder="ex: 0123456" style="max-width:200px"></div>
+    <div class="row2">
+      <div class="field"><label>Unidade emissora NF (sigla) <span style="color:var(--red);font-size:11px">*</span></label>
+        <input type="text" id="q-sif-unid" placeholder="ex: MZL" maxlength="5" oninput="this.value=this.value.toUpperCase();fillSIF('q-sif-unid','q-sif-num')"></div>
+      <div class="field"><label>Nº SIF</label><input type="text" id="q-sif-num" placeholder="automático" readonly></div>
+    </div>
+    <div class="field"><label>Nota Fiscal <span style="color:var(--red);font-size:11px">*</span></label><input type="text" id="q-nf" placeholder="ex: 241713" style="max-width:200px"></div>
+    <div class="field"><label>Tipo de divergência</label>
+      <select id="q-tipo-div">
+        <option value="Falta de peso (kg)">Falta de peso (kg)</option>
+        <option value="Falta de caixas (volume)">Falta de caixas (volume)</option>
+        <option value="Falta de peso e de caixas">Falta de peso e de caixas</option>
+      </select>
+    </div>
+    <div class="field"><label>Abrangência do desvio</label>
+      <select id="q-abrangencia">
+        <option value="Corte específico">Corte específico</option>
+        <option value="Diversos produtos da carga">Diversos produtos da carga</option>
+      </select>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Peso líq. faturado NF (kg)</label><input type="text" inputmode="text" id="q-pl-nf" placeholder="ex: 28.070" oninput="qCalcDifNF()" onblur="fmtKgInput(this);qCalcDifNF()"></div>
+      <div class="field"><label>Peso líq. conferido cliente (kg)</label><input type="text" inputmode="text" id="q-pl-cliente" placeholder="ex: 28.047" oninput="qCalcDifNF()" onblur="fmtKgInput(this);qCalcDifNF()"></div>
+    </div>
+    <div class="field"><label>Diferença NF × cliente (kg) <span style="font-size:10px;color:var(--text3)">automático</span></label><input type="text" id="q-dif-nf" placeholder="0" readonly></div>
+  </div>
+
+  <!-- 2. AVALIAÇÃO PRÉVIA -->
+  <div class="section">
+    <div class="sec-lbl">2 · Avaliação prévia — Ticket Balanção (Unidade)</div>
+    <div class="field"><label>Valor da apuração / diferença do balanção (kg)</label>
+      <input type="text" inputmode="text" id="q-balancao" placeholder="ex: -23" oninput="qBalancaoNota()"></div>
+    <div id="q-balancao-nota" style="display:none;font-size:12px;border-radius:var(--radius-sm);padding:8px 10px;margin-top:2px"></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-lbl">2 · Avaliação prévia — Balança do cliente</div>
+    <div class="field"><label>Certificado de calibração válido e visivelmente exposto?</label>
+      <select id="q-cert-valido"><option value="">—</option><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
+    <div class="row2">
+      <div class="field"><label>Nº de série da balança</label><input type="text" id="q-balanca-serie" placeholder="ex: 29.620.782-2"></div>
+      <div class="field"><label>Nº série confere c/ certificado?</label>
+        <select id="q-serie-confere"><option value="">—</option><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
+    </div>
+    <div class="field"><label>Equipamento em boas condições de manutenção?</label>
+      <select id="q-manutencao"><option value="">—</option><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
+  </div>
+
+  <!-- 3. CHECKLIST DE INVESTIGAÇÃO -->
+  <div class="section">
+    <div class="sec-lbl">3 · Investigação — verificações</div>
+    <div class="field"><label>Houve conferência no dia da entrega?</label>
+      <select id="q-conferencia"><option value="">—</option><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
+    <div class="field"><label>Todos os paletes foram disponibilizados para pesagem?</label>
+      <select id="q-paletes-disp"><option value="">—</option><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
+    <div class="field"><label>Foi possível repesar toda a carga?</label>
+      <select id="q-repesar"><option value="">—</option><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
+    <div class="field"><label>A quantidade de caixas está correta?</label>
+      <select id="q-qtd-caixas"><option value="">—</option><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
+    <div class="field"><label>O cliente usa as informações da nossa ficha palete?</label>
+      <select id="q-usa-ficha"><option value="">—</option><option value="Sim">Sim</option><option value="Não">Não — usa critério/fonte própria</option></select></div>
+    <div class="field"><label>As informações da etiqueta palete estão corretas e coerentes?</label>
+      <select id="q-info-ok" onchange="document.getElementById('q-info-erro-wrap').style.display=this.value==='Não'?'block':'none'">
+        <option value="">—</option><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
+    <div class="field" id="q-info-erro-wrap" style="display:none"><label>Descreva o que está errado</label>
+      <textarea id="q-info-erro" placeholder="ex: campo de peso líquido zerado em 2 paletes / etiqueta única para corte misto..."></textarea></div>
+    <div class="field"><label>Foi feita a amostragem de peso líquido?</label>
+      <select id="q-fez-amostragem"><option value="">—</option><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
+  </div>
+
+  <!-- 4. PESAGEM DE PALETES -->
+  <div class="section">
+    <div class="sec-lbl">4 · Pesagem de paletes na balança (peso líquido por palete)</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Peso líquido = peso bruto na balança − palete (madeira) − strech − caixas (papelão) − emb. primária. Compara com a ficha palete.</div>
+    <div id="q-palete-lista"></div>
+    <button class="btn-add" onclick="qAddPalete()">+ Adicionar palete</button>
+  </div>
+
+  <!-- 5. AMOSTRAGEM POR CORTE -->
+  <div class="section">
+    <div class="sec-lbl">5 · Amostragem de peso líquido (contraprova por corte)</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Recomendado: 3 a 10 caixas por corte (média 5). A quebra média por caixa é projetada para o total de caixas do corte na NF.</div>
+    <div id="q-corte-lista"></div>
+    <button class="btn-add" onclick="qAddCorte()">+ Adicionar corte</button>
+  </div>
+
+  <button class="btn-green" id="q-btn-gerar" onclick="qGerar()">Gerar resumo e e-mail</button>
+  <button class="btn-outline" onclick="qLimparForm()" style="color:var(--red)">Limpar formulário</button>
+
+  <div class="section" style="margin-top:16px">
+    <div class="sec-lbl">Histórico de quebra de peso</div>
+    <div id="q-hist-lista"><div class="empty-state" style="padding:20px 0">Nenhuma análise registrada ainda.</div></div>
+  </div>
+</div>
+
+<script>
+const SHEETS_URL='https://script.google.com/macros/s/AKfycbx3haDEUJfgNynbg5aJ_gENln-QazFR1yp1Z3bZKkXR2z1ir6xix21QGiOcs9p797OR/exec';
+const KEY='entregas_v4';
+const SIF_MAP={'AFT':'4302','AGB':'4121','ALM':'','AMS':'615','AND':'385','ANF':'385','ARA':'2979','ATO':'4001','BAR':'42','BAU':'','BNT':'','BTM':'76','BTS':'76','CAJ':'556','CBO':'','CDT':'5616','CFS':'3470','CGR':'4400','CGS':'4400','CLR':'4268','CNT':'125','CPG':'1662','CRT':'1849','DCA':'','DDF':'','DGO':'','DMG':'','DMT':'3000','DSC':'','DSP':'1552','DSR':'88','EST':'','GCP':'','GDS':'1552','GPE':'','GRP':'','GYN':'862','ITA':'2720','ITB':'504','ITJ':'','ITR':'3225','JCL':'337','JUA':'200','LGE':'337','LIF':'337','LIN':'337','MNA':'','MRA':'','MRB':'457','MZL':'4507','NAD':'49','NVR':'3181','PDP':'2019','PEL':'51','PIB':'2880','PVH':'4149','RBR':'2951','REC':'154','RED':'807','RJN':'99','SEN':'2058','SFL':'126','SMG':'175','SPA':'1686','STA':'1110','TAQ':'2119','TCM':'2350','VHA':'4333'};
+const MOTIVOS=['NA','ABSCESSO','ATRASO NA ENTREGA','AUSÊNCIA DE VÁCUO','BSE','CLIENTE NÃO PÔDE RECEBER','CONDIÇÃO DO CESTO ARAMADO','CONDIÇÃO DO CONTAINER/VEÍCULO','CONTAMINAÇÃO BIOLÓGICA','CONTAMINAÇÃO FÍSICA','CONTAMINAÇÃO QUÍMICA','DOCUMENTAÇÃO','EMBALAGEM','EMBARQUE INCORRETO','ERRO NA DIGITAÇÃO DO PEDIDO','EXSUDAÇÃO','FALTA DE PESO','LIMOSIDADE','NOTA FISCAL SEM EMPENHO','ODOR ALTERADO','OPERAÇÃO LOGÍSTICA','PADRÃO DO PRODUTO','PEDIDO CANCELADO','ROTULAGEM','SIF BLOQUEADO','SINISTRO COM VEÍCULO','SUSPENSÃO PAÍS','TEMPERATURA FORA DO PADRÃO'];
+const PRODUTOS_RAW=`2|PEITO BOV RESF (2)
+3|PÁ BOV RESF (3)
+18|FILE MIGNON BOV RESF (CABEÇA) FRIBOI RESERVA (18)
+23|ALCATRA BOV RESF (23)
+25|COXAO DURO BOV RESF (25)
+26|PATINHO BOV RESF (26)
+27|COSTELA DO TRASEIRO BOV CONG (MINGA C/OSSO) (27)
+28|COSTELA DO TRASEIRO BOV CONG (FINA C/OSSO) (28)
+32|CONTRA FILE BOV RESF (32)
+33|OSSOS BOV CONG (FEMUR E TÍBIA) SWIFT BLACK (33)
+35|CORAÇAO DA ALCATRA BOV RESF (35)
+36|FILE DE COSTELA BOV RESF (1/2KG) (36)
+37|LAGARTO BOV RESF (37)
+38|MAMINHA DA ALCATRA BOV RESF (38)
+39|FRALDA BOV RESF (1,5 a 2,2 KG) (39)
+40|COXAO MOLE BOV RESF (40)
+41|PICANHA BOV RESF (41)
+42|PICANHA BOV RESF (42)
+43|MUSCULO BOV RESF (MOLE E DURO) (43)
+56|COXAO DURO BOV CONG (56)
+59|ALCATRA C/MAMINHA BOV RESF (59)
+60|COXAO DURO BOV RESF (VERMELHO) (60)
+67|MUSCULO BOV CONG (MOLE E DURO) (67)
+68|PATINHO BOV CONG (68)
+69|PALETA BOV CONG (69)
+71|CUPIM BOV CONG (1,5/5KG) (71)
+73|CORAÇÃO DA PALETA BOV RESF (RED) (73)
+76|COXAO MOLE BOV CONG (76)
+77|FILE MIGNON BOV CONG (77)
+78|CONTRA FILE BOV CONG (78)
+79|CORAÇAO DA ALCATRA BOV CONG (79)
+80|ALCATRA C/MAMINHA BOV CONG (80)
+81|ALCATRA BOV CONG (81)
+82|LAGARTO BOV CONG (82)
+83|MAMINHA DA ALCATRA BOV CONG (83)
+84|CAPA DE FILE BOV CONG (84)
+85|ACEM / PESCOCO/COSTELA DO DIANTEIRO BOV CONG (85)
+86|PEITO BOV CONG (86)
+87|FRALDA BOV CONG (87)
+91|PICANHA BOV CONG (FRIBOI) (91)
+111|CUPIM BOV CONG (111)
+119|LINGUA BOV CONG (119)
+120|CORAÇAO BOV CONG (120)
+121|RABO BOV CONG (121)
+122|RIM BOV CONG (122)
+123|RUMEN BOV CONG (FATIADO) (123)
+125|BAÇO BOV CONG (125)
+150|TESTICULOS BOV CONG (150)
+151|FIGADO BOV CONG (151)
+165|BIFE DO VAZIO BOV CONG (165)
+166|MOCOTO BOV CONG (166)
+194|COXAO DURO BOV RESF (P/CHARQUE) (194)
+201|TRASEIRO SERROTE BOI CASTRADO (AVULSO) RESF (201)
+202|DIANTEIRO S/ CUPIM BOI CASTRADO (AVULSO) RESF (202)
+203|PONTA DE AGULHA BOI CASTRADO (AVULSO) RESF (203)
+238|RECORTE DO FILE MIGNON BOV RESF (CORDAO) (238)
+248|PICANHA BOV CONG (248)
+258|CAPA DE FILE BOV RESF (258)
+266|CORAÇAO DA ALCATRA BOV RESF (266)
+272|PICANHA BOV RESF ANGLO (272)
+286|RECORTE DE ALCATRA BOV RESF (ROLHA) (286)
+288|RECORTE DE COXAO MOLE BOV RESF (PERA) (288)
+385747|ACEM E PESCOÇO BOV RESF (C/ OSSO) (385747)
+385748|PEITO E COSTELA DO DIANTEIRO BOV RESF (C/ OSSO) (385748)
+385751|PALETA E MÚSCULO BOV RESF (C/OSSO) (385751)
+386537|LOMBO BOV RESF FRIBOI RESERVA (386537)
+386641|COXAO BOLA BOV RESF C/OSSO (386641)
+387288|COSTELA DO TRASEIRO BOV RESF (JANELA C/OSSO) FRIBOI RESERVA (387288)
+5368|FILE DE COSTELA BOV RESF MATURATTA (5368)
+359090|FILE MIGNON BOV RESF (S/TRANÇA) (359090)
+298|FRALDA BOV RESF MATURATTA (298)
+299|MAMINHA DA ALCATRA BOV RESF MATURATTA (299)
+300|PICANHA BOV RESF MATURATTA (300)
+310|ALCATRA BOV RESF (310)
+311|FILE MIGNON BOV RESF MATURATTA (311)
+314|CUPIM BOV RESF MATURATTA (314)
+324|FILE MIGNON BOV RESF KIT (324)
+325|PICANHA BOV RESF (KIT) (325)
+327|FRALDA BOV RESF KIT (327)
+338|BIFE DO VAZIO BOV RESF (338)
+354|GORDURA BOV CONG FRIBOI ANGUS (354)
+359|COSTELA DO TRASEIRO BOV CONG (JANELA 6,5KG UP) SWIFT BLACK (359)
+363|FILE MIGNON BOV RESF FRIBOI RESERVA (363)
+364|PICANHA BOV RESF FRIBOI RESERVA (364)
+365|ALCATRA C/MAMINHA BOV RESF FRIBOI RESERVA (365)
+366|CONTRA FILE BOV RESF FRIBOI RESERVA (366)
+367|COXAO MOLE BOV RESF FRIBOI RESERVA (367)
+368|PATINHO BOV RESF FRIBOI RESERVA (368)
+369|LAGARTO BOV RESF FRIBOI RESERVA (369)
+370|COXAO DURO BOV RESF FRIBOI RESERVA (370)
+371|MUSCULO BOV RESF (MOLE E DURO) FRIBOI RESERVA (371)
+372|FRALDA BOV RESF FRIBOI RESERVA (372)
+374|ACEM / PESCOCO BOV RESF FRIBOI RESERVA (374)
+375|PA BOV RESF FRIBOI RESERVA (375)
+390|CUPIM BOV RESF KIT (390)
+392|CARNE MOIDA BOV CONG (392)
+404|CUPIM BOV CONG (404)
+406|LOMBO BOV CONG (406)
+408|PALETA BOV RESF (408)
+409|ACEM / PESCOCO/COSTELA DO DIANTEIRO BOV RESF (409)
+427|RECORTE DE ALCATRA BOV RESF (ARANHA) (427)
+452|FILE DE COSTELA BOV CONG (452)
+462|FRALDA BOV RESF (462)
+469|ALCATRA BOV CONG (469)
+480|PA BOV CONG (480)
+483|RECORTE DE CONTRA FILE BOV RESF (BANANINHA) (483)
+506|CONTRA FILE BOV CONG (FRIBOI) (506)
+511|FILE MIGNON BOV CONG (S/TRANCA) (FRIBOI) (511)
+521|CAPA DE FILE BOV CONG (521)
+540|FILE MIGNON BOV CONG (540)
+541|CONTRA FILE BOV RESF (4KG UP) (541)
+544|COXAO DURO BOV CONG FRIBOI (544)
+545|ALCATRA COM MAMINHA BOV CONG (545)
+548|PATINHO BOV CONG FRIBOI (548)
+551|FRALDA BOV RESF (RED) (551)
+552|ACEM/PESCOÇO BOV RESF (552)
+594|FRALDA BOV RESF REFEITORIO (594)
+637|CHARQUE BOV CAVACO 1X30 KG BERTIN (637)
+652|FILE MIGNON BOV RESF (CAUDA + CABEÇA) SWIFT BLACK (652)
+671|ACEM BOV CONG (C/ OSSO SHORT RIB - STEAK) FRIBOI 1953 (671)
+685|CAPA DE FILE BOV RESF REFEITORIO (685)
+720|CONTRA FILE BOV RESF KIT (720)
+815|MAMINHA DA ALCATRA BOV CONG (815)
+837|FRALDA BOV CONG FRIBOI (837)
+864|LAGARTO BOV RESF (PORCIONADO) FRIBOI RESERVA (864)
+870|COXAO MOLE BOV CONG (870)
+915|RECORTE DE ALCATRA BOV CONG (ROLHA) (915)
+928|OSSOS BOV CONG (PATELA) (928)
+934|MAMINHA DA ALCATRA BOV RESF (934)
+983|PATINHO BOV RESF KIT (983)
+996|MAMINHA DA ALCATRA BOV RESF KIT (996)
+1024|ALCATRA BOV RESF (6,8KG UP) DO CHEF (1024)
+1026|PICANHA BOV RESF DO CHEF (1026)
+1027|MAMINHA DA ALCATRA BOV RESF DO CHEF (1027)
+1029|FRALDA BOV RESF (1,5KG UP) DO CHEF (1029)
+1030|CUPIM BOV RESF (2/3,5KG) DO CHEF (1030)
+1107|CORAÇAO DA ALCATRA BOV RESF KIT (1107)
+1182|COXAO DURO BOV RESF (REFEITORIO) (1182)
+1221|CARNE INDUSTRIAL BOV CONG (LOMBINHO) (1221)
+1234|CONTRA FILE BOV RESF (1234)
+1410|COXAO DURO BOV CONG (CUBOS IQF 25MM) (1410)
+1425|COXAO MOLE BOV CONG FRIBOI (1425)
+1435|MAMINHA DA ALCATRA BOV CONG (FRIBOI) (1435)
+1440|ACEM BOV CONG (1440)
+1469|LAGARTO BOV RESF (1469)
+1490|COSTELA DO TRASEIRO BOV RESF (MINGA C/OSSO) (1490)
+1553|COSTELA DO TRASEIRO BOV CONG (C/OSSO TIRAS) (1553)
+1574|CAPA DE FILE BOV RESF FRIBOI 1953 (1574)
+1643|CUPIM BOV CONG (1643)
+1649|PICANHA BOV RESF (1649)
+1666|CONTRA FILE BOV RESF (1666)
+1690|MOCOTO BOV CONG (1690)
+1762|FILE DE COSTELA BOV RESF FRIBOI RESERVA (1762)
+1788|LAGARTO BOV CONG (FRIBOI) (1788)
+1981|FILE MIGNON BOV CONG (S/TRANÇA) (1981)
+2232|PICANHA BOV CONG (2232)
+2820|CAPA DE FILE BOV CONG FRIBOI 1953 (2820)
+3271|CONTRA FILE BOV CONG (3271)
+3275|COXAO DURO BOV CONG (3275)
+3290|COXAO MOLE BOV CONG (3290)
+3500|PATINHO BOV CONG (3500)
+3644|CORAÇAO DA ALCATRA BOV CONG (3644)
+3738|LAGARTO BOV CONG (3738)
+3764|PONTA DE AGULHA C/OSSO BOV RESF (3764)
+3930|DIANTEIRO SEM CUPIM BOI INTEIRO (AVULSO) RESF (3930)
+4583|PICANHA BOV CONG (4583)
+4739|ACEM BOV CONG (PORCIONADO) FRIBOI ANGUS (4739)
+4848|FILE MIGNON BOV CONG (S/TRANCA) (FRIBOI) (4848)
+4878|COXAO MOLE BOV RESF (S/CAPA C/MEMBRANA) (4878)
+4950|ACEM / PESCOÇO/COSTELA DO DIANTEIRO BOV RESF (4950)
+4951|PALETA BOV RESF (4951)
+382561|PEITO BOV RESF DO CHEF (382561)
+4952|PEITO BOV RESF (4952)
+4953|COXAO DURO BOV RESF (4953)
+4954|COXAO MOLE BOV RESF (4954)
+5311|RECORTE DE ALCATRA BOV CONG (ARANHA) (5311)
+5562|CONTRA FILE BOV RESF (5,500 KG ACIMA) FRIBOI 1953 (5562)
+5611|CONTRA FILE C/OSSO BOV RESF (5611)
+5640|PEITO BOV CONG (5640)
+5806|COSTELA DO TRASEIRO BOV CONG (FINA C/OSSO) (5806)
+5881|COXAO MOLE BOV CONG (5881)
+6187|CONTRA FILE BOV CONG (FRIBOI) (6187)
+6256|FRALDA BOV CONG (RED) 1953 FRIBOI (6256)
+6293|COXAO DURO BOV RESF (3,0KG UP) (6293)
+6693|FILE MIGNON BOV CONG (6693)
+6852|PICANHA S/P P >1,4KG VP 15KG BOV RESF PANDO (6852)
+6988|PICANHA A S/P 0,9/1,3 KG BOV RESF BPU (6988)
+6992|PICANHA A S/P 1,3/1,7 KG BOV RESF BPU (6992)
+6993|PICANHA A S/P >1,7 KG BOV RESF BPU (6993)
+7168|FILÉ DE COSTELA S/A 2,5 KG UP VP BOV RESF PANDO (7168)
+7385|FILE MIGNON BOV RESF (3/4LB S/TRANÇA) DO CHEF (7385)
+7386|FILE MIGNON BOV RESF (4/5LB S/TRANÇA) DO CHEF (7386)
+7491|CORAÇAO DA ALCATRA BOV RESF (S/GORDURA S/ROLHA) DO CHEF (7491)
+7549|FILE DE COSTELA 2.0 KG UP CONGELADO ANGUS GORINA (7549)
+7718|PONTA DE AGULHA BOV RESF FRIBOI RESERVA (7718)
+7828|COXAO MOLE BOV CONG FRIBOI 1953 (7828)
+7990|FILE DE COSTELA BOV RESF (2/4KG C/ABA) DO CHEF (7990)
+8040|COXAO MOLE BOV CONG FRIBOI (8040)
+8357|CONTRA FILE BOV RESF CORTADO MATURATTA (8357)
+8427|CONTRA FILE BOV RESF (5KG UP) DO CHEF (8427)
+8532|PICANHA A S/P 1,6/2,0KG A VP BOV CONG AMH (8532)
+8533|PICANHA A S/P 2,0/2,5KG VP BOV CONG AMH (8533)
+8703|PATINHO BOV RESF (PORCIONADO) FRIBOI 1953 (8703)
+8741|CONTRA FILE BOV RESF (S/PONTA) (8741)
+8814|CUPIM BOV RESF (8814)
+8944|FILE DE COSTELA BOV RESF KIT (8944)`;
+
+const PRODUTOS=PRODUTOS_RAW.trim().split('\n').map(l=>{const[c,...r]=l.split('|');return{cod:c.trim(),nome:r.join('|').trim()};});
+
+let cnt=0,devIds=[],restIds=[],okIds=[],curStep=0,cvol,cmot;
+
+function g(id){const e=document.getElementById(id);return e?e.value:'';}
+function chk(id){const e=document.getElementById(id);return!!(e&&e.checked);}
+function fmt(v){if(!v)return'';const[y,m,d]=v.split('-');return d+'/'+m+'/'+y;}
+let produtosSheets=[];
+
+async function carregarProdutosSheets(){
+  if(!SHEETS_URL)return;
+  try{
+    const r=await fetch(SHEETS_URL+'?tipo=produtos');
+    const txt=await r.text();
+    const bruto=JSON.parse(txt)||[];
+    // normaliza: cod sempre string (o Sheets pode devolver número), remove vazios/duplicados
+    const porCodigo=new Map();
+    bruto.forEach(p=>{
+      if(!p)return;
+      const cod=String(p.cod??p.codigo??'').trim();
+      const nome=String(p.nome??'').trim();
+      if(!cod)return;
+      porCodigo.set(cod,{cod,nome}); // última ocorrência da planilha prevalece
+    });
+    produtosSheets=Array.from(porCodigo.values());
+  }catch(err){
+    console.warn('Não foi possível carregar produtos do Sheets');
+    produtosSheets=[];
+  }
+}
+
+async function admAddProduto(){
+  const cod=document.getElementById('adm-cod').value.trim();
+  const nome=document.getElementById('adm-nome').value.trim();
+  if(!cod||!nome){alert('Preencha o código e o nome.');return;}
+  // evita duplicidade: verifica contra a lista já carregada (PRODUTOS base + Sheets)
+  const existente=getProdutosTodos().find(p=>p.cod===cod);
+  if(existente){
+    if(!confirm('O código '+cod+' já existe na lista:\n"'+existente.nome+'"\n\nDeseja editá-lo em vez de criar um novo registro duplicado?\n\nOK = ir para edição  |  Cancelar = não fazer nada')){
+      return;
+    }
+    admEditarProduto(existente.cod, existente.nome);
+    return;
+  }
+  const btn=document.getElementById('adm-btn');
+  if(btn){btn.disabled=true;btn.textContent='Adicionando...';}
+  try{
+    const payload={_tipo:'produto',codigo:cod,nome:nome};
+    await fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    document.getElementById('adm-cod').value='';
+    document.getElementById('adm-nome').value='';
+    alert('Produto adicionado! Atualizando lista...');
+    await carregarProdutosSheets();
+    renderAdmin();
+  }catch(err){
+    alert('Erro ao adicionar. Verifique a conexão.');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='Adicionar no Sheets';}
+  }
+}
+
+function admEditarProduto(cod, nome){
+  // Preenche os campos para edição e troca o botão para salvar edição
+  document.getElementById('adm-cod').value = cod;
+  document.getElementById('adm-nome').value = nome;
+  document.getElementById('adm-cod').dataset.editOrigCod = cod;
+  document.getElementById('adm-cod').style.borderColor = 'var(--yellow)';
+  document.getElementById('adm-nome').style.borderColor = 'var(--yellow)';
+  const btn = document.getElementById('adm-btn');
+  if(btn){
+    btn.textContent = '💾 Salvar alteração';
+    btn.onclick = admSalvarEdicao;
+  }
+  const btnCancel = document.getElementById('adm-btn-cancel');
+  if(btnCancel) btnCancel.style.display = '';
+  document.getElementById('adm-cod').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+async function admSalvarEdicao(){
+  const cod = document.getElementById('adm-cod').value.trim();
+  const nome = document.getElementById('adm-nome').value.trim();
+  const origCod = document.getElementById('adm-cod').dataset.editOrigCod || cod;
+  if(!cod||!nome){alert('Preencha o código e o nome.');return;}
+  const btn=document.getElementById('adm-btn');
+  if(btn){btn.disabled=true;btn.textContent='Salvando...';}
+  try{
+    const payload={_tipo:'editarProduto', codigoOriginal: origCod, codigo:cod, nome:nome};
+    await fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    alert('Produto atualizado! Atualizando lista...');
+    admCancelarEdicao();
+    await carregarProdutosSheets();
+    renderAdmin();
+  }catch(err){
+    alert('Erro ao salvar. Verifique a conexão.');
+  }finally{
+    if(btn){btn.disabled=false;}
+  }
+}
+
+function admCancelarEdicao(){
+  document.getElementById('adm-cod').value = '';
+  document.getElementById('adm-nome').value = '';
+  delete document.getElementById('adm-cod').dataset.editOrigCod;
+  document.getElementById('adm-cod').style.borderColor = '';
+  document.getElementById('adm-nome').style.borderColor = '';
+  const btn = document.getElementById('adm-btn');
+  if(btn){
+    btn.textContent = 'Adicionar no Sheets';
+    btn.onclick = admAddProduto;
+  }
+  const btnCancel = document.getElementById('adm-btn-cancel');
+  if(btnCancel) btnCancel.style.display = 'none';
+}
+
+async function admExcluirProduto(cod, nome){
+  if(!confirm('Excluir o produto:\n' + cod + ' — ' + nome + '\n\nEsta ação não pode ser desfeita.')) return;
+  try{
+    const payload={_tipo:'excluirProduto', codigo:cod};
+    await fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    alert('Produto excluído! Atualizando lista...');
+    await carregarProdutosSheets();
+    renderAdmin();
+  }catch(err){
+    alert('Erro ao excluir. Verifique a conexão.');
+  }
+}
+
+async function renderAdmin(){
+  await carregarProdutosSheets();
+  const wrap=document.getElementById('adm-lista');
+  document.getElementById('adm-count').textContent='('+produtosSheets.length+')';
+  if(!produtosSheets.length){
+    wrap.innerHTML='<div class="empty-state" style="padding:20px 0">Nenhum produto adicionado ainda.<br><span style="font-size:11px">Adicione pelo formulário acima.</span></div>';
+    return;
+  }
+  wrap.innerHTML=produtosSheets.map(p=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border)">'
+    +'<div><strong style="font-size:13px">'+p.cod+'</strong> <span style="font-size:12px;color:var(--text2)">'+p.nome+'</span></div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button onclick="admEditarProduto(\''+p.cod+'\',\''+p.nome.replace(/'/g,"\\\'")+'\'" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--text2)">✏️ Editar</button>'
+    +'<button onclick="admExcluirProduto(\''+p.cod+'\',\''+p.nome.replace(/'/g,"\\\'")+'\'" style="background:none;border:1px solid var(--red);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--red)">🗑 Excluir</button>'
+    +'</div>'
+    +'</div>').join('');
+}
+
+function getProdutosTodos(){
+  const todos=[...PRODUTOS,...produtosSheets]
+    .filter(p=>p&&p.cod!==undefined&&p.cod!==null)
+    .map(p=>({cod:String(p.cod).trim(),nome:String(p.nome||'').trim()}));
+  // remove duplicados por código, mantendo a última ocorrência (produtosSheets sobrescreve PRODUTOS base)
+  const porCodigo=new Map();
+  todos.forEach(p=>porCodigo.set(p.cod,p));
+  return Array.from(porCodigo.values());
+}
+
+function busca(pfx,id){
+  const q=document.getElementById(pfx+'s'+id).value.toLowerCase().trim();
+  const r=document.getElementById(pfx+'r'+id);
+  // exige 2+ caracteres para texto, mas libera busca por código com 1 dígito (ex: produtos "2", "3")
+  const ehNumero=/^\d+$/.test(q);
+  if(!q||(q.length<2&&!ehNumero)){r.style.display='none';return;}
+  let m=getProdutosTodos().filter(p=>String(p.cod).includes(q)||String(p.nome).toLowerCase().includes(q));
+  // prioriza código idêntico ao buscado, depois código que começa com o termo, antes de qualquer outro match
+  m.sort((a,b)=>{
+    const ca=String(a.cod), cb=String(b.cod);
+    const score=c=>c===q?0:(c.startsWith(q)?1:2);
+    return score(ca)-score(cb);
+  });
+  m=m.slice(0,8);
+  if(!m.length){r.style.display='none';return;}
+  r.innerHTML=m.map(p=>'<div class="search-item" onclick="selProd(\''+pfx+'\','+id+',\''+p.cod+'\',\''+p.nome.replace(/'/g,"\\'")+'\')">'+'<strong>'+p.cod+'</strong> — '+p.nome+'</div>').join('');
+  r.style.display='block';
+}
+
+function getData(){try{return JSON.parse(localStorage.getItem(KEY)||'[]');}catch{return[];}}
+function save(d){localStorage.setItem(KEY,JSON.stringify(d));}
+
+function fillSIF(uid,nid){
+  const u=document.getElementById(uid);
+  const n=document.getElementById(nid);
+  if(!u||!n)return;
+  const v=SIF_MAP[u.value.toUpperCase()]||'';
+  n.value=v;
+  n.style.color=v?'var(--green)':'var(--text2)';
+}
+
+function showView(v,btn){
+  document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(e=>e.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(v==='dash')renderDash();
+  if(v==='hist')renderHist();
+  if(v==='admin')renderAdmin();
+  if(v==='quebra')qInit();
+  if(v==='laudo')laudoInit();
+}
+
+function irPasso(n){
+  document.getElementById('step'+(curStep===0?0:curStep===1?2:curStep===2?3:4)).classList.remove('active');
+  const steps=[0,2,3,4];
+  document.getElementById('step'+steps[curStep]).classList.remove('active');
+  document.getElementById('dot'+curStep).classList.remove('active');
+  document.getElementById('dot'+curStep).classList.add('done');
+  curStep=n;
+  document.getElementById('step'+steps[n]).classList.add('active');
+  document.getElementById('dot'+n).classList.add('active');
+  document.getElementById('prog').style.width=((n+1)/4*100)+'%';
+  window.scrollTo(0,0);
+}
+
+// ── Mapa motivo → detalhes ────────────────────────────────────────────────────
+const MOTIVO_DETALHES={
+  'ABSCESSO':['REAÇÃO INFLAMATÓRIA'],
+  'ATRASO NA ENTREGA':['FORA DO HORÁRIO DE RECEBIMENTO','FORA DA DATA COMBINADA','FORA DO HORÁRIO COMERCIAL'],
+  'AUSÊNCIA DE VÁCUO':['PERDA PARCIAL','PERDA TOTAL','MICROBOLHAS','MACROBOLHAS','EMBALAGEM ROMPIDA'],
+  'BSE':['BSE'],
+  'CLIENTE NÃO PÔDE RECEBER':['FECHADO POR LUTO','FERIADO NA CIDADE','FALHA NO SISTEMA','CÂMARA QUEBRADA/DEFEITO','ESTOQUE CHEIO','SEM CARIMBO','PRODUTO NÃO CADASTRADO','REFORMA','PROBLEMAS FINANCEIROS','PRODUTO VENCEU NO CLIENTE','NÃO EMITE NFD PARCIAL','PRODUTO DUPLICADO NA NF','CLIENTE FECHADO'],
+  'CONDIÇÃO DO CESTO ARAMADO':['ENFERRUJADO','QUEBRADO','SUJO'],
+  'CONDIÇÃO DO CONTAINER/VEÍCULO':['DANIFICADO','LACRE INCORRETO','MAL-FUNCTION','PORTA AMASSADA','ENFERRUJADO','SUJO','ODOR QUIMICO','ODOR PÚTRIDO','LARVA/INSETO'],
+  'CONTAMINAÇÃO BIOLÓGICA':['BACILLUS','CLOSTRIDIUM','CONTAMINAÇÃO FECAL','SALMONELLA','E. COLI','BOLOR','STAPHILOCOCCUS','EMBALAGENS TUFADAS','MESÓFILOS','AERÓBICOS'],
+  'CONTAMINAÇÃO FÍSICA':['ACRILICO','BARBANTE','BORRACHA','CABELO','CASCO','CERÂMICA','CHIFRE','COÁGULO','CONTAMINAÇÃO RUMINAL','COURO','ESPINHO','GÂNGLIOS','GLÂNDULA','IMPUREZAS','INSETO','MADEIRA','MEDULA / NERVO CERVICAL','NÃO IDENTIFICADO','NYLON','OSSO','PAPEL','PEDRA','PELO','PÓ DE TRILHO','TECIDO','VEIAS / VASOS','VIDRO','POEIRA','LAGARTA','CARRAPATO','LARVA','CORDA','LINFONODO','PAPILA','DENTE','NÓDULOS','LIMALHA','CARTILAGEM','TRIPA SINTÉTICA','PLÁSTICO/RÍGIDO/EMBALAGEM/AMARELO','PLÁSTICO/RÍGIDO/EMBALAGEM/AZUL','PLÁSTICO/RÍGIDO/EMBALAGEM/BRANCO','PLÁSTICO/RÍGIDO/EMBALAGEM/TRANSPARENTE','PLÁSTICO/RÍGIDO/EMBALAGEM/VERDE','PLÁSTICO/RÍGIDO/EMBALAGEM/PRETO','PLÁSTICO/RÍGIDO/AMARELO','PLÁSTICO/RÍGIDO/AZUL','PLÁSTICO/RÍGIDO/BRANCO','PLÁSTICO/RÍGIDO/TRANSPARENTE','PLÁSTICO/RÍGIDO/VERDE','PLÁSTICO/RÍGIDO/PRETO','PLÁSTICO/FLEXÍVEL/EMBALAGEM/AMARELO','PLÁSTICO/FLEXÍVEL/EMBALAGEM/AZUL','PLÁSTICO/FLEXÍVEL/EMBALAGEM/BRANCO','PLÁSTICO/FLEXÍVEL/EMBALAGEM/TRANSPARENTE','PLÁSTICO/FLEXÍVEL/EMBALAGEM/VERDE','PLÁSTICO/FLEXÍVEL/EMBALAGEM/PRETO','PLÁSTICO/FLEXÍVEL/AMARELO','PLÁSTICO/FLEXÍVEL/AZUL','PLÁSTICO/FLEXÍVEL/BRANCO','PLÁSTICO/FLEXÍVEL/TRANSPARENTE','PLÁSTICO/FLEXÍVEL/VERDE','PLÁSTICO/FLEXÍVEL/PRETO','ETIQUETA/ABATE(GARRÃO)/INTEIRA/AZUL','ETIQUETA/ABATE(GARRÃO)/INTEIRA/BRANCA','ETIQUETA/ABATE(GARRÃO)/INTEIRA','ETIQUETA/ABATE(GARRÃO)/PEDAÇO/AZUL','ETIQUETA/ABATE(GARRÃO)/PEDAÇO/BRANCA','ETIQUETA/ABATE(GARRÃO)/PEDAÇO','ETIQUETA/CROMO/INTEIRA/AZUL','ETIQUETA/CROMO/INTEIRA/BRANCA','ETIQUETA/CROMO/INTEIRA','ETIQUETA/CROMO/PEDAÇO/AZUL','ETIQUETA/CROMO/PEDAÇO/BRANCA','ETIQUETA/CROMO/PEDAÇO','ETIQUETA/INTERNA/INTEIRA/AZUL','ETIQUETA/INTERNA/INTEIRA/BRANCA','ETIQUETA/INTERNA/INTEIRA','ETIQUETA/INTERNA/PEDAÇO/AZUL','ETIQUETA/INTERNA/PEDAÇO/BRANCA','ETIQUETA/INTERNA/PEDAÇO','ETIQUETA/INTEIRA/AZUL','ETIQUETA/INTEIRA/BRANCA','ETIQUETA/INTEIRA','ETIQUETA/PEDAÇO/AZUL','ETIQUETA/PEDAÇO/BRANCA','ETIQUETA/PEDAÇO','LUVA/ANTICORTE/INTEIRA/AMARELA','LUVA/ANTICORTE/INTEIRA/AZUL','LUVA/ANTICORTE/INTEIRA/BRANCA','LUVA/ANTICORTE/INTEIRA/VERDE','LUVA/ANTICORTE/INTEIRA/PRETA','LUVA/ANTICORTE/PEDAÇO/AMARELA','LUVA/ANTICORTE/PEDAÇO/AZUL','LUVA/ANTICORTE/PEDAÇO/BRANCA','LUVA/ANTICORTE/PEDAÇO/VERDE','LUVA/ANTICORTE/PEDAÇO/PRETA','LUVA/NITRILICA/INTEIRA/AMARELA','LUVA/NITRILICA/INTEIRA/AZUL','LUVA/NITRILICA/INTEIRA/BRANCA','LUVA/NITRILICA/INTEIRA/VERDE','LUVA/NITRILICA/INTEIRA/PRETA','LUVA/NITRILICA/PEDAÇO/AMARELA','LUVA/NITRILICA/PEDAÇO/AZUL','LUVA/NITRILICA/PEDAÇO/BRANCA','LUVA/NITRILICA/PEDAÇO/VERDE','LUVA/NITRILICA/PEDAÇO/PRETA','LUVA/INTEIRA/AMARELA','LUVA/INTEIRA/AZUL','LUVA/INTEIRA/BRANCA','LUVA/INTEIRA/VERDE','LUVA/INTEIRA/PRETA','LUVA/PEDAÇO/AMARELA','LUVA/PEDAÇO/AZUL','LUVA/PEDAÇO/BRANCA','LUVA/PEDAÇO/VERDE','LUVA/PEDAÇO/PRETA','METAL/FACA/FRAGMENTO','METAL/FACA/INTEIRA','METAL/GANCHO/FRAGMENTO','METAL/GANCHO/INTEIRA','METAL/LATA/FRAGMENTO','METAL/LATA/INTEIRA','METAL/FRAGMENTO','METAL/FRAGMENTO (MALHA DE AÇO)','METAL/INTEIRO','METAL/LIMALHA DE METAL','PROJÉTIL DE ARMA DE FOGO','METAL/AGULHA','CARIMBO','GRAXA','TINTA','FERRUGEM','PÓ QUIMICO'],
+  'CONTAMINAÇÃO QUÍMICA':['GÁS','RESÍDUOS VETERINÁRIOS','METAIS PESADOS','DIOXINAS E FURANOS','PCB','HORMÔNIOS'],
+  'DOCUMENTAÇÃO':['ATRASO DE DOCUMENTAÇÃO','CERTIFICADO SANITÁRIO INCORRETO','NF SEM PLACA DO VEÍCULO','NF EMITIDA PARA CLIENTE ERRADO','FALTA DE LAUDO','FALTA DE CERTIFICADO SANITÁRIO','ATRASO POR TROCA DE BUYER','LICENÇA DE IMPORTAÇÃO VENCIDA','EXTRAVIO DE DOCUMENTAÇÃO','FATURADO COM IMPOSTO INCORRETO','EHC INCORRETO','CLIENTE TEM REGIME ESPECIAL DE TRIBUTAÇÃO'],
+  'EMBALAGEM':['FALHA NA RECRAVAÇÃO/SOLDA','FURO','BAG RASGADO','EMBALAGEM SECUNDÁRIA VIOLADA','LATA AMASSADA','CAIXA AMASSADA/RASGADA','CAIXA SEM FITILHO/FITA DE ARQUEAR','CAIXAS SUJAS','CAIXAS MOLHADAS','CAIXA COM GELO NA SUPERFÍCIE','EMBALAGEM ENTREMEADA','DATA MISTURADA NA CAIXA','PRODUTO TROCADO NA CAIXA','DIVERGÊNCIA DE DATA ENTRE ETIQUETA TESTEIRA E ETIQUETA INTERNA'],
+  'EMBARQUE INCORRETO':['PRODUTO MISTURADO NO PALETE','DATAS MISTURADAS NO PALETE','ENTREGAS SEM SEPARAÇÃO POR NF','PALETIZADA','ESTIVADA','SEM TERMÓGRAFO','EMBARQUE DE PRODUTO INCORRETO','EMBARQUE DE PRODUTO VENCIDO','PALETE SEM IDENTIFICAÇÃO DE PESO','PALETES DANIFICADOS','PRODUTO NÃO FOI EMBARCADO','TERMÓGRAFO COM DEFEITO','SIF BLOQUEADO','SEM ETIQUETA PALETE','PALETE DESCARTÁVEL','PALETE NÃO É PBR','QUANTIDADE INCORRETA DE STRECH','ALTURA DA PALETIZAÇÃO','FORA DA PROPORÇÃO','DATA FORA DA RESTRIÇÃO DO CLIENTE','PESO/QUANTIDADE MENOR QUE O FATURADO','PESO/QUANTIDADE MAIOR QUE O FATURADO','PESO MAIOR QUE O SOLICITADO NO PEDIDO','PESO MENOR QUE O SOLICITADO NO PEDIDO'],
+  'ERRO NA DIGITAÇÃO DO PEDIDO':['CÓDIGO DE PRODUTO ERRADO','CLIENTE NÃO FEZ O PEDIDO','CLIENTE EFETUOU O PEDIDO ERRADO','UNIDADE DE MEDIDA','PREÇO ERRADO','CNPJ OU CONTA BANCÁRIA INCORRETA','PEDIDO DIGITADO EM DUPLICIDADE','PESO MENOR','PESO MAIOR','VENDEDOR ENVIOU O PEDIDO ERRADO','ORGÃO SEM SALDO NO PEDIDO PARA RECEBER'],
+  'EXSUDAÇÃO':['EXCESSO DE LIQUIDO'],
+  'FALTA DE PESO':['FALTA DE CAIXA','FALTA DE PEÇA','PESO MENOR','TARA INCORRETA','FALTA DE PALETE'],
+  'LIMOSIDADE':['LIMOSIDADE SUPERFICIAL'],
+  'NOTA FISCAL SEM EMPENHO':['ORGÃO SEM EMPENHO PARA RECEBER'],
+  'ODOR ALTERADO':['PÚTRIDO','ÁCIDO','FERMENTAÇÃO/MATURAÇÃO'],
+  'OPERAÇÃO LOGÍSTICA':['ENTREGA EM ENDEREÇO ERRADO','MOTORISTA NÃO ENCONTROU O ENDEREÇO','MAU COMPORTAMENTO DO ENTREGADOR','MOTORISTA SEM UNIFORME','REENTREGA NÃO FOI REALIZADA','FRETE ERRADO','AMARRAÇÃO DA INSTRUÇÃO ERRADA'],
+  'PADRÃO DO PRODUTO':['ACIDEZ','APONEUROSE','EXCESSO DE GORDURA','GORDURA ESCASSA','EXCESSO DE SEBO','PESO ACIMA DO PQ','PESO ABAIXO DO PQ','DANIFICADO/QUEBRADO','GRANULOMETRIA','REFILE / LIMPEZA / RENDIMENTO','UMIDADE','PROTEÍNA ABAIXO DO PQ','PROTEÍNA ACIMA DO PQ','TEXTURA','HEMATOMAS','PERÓXIDO','EBER','TIPIFICAÇÃO DIVERGENTE','PRODUTO ENCOLHENDO AO FRITAR','MATÉRIA MINERAL ABAIXO DO PQ','MATÉRIA MINERAL ACIMA DO PQ','SUCO ROSADO','TAMANHO ACIMA DO PQ','TAMANHO ABAIXO DO PQ','PH ABAIXO DE 6.4','PH ACIMA DE 6.4','SEBO COM BORRA','COURO COM FUROS','COZIMENTO SUPERFICIAL','QUEIMADO PELO FRIO','TEMPO DE MATURAÇÃO','COR ALTERADA','SABOR ALTERADO'],
+  'PEDIDO CANCELADO':['CANCELADO PELO COMERCIAL','TROCA DE BAYER','CANCELADO PELO CLIENTE'],
+  'ROTULAGEM':['AUSÊNCIA ETIQUETA PRIMÁRIA','AUSÊNCIA ETIQUETA TESTEIRA','AUSÊNCIA ETIQUETA CROMO','FALHA NA IMPRESSÃO','ETIQUETA TESTEIRA DANIFICADA','SEM TARA','SEM DATA DE PRODUÇÃO','SEM DATA DE VALIDADE','AUSÊNCIA DE ETIQUETA DO CLIENTE','ETIQUETA BORRADA'],
+  'SIF BLOQUEADO':[],
+  'SINISTRO COM VEÍCULO':['CARGA ROUBADA','CARGA TOMBADA','ACIDENTE','RISCO DE ROUBO','ENCHENTE'],
+  'SUSPENSÃO PAÍS':['SUSPENSÃO PAÍS'],
+  'TEMPERATURA FORA DO PADRÃO':['PRODUTO ACIMA DE 7 ºC','PRODUTO ABAIXO DE 0 ºC','FORA DO PADRÃO DE CONGELADO','TRANSPORTE FORA DO RANGE']
+};
+
+function motivoSel(id){
+  const opts=MOTIVOS.map(m=>'<option>'+m+'</option>').join('');
+  return '<div id="motivos-wrap-'+id+'"></div>'
+    +'<button type="button" onclick="addMotivo(\''+id+'\')" style="font-size:11px;color:var(--text2);background:none;border:1px dashed var(--border);border-radius:var(--radius-sm);padding:4px 10px;cursor:pointer;width:100%;margin-top:4px">+ Adicionar motivo</button>';
+}
+
+let motCnt=0;
+function addMotivo(baseId){
+  const mid=motCnt++;
+  const wrap=document.getElementById('motivos-wrap-'+baseId);
+  const div=document.createElement('div');
+  div.id='motblk-'+baseId+'-'+mid;
+  div.style.cssText='border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;margin-bottom:6px;background:var(--bg)';
+  const opts=MOTIVOS.map(m=>'<option>'+m+'</option>').join('');
+  div.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+    +'<span style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Motivo '+(wrap.children.length+1)+'</span>'
+    +'<button type="button" onclick="document.getElementById(\'motblk-'+baseId+'-'+mid+'\').remove()" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0 2px">×</button>'
+    +'</div>'
+    +'<select id="'+baseId+'-mot-'+mid+'" onchange="atualizarDetalhes(\''+baseId+'\','+mid+')" style="width:100%;margin-bottom:6px">'
+    +'<option value="">Selecione o motivo...</option>'+opts+'</select>'
+    +'<div id="'+baseId+'-det-wrap-'+mid+'" style="display:none;margin-bottom:6px">'
+    +'<select id="'+baseId+'-det-'+mid+'" style="width:100%">'
+    +'<option value="">Selecione o detalhe...</option></select></div>'
+    +'<div style="margin-bottom:6px"><label style="font-size:11px;color:var(--text2)">Análise feita por</label>'
+    +'<select id="'+baseId+'-mun-'+mid+'" onchange="atualizarUnidade(\''+baseId+'\','+mid+')" style="width:100%">'
+    +'<option value="cx">Caixa</option><option value="pç">Peça</option></select></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'
+    +'<div><label style="font-size:11px;color:var(--text2)" id="'+baseId+'-lav-'+mid+'">Qtd avaliada (cx)</label>'
+    +'<input type="number" min="0" id="'+baseId+'-mav-'+mid+'" style="width:100%" oninput="calcMotInc(\''+baseId+'\','+mid+')"></div>'
+    +'<div><label style="font-size:11px;color:var(--text2)" id="'+baseId+'-lpb-'+mid+'">Qtd com problema (cx)</label>'
+    +'<input type="number" min="0" id="'+baseId+'-mpb-'+mid+'" style="width:100%" oninput="calcMotInc(\''+baseId+'\','+mid+')"></div>'
+    +'</div>'
+    +'<div style="margin-top:6px"><label style="font-size:11px;color:var(--text2)">Incidência</label>'
+    +'<input type="text" id="'+baseId+'-mic-'+mid+'" placeholder="calculada ou manual" style="width:100%" inputmode="text"></div>';
+  wrap.appendChild(div);
+}
+
+function atualizarUnidade(baseId,mid){
+  const un=document.getElementById(baseId+'-mun-'+mid)?.value||'cx';
+  const lav=document.getElementById(baseId+'-lav-'+mid);
+  const lpb=document.getElementById(baseId+'-lpb-'+mid);
+  if(lav)lav.textContent='Qtd avaliada ('+un+')';
+  if(lpb)lpb.textContent='Qtd com problema ('+un+')';
+}
+
+function atualizarDetalhes(baseId,mid){
+  const mot=document.getElementById(baseId+'-mot-'+mid).value;
+  const wrap=document.getElementById(baseId+'-det-wrap-'+mid);
+  const sel=document.getElementById(baseId+'-det-'+mid);
+  const dets=(MOTIVO_DETALHES[mot]||[]);
+  if(!mot||!dets.length){wrap.style.display='none';sel.value='';return;}
+  sel.innerHTML='<option value="">Selecione o detalhe...</option>'+dets.map(d=>'<option>'+d+'</option>').join('');
+  wrap.style.display='block';
+}
+
+function calcMotInc(baseId,mid){
+  const av=parseFloat(document.getElementById(baseId+'-mav-'+mid)?.value)||0;
+  const pb=parseFloat(document.getElementById(baseId+'-mpb-'+mid)?.value)||0;
+  const el=document.getElementById(baseId+'-mic-'+mid);
+  if(!el)return;
+  if(av>0){
+    const pct=(pb/av*100).toFixed(1);
+    el.value=pct+'%';
+    el.style.color=parseFloat(pct)>10?'var(--red)':parseFloat(pct)>5?'var(--amber)':'var(--green)';
+  }
+}
+
+function getMotivos(baseId){
+  const wrap=document.getElementById('motivos-wrap-'+baseId);
+  if(!wrap)return'';
+  const blocos=wrap.querySelectorAll('[id^="motblk-'+baseId+'-"]');
+  return Array.from(blocos).map(blk=>{
+    const mid=blk.id.split('-').pop();
+    const mot=(document.getElementById(baseId+'-mot-'+mid)||{}).value||'';
+    const det=(document.getElementById(baseId+'-det-'+mid)||{}).value||'';
+    const av=(document.getElementById(baseId+'-mav-'+mid)||{}).value||'';
+    const pb=(document.getElementById(baseId+'-mpb-'+mid)||{}).value||'';
+    const ic=(document.getElementById(baseId+'-mic-'+mid)||{}).value||'';
+    const un=(document.getElementById(baseId+'-mun-'+mid)||{}).value||'cx';
+    if(!mot)return null;
+    return {mot,det,av,pb,ic,un};
+  }).filter(Boolean);
+}
+
+function fmtMotivos(arr){
+  if(!arr||!arr.length)return'—';
+  return arr.map(m=>{const u=m.un||'cx';return m.mot+(m.det?' — '+m.det:'')+(m.av?' | Av:'+m.av+' '+u+(m.pb?'/Pb:'+m.pb+' '+u:'')+(m.ic?' Inc:'+m.ic:''):'');}).join(' / ');
+}
+
+function addItem(cid,pfx){
+  const id=cnt++;
+  if(pfx==='dev')devIds.push(id);else restIds.push(id);
+  const c=document.getElementById(cid);
+  const d=document.createElement('div');
+  d.className='dev-item';d.id=pfx+id;
+
+  const labelTipo=pfx==='rest'?'restrição':'devolução';
+
+  let html='<button class="dev-remove" onclick="rmItem(\''+pfx+id+'\',\''+pfx+'\','+id+')">×</button>'
+
+    // 1. Produto
+    +'<div class="field"><label>Produto (código ou nome)</label>'
+    +'<div class="search-wrapper">'
+    +'<input type="text" id="'+pfx+'s'+id+'" placeholder="Digite código ou nome..." oninput="busca(\''+pfx+'\','+id+')" autocomplete="off">'
+    +'<div class="search-results" id="'+pfx+'r'+id+'"></div></div></div>'
+    +'<input type="hidden" id="'+pfx+'p'+id+'" value="">'
+    +'<div class="row2">'
+    +'<div class="field"><label>Unidade (sigla)</label><input type="text" id="'+pfx+'su'+id+'" placeholder="ex: MZL" maxlength="5" oninput="this.value=this.value.toUpperCase();fillSIF(\''+pfx+'su'+id+'\',\''+pfx+'sn'+id+'\')"></div>'
+    +'<div class="field"><label>Nº SIF</label><input type="text" id="'+pfx+'sn'+id+'" placeholder="automático" readonly></div></div>'
+
+    // 2. Qtd do corte na NF
+    +'<div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:10px 0 6px">Qtd do corte na NF</div>'
+    +'<div class="row2">'
+    +'<div class="field"><label>Caixas na NF</label><input type="number" min="0" id="'+pfx+'nfcx'+id+'" placeholder="cx"></div>'
+    +'<div class="field"><label>Peso na NF (kg)</label><input type="text" inputmode="text" id="'+pfx+'nfkg'+id+'" placeholder="kg" onblur="fmtKgInput(this)"></div>'
+    +'</div>'
+
+    // 3. Não conformidades
+    +'<div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:10px 0 6px">Não conformidades</div>'
+    +'<div class="field">'+motivoSel(pfx+'mo'+id)+'</div>'
+
+    // 4. Quantidade devolvida + tipo
+    +'<div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:10px 0 6px">Quantidade '+(pfx==='rest'?'em restrição':'devolvida')+'</div>'
+    +'<div class="row2">'
+    +'<div class="field"><label>Caixas</label><input type="number" min="0" id="'+pfx+'cx'+id+'"></div>'
+    +'<div class="field"><label>Peso (kg)</label><input type="text" inputmode="text" id="'+pfx+'kg'+id+'" oninput="calcVolumes()" onblur="fmtKgInput(this);calcVolumes()"></div></div>'
+    +'<div class="field"><label>Tipo de '+(pfx==='rest'?'restrição':'devolução')+'</label>'
+    +'<select id="'+pfx+'td'+id+'" style="width:100%">'
+    +'<option value="Parcial">Parcial</option>'
+    +'<option value="Total do corte">Total do corte</option>'
+    +'</select></div>';
+
+  if(pfx==='rest'){
+    html+='<div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px">'
+      +'<div class="field"><label>Restrição procedente?</label>'
+      +'<select id="'+pfx+'rpr'+id+'" style="width:100%"><option value="">N/A</option><option value="Procedente">Procedente</option><option value="Improcedente">Improcedente</option></select></div>'
+      +'</div>';
+  }
+
+  d.innerHTML=html;
+  c.appendChild(d);
+}
+
+function rmItem(eid,pfx,id){
+  const e=document.getElementById(eid);if(e)e.remove();
+  if(pfx==='dev')devIds=devIds.filter(i=>i!==id);
+  else restIds=restIds.filter(i=>i!==id);
+  calcVolumes();
+}
+
+function addItemOk(){
+  const id=cnt++;
+  okIds.push(id);
+  const c=document.getElementById('ok-lista');
+  const d=document.createElement('div');
+  d.className='dev-item';d.id='ok'+id;
+  d.innerHTML='<button class="dev-remove" onclick="rmItemOk('+id+')">×</button>'
+    +'<div class="field"><label>Produto (código ou nome)</label>'
+    +'<div class="search-wrapper">'
+    +'<input type="text" id="oks'+id+'" placeholder="Digite código ou nome..." oninput="busca(\'ok\','+id+')" autocomplete="off">'
+    +'<div class="search-results" id="okr'+id+'"></div></div></div>'
+    +'<input type="hidden" id="okp'+id+'" value="">'
+    +'<div class="row2">'
+    +'<div class="field"><label>Unidade (sigla)</label><input type="text" id="oksu'+id+'" placeholder="ex: MZL" maxlength="5" oninput="this.value=this.value.toUpperCase();fillSIF(\'oksu'+id+'\',\'oksn'+id+'\')"></div>'
+    +'<div class="field"><label>Nº SIF</label><input type="text" id="oksn'+id+'" placeholder="automático" readonly></div></div>'
+    +'<div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:10px 0 6px">Quantidade recebida</div>'
+    +'<div class="row2">'
+    +'<div class="field"><label>Caixas</label><input type="number" min="0" id="okcx'+id+'"></div>'
+    +'<div class="field"><label>Peso (kg)</label><input type="text" inputmode="text" id="okkg'+id+'" onblur="fmtKgInput(this)"></div></div>';
+  c.appendChild(d);
+}
+
+function rmItemOk(id){
+  const e=document.getElementById('ok'+id);if(e)e.remove();
+  okIds=okIds.filter(i=>i!==id);
+}
+
+function getItemsOk(){
+  return okIds.map(id=>{
+    const p=g('okp'+id)||g('oks'+id);if(!p)return null;
+    const sifN=g('oksn'+id);
+    const sifU=g('oksu'+id);
+    const sif=sifN+(sifU?' ('+sifU+')':'');
+    const caixas=parseFloat(g('okcx'+id))||0;
+    const kg=parseKgBR(g('okkg'+id));
+    return {produto:p,sif,caixas,kg};
+  }).filter(Boolean);
+}
+
+function selProd(pfx,id,cod,nome){
+  document.getElementById(pfx+'s'+id).value=cod+' — '+nome;
+  document.getElementById(pfx+'p'+id).value=cod+' — '+nome;
+  document.getElementById(pfx+'r'+id).style.display='none';
+}
+
+document.addEventListener('click',function(e){
+  document.querySelectorAll('.search-results').forEach(r=>{if(!r.contains(e.target))r.style.display='none';});
+});
+
+function fmtValor(el){
+  // Remove tudo exceto dígitos e vírgula
+  let v=el.value.replace(/[^\d,]/g,'');
+  if(!v){el.value='';return;}
+  // Separa parte inteira e decimal
+  const parts=v.split(',');
+  const intPart=parts[0].replace(/\D/g,'');
+  const decPart=parts.length>1?parts[1].replace(/\D/g,'').slice(0,2):'';
+  // Formata parte inteira com pontos
+  const intFmt=intPart?parseInt(intPart).toLocaleString('pt-BR'):'0';
+  // Reconstrói
+  if(parts.length>1){
+    el.value=intFmt+','+(decPart.length?decPart:'');
+  } else {
+    el.value=intFmt;
+  }
+}
+
+function calcInc(pfx,id){
+  const av=parseFloat(document.getElementById(pfx+'av'+id).value)||0;
+  const pb=parseFloat(document.getElementById(pfx+'pb'+id).value)||0;
+  const el=document.getElementById(pfx+'ic'+id);
+  if(!el)return;
+  if(av>0){
+    const pct=(pb/av*100).toFixed(1);
+    el.value=pct+'%';
+    el.style.color=parseFloat(pct)>10?'var(--red)':parseFloat(pct)>5?'var(--amber)':'var(--green)';
+  }
+}
+
+function toggleAbrangencia(pfx){
+  const abr=g('f-abr-'+pfx);
+  const sec=document.getElementById('sec-'+pfx);
+  const par=document.getElementById(pfx+'-parcial-bloco');
+  const tot=document.getElementById(pfx+'-total-bloco');
+  if(sec)sec.style.display=abr==='na'?'none':'block';
+  const semCortes=pfx==='dev'&&abr==='total'&&chk('f-dev-sem-cortes');
+  // Na devolução total, a lista de cortes aparece ABAIXO do banner/checkbox
+  if(par&&tot&&pfx==='dev'){
+    if(abr==='total'){tot.after(par);}else{tot.before(par);}
+  }
+  if(par)par.style.display=(abr==='parcial'||(pfx==='dev'&&abr==='total'&&!semCortes))?'block':'none';
+  // Motivos gerais só aparecem quando marcado "sem análise corte a corte"
+  const motWrap=document.getElementById('dev-total-motivos-wrap');
+  if(pfx==='dev'&&motWrap)motWrap.style.display=semCortes?'block':'none';
+  if(tot)tot.style.display=abr==='total'?'block':'none';
+  // Sincroniza o "Devolução procedente?" do passo 4 quando devolução total
+  if(pfx==='dev'&&abr==='total'){
+    const p=g('f-devtot-proc');
+    if(p)document.getElementById('f-devprocedente').value=p;
+  }
+  calcVolumes();
+}
+
+// ── Números no padrão brasileiro (ponto = milhar, vírgula = decimal) ─────────
+function parseKgBR(v){
+  if(v===null||v===undefined)return 0;
+  v=String(v).trim().replace(/\s/g,'');
+  if(!v)return 0;
+  if(v.includes(',')){v=v.replace(/\./g,'').replace(',','.');}
+  else{
+    const dots=(v.match(/\./g)||[]).length;
+    if(dots>1){v=v.replace(/\./g,'');}
+    else if(dots===1){
+      const dec=v.split('.')[1]||'';
+      // 1–2 dígitos após o ponto = decimal (ex: 30.5); 3+ = separador de milhar (ex: 25.467)
+      if(dec.length>=3)v=v.replace(/\./g,'');
+    }
+  }
+  return parseFloat(v)||0;
+}
+function fmtKgBR(n){
+  return n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function fmtKgInput(el){
+  if(!el||!el.value.trim())return;
+  const n=parseKgBR(el.value);
+  el.value=n?n.toLocaleString('pt-BR',{maximumFractionDigits:3}):'';
+}
+
+function calcVolumes(){
+  const nf=parseKgBR(document.getElementById('f-vol-nf')?.value);
+  const abrDev=g('f-abr-dev');
+  const tot=abrDev==='total'?nf:(abrDev==='na'?0:devIds.reduce((s,id)=>s+parseKgBR(document.getElementById('devkg'+id)?.value),0));
+  document.getElementById('f-vol-dev').value=tot>0?fmtKgBR(tot):'';
+  document.getElementById('f-vol-rec').value=(nf>0&&tot>=0)?fmtKgBR(Math.max(0,nf-tot)):'';
+  document.getElementById('alerta-volume').style.display=tot>=3000?'block':'none';
+
+  // Vol. restrição (kg): soma os itens de restrição parcial, ou usa o volume
+  // total da NF quando a restrição é da NF inteira (mesmo padrão da devolução).
+  const abrRest=g('f-abr-rest');
+  const totRest=abrRest==='total'?nf:(abrRest==='na'?0:restIds.reduce((s,id)=>s+parseKgBR(document.getElementById('restkg'+id)?.value),0));
+  const elRest=document.getElementById('f-vol-rest');
+  if(elRest) elRest.value=totRest>0?fmtKgBR(totRest):'';
+}
+
+function getItems(pfx,ids){
+  return ids.map(id=>{
+    // Usa o produto selecionado; se nada foi selecionado, aproveita o texto
+    // digitado (igual aos recebidos) para o item não sumir do resumo.
+    const p=g(pfx+'p'+id)||g(pfx+'s'+id);
+    const sifN=g(pfx+'sn'+id);
+    const sifU=g(pfx+'su'+id);
+    const sif=sifN+(sifU?' ('+sifU+')':'');
+    const nfcx=parseFloat(g(pfx+'nfcx'+id))||0;
+    const nfkg=parseKgBR(g(pfx+'nfkg'+id));
+    const motivosArr=getMotivos(pfx+'mo'+id);
+    const motivoStr=fmtMotivos(motivosArr);
+    const caixas=parseFloat(g(pfx+'cx'+id))||0;
+    const kg=parseKgBR(g(pfx+'kg'+id));
+    // Só descarta um item realmente vazio. Se tem peso, caixas ou motivo
+    // lançado, mantém — antes o item sumia do resumo mesmo com volume.
+    if(!p && !kg && !caixas && !nfkg && !nfcx && !motivosArr.length) return null;
+    // incidência geral: soma avaliados e problemas de todos os motivos
+    const totAv=motivosArr.reduce((s,m)=>s+(parseFloat(m.av)||0),0);
+    const totPb=motivosArr.reduce((s,m)=>s+(parseFloat(m.pb)||0),0);
+    const incGeral=totAv>0?(totPb/totAv*100).toFixed(1)+'%':'—';
+    const tipoDev=g(pfx+'td'+id)||'Parcial';
+    const base={produto:p||'(produto não informado)',sif,nfcx,nfkg,avaliado:totAv,problema:totPb,incidencia:incGeral,caixas,kg,motivo:motivoStr,motivosArr,tipoDev};
+    if(pfx==='rest'){
+      base.restProcedente=g(pfx+'rpr'+id)||'';
+    }
+    return base;
+  }).filter(Boolean);
+}
+
+function motLinhas(arr){
+  if(!arr||!arr.length)return'—';
+  return arr.map(m=>{const u=m.un||'cx';return '  • '+m.mot+(m.det?' — '+m.det:'')+(m.av?' | Av: '+m.av+' '+u+(m.pb?' | Pb: '+m.pb+' '+u:'')+(m.ic?' | Inc: *'+m.ic+'*':''): '');}).join('\n');
+}
+
+function toggleReversaoCortes(){
+  const sel=document.getElementById('f-reversao');
+  const campo=document.getElementById('campo-reversao-cortes');
+  if(!sel||!campo)return;
+  campo.style.display = (sel.value==='REVERSÃO SEM RESTRIÇÃO') ? 'block' : 'none';
+}
+
+function gerarTexto(e){
+  // Bug fix: presencial=true significa que FOI acompanhada, presencial=false = NÃO foi
+  const pres=e.presencial
+    ?'Descarga foi acompanhada presencialmente.'
+    :'Descarga foi acompanhada remotamente.';
+
+  const devProd=d=>{
+    const motTxt=d.motivosArr&&d.motivosArr.length?motLinhas(d.motivosArr):(d.motivo||'—');
+    // Só mostra "Devolvido: Parcial" se NÃO for devolução total da NF
+    const devLinha=e.devTotalNF?'':`\nDevolvido: *${d.tipoDev}* — ${d.caixas} cx — ${d.kg} kg`;
+    return '✔️ *'+d.produto+'*\nSIF: '+d.sif+(d.nfcx||d.nfkg?'\nQtd na NF: '+d.nfcx+' cx — '+d.nfkg+' kg':'')+devLinha+'\nNão conformidades:\n'+motTxt;
+  };
+  const devTxt=e.devTotalNF
+    ?'🚫 *DEVOLUÇÃO TOTAL DA NF*'
+      +(e.devSemCortes?'\n_Sem análise corte a corte._':'')
+      +(e.volNF?'\nVolume: *'+e.volNF.toLocaleString('pt-BR')+' kg*':'')
+      +(e.devTotalMotivos&&e.devTotalMotivos.length?'\nMotivo(s) gerais:\n'+motLinhas(e.devTotalMotivos):'')
+      +(e.devList&&e.devList.length?'\n\n'+e.devList.map(devProd).join('\n\n'):'')
+    :(e.devList&&e.devList.length
+    ?e.devList.map(devProd).join('\n\n')
+    :'Não houve.');
+
+  const restProd=r=>{
+    const motTxt=r.motivosArr&&r.motivosArr.length?motLinhas(r.motivosArr):(r.motivo||'—');
+    return '⚠️ *'+r.produto+'*\nSIF: '+r.sif+(r.nfcx||r.nfkg?'\nQtd na NF: '+r.nfcx+' cx — '+r.nfkg+' kg':'')+'\nEm restrição: *'+r.tipoDev+'* — '+r.caixas+' cx — '+r.kg+' kg\nNão conformidades:\n'+motTxt+(r.restProcedente?'\nRestrição: *'+r.restProcedente+'*':'');
+  };
+  const restTxt=e.restTotalNF
+    ?'‼️ *RESTRIÇÃO TOTAL DA NF*'
+      +'\nMotivo(s):\n'+motLinhas(e.restTotalMotivos)
+      +(e.restTotalProc?'\nRestrição: *'+e.restTotalProc+'*':'')
+    :(e.restList&&e.restList.length
+    ?e.restList.map(restProd).join('\n\n')
+    :'');  // vazio quando não há restrição
+
+  const okTxt=e.okList&&e.okList.length
+    ?e.okList.map(o=>'✅ *'+o.produto+'*\nSIF: '+o.sif+'\nRecebido: '+o.caixas+' cx — '+o.kg+' kg').join('\n\n')
+    :'';
+  const emailTxt=e.email?'\n📧 E-mail com resumo será enviado posteriormente.':'';
+
+  // Seção de restrição só aparece quando há de fato restrição
+  const restSecao=restTxt?'\n\n‼️ *Recebimento com restrição*\n'+restTxt:'';
+
+  return '*Resumo Ato de entrega - '+e.cliente+(e.estadoCliente?' - '+e.estadoCliente.trim().toUpperCase():'')+'*'
+    +'\n'+fmt(e.data)
+    +'\nUnidade emissora NF: *'+e.sif+'*'
+    +'\nNF: '+e.nf
+    +'\nPlaca: '+e.placa
+    +'\nLocal: '+(e.local||'—')
+    +'\nTermógrafo '+e.termnum+': '+tempC(e.termtemp)
+    +'\nTemperatura dos produtos: '+tempC(e.prodtemp)
+    +'\nTipo de carga: '+e.tipo
+    +'\n'+pres
+    +'\n\n🚫 *Devoluções:*\n'+devTxt
+    +restSecao
+    +(okTxt?'\n\n✅ *Recebido conforme:*\n'+okTxt:'')
+    +'\n\n*Percepção técnica:*\n'+e.status
+    +'\n⚠️ '+( e.obs||'Sem observações.')+emailTxt
+    +'\n\n*PARECER FINAL*'
+    +'\nVol. total NF: *'+(e.volNF||0).toLocaleString('pt-BR')+' kg*'
+    +'\nVolume total devolvido: *'+(e.volDev||0).toLocaleString('pt-BR')+' kg*'
+    +(e.devTotalNF?'\n⚠️ *Devolução total da NF*':'')
+    +(e.restTotalNF?'\n⚠️ *Restrição total da NF*':'')
+    +'\nVolume total recebido: *'+(e.volRec||0).toLocaleString('pt-BR')+' kg*'
+    +'\n\nAtt,\n'+e.tecnico+'.';
+}
+
+function gerarPanorama(e){
+  const produtos=e.devTotalNF
+    ?'NF completa (devolução total)'
+    :(e.devList&&e.devList.length
+    ?e.devList.map(d=>d.produto).join(' / ')
+    :(e.restTotalNF
+      ?'NF completa (restrição total)'
+      :(e.restList&&e.restList.length
+      ?e.restList.map(r=>r.produto).join(' / ')
+      :'—')));
+  let t='⚠️ *PANORAMA UNIDADES - Clientes* ⚠️'
+    +'\n*Atendimento*: '+(e.atendimento||'Ato de entrega')
+    +'\n*Data:* '+fmt(e.data)
+    +'\n*Cliente:* '+e.cliente
+    +'\n*Unidade emissora NF:* '+e.sif
+    +'\n---------------------'
+    +'\n*Data de produção*: '+(e.dataprod||'—')
+    +'\n*Observação*: '+(e.obs||'—');
+  if(e.volRestKg>0){
+    t+='\n---------------------'
+      +'\n*Volume total recebido em restrição:* '+e.volRestKg.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+' kg';
+  }
+  return t;
+}
+
+// Formata temperatura acrescentando °C — só quando há valor de fato.
+// Evita gerar "--°C" e garante o °C também no termógrafo.
+function tempC(v){
+  if(v===null||v===undefined||String(v).trim()===''||String(v).trim()==='--') return '--';
+  const s=String(v).trim();
+  return /°\s*C/i.test(s) ? s : s+'°C';
+}
+
+function gerarAlerta(e){
+  const volTon=((e.volDev||0)/1000).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+  // Bloco de um corte individual (produto + motivos + volume)
+  const corteLinha=d=>{
+    const motTxt=d.motivosArr&&d.motivosArr.length?motLinhas(d.motivosArr).replace(/\n/g,' | '):(d.motivo||'—');
+    return '*'+d.produto+'*\n   SIF: '+d.sif+' | Motivo: '+motTxt+'\n   Volume: '+d.caixas+' cx — '+d.kg+' kg | Inc: *'+d.incidencia+'*';
+  };
+  const cortes=e.devTotalNF
+    ?'*DEVOLUÇÃO TOTAL DA NF*'
+      +(e.volNF?'\n   Volume NF: '+e.volNF.toLocaleString('pt-BR')+' kg':'')
+      +(e.devTotalMotivos&&e.devTotalMotivos.length?'\n   Motivo(s) gerais: '+fmtMotivos(e.devTotalMotivos):'')
+      +(e.devTotalProc?'\n   Devolução: *'+e.devTotalProc+'*':'')
+      // Mesmo em devolução total, mostra os cortes analisados (é onde ficam os motivos)
+      +(e.devList&&e.devList.length?'\n\n'+e.devList.map(corteLinha).join('\n\n'):'')
+    :(e.devList&&e.devList.length
+    ?e.devList.map(corteLinha).join('\n\n')
+    :'Não especificado');
+  let t='🔴🔄 *DEVOLUÇÃO DE ALTO VOLUME (Acima de 3 tons)* 🔄🔴'
+    +'\n*Data:* '+fmt(e.data)
+    +'\n*Cliente:* '+e.cliente
+    +'\n*Unidade emissora NF:* '+e.sif
+    +'\n---------------------'
+    +'\n*Corte(s):*\n'+cortes
+    +'\n---------------------'
+    +'\n*Volume total:* '+volTon+' ton'
+    +'\n*Temperatura produtos:* '+tempC(e.prodtemp)
+    +'\n*Temperatura Termógrafo:* '+tempC(e.termtemp)
+    +'\n*Acompanhamento:* '+(e.presencial?'Presencial':'Remoto');
+  if(e.obs){
+    t+='\n═════════════════════'
+      +'\n🚨 *ATENÇÃO — OBSERVAÇÃO* 🚨'
+      +'\n_'+e.obs+'_'
+      +'\n═════════════════════';
+  }
+  return t;
+}
+
+function copiar(tid,bid){
+  const el=document.getElementById(tid);
+  const txt=el.textContent;
+  const b=document.getElementById(bid);
+  const orig=b.textContent;
+  if(navigator.clipboard&&location.protocol==='https:'){
+    navigator.clipboard.writeText(txt).then(()=>{
+      b.textContent='Copiado! ✓';
+      setTimeout(()=>b.textContent=orig,2500);
+    });
+  } else {
+    // Fallback: seleciona o texto para copiar manualmente
+    const range=document.createRange();
+    range.selectNodeContents(el);
+    const sel=window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    try{
+      document.execCommand('copy');
+      b.textContent='Copiado! ✓';
+      setTimeout(()=>b.textContent=orig,2500);
+    } catch(e){
+      b.textContent='Selecione e copie (Ctrl+C)';
+      setTimeout(()=>b.textContent=orig,3000);
+    }
+  }
+}
+
+async function verificarDuplicata(sif, nf, tecnico){
+  if(!SHEETS_URL) return {exists:false};
+  try{
+    const url=SHEETS_URL+'?sif='+encodeURIComponent(sif)+'&nf='+encodeURIComponent(nf)+'&tecnico='+encodeURIComponent(tecnico);
+    const resp=await fetch(url);
+    const txt=await resp.text();
+    return JSON.parse(txt);
+  } catch(err){ return {exists:false}; }
+}
+
+async function enviarSheets(e, mode, row){
+  if(!SHEETS_URL) return;
+  try{
+    const d={
+      id:String(e.id), _mode:mode, _row:row||null,
+      data:fmt(e.data), tecnico:e.tecnico, cliente:e.cliente,
+      codterceiro:e.codterceiro, sif:e.sif, nf:e.nf, placa:e.placa, lacre:e.lacre,
+      local:e.local, tipo:e.tipo, atendimento:e.atendimento,
+      termTermografo:e.termtemp, tempProduto:e.prodtemp,
+      tempFora:e.tempFora?'Sim':'Não', presencial:e.presencial?'Sim':'Não',
+      volTotalNF:e.volNF, valorNF:e.valNF,
+      volDevolvido:e.volDev, volRecebido:e.volRec, volRestricaoKg:e.volRestKg||0,
+      volRevertido:e.volRev, reversao:e.reversao, reversaoCortesMotivos:e.reversaoCortesMotivos||'',
+      devprocedente:e.devprocedente, devTotalNF:e.devTotalNF?'Sim':'Não', restTotalNF:e.restTotalNF?'Sim':'Não',
+      status:e.status, obs:e.obs,
+      dataprod:e.dataprod, altoVolume:e.alto?'Sim':'Não',
+      qtdDev:e.devList?e.devList.length:0,
+      qtdRest:e.restList?e.restList.length:0,
+      qtdConforme:e.okList?e.okList.length:0,
+      recebidosConformes:e.okList?e.okList.map(x=>x.produto+'|SIF:'+x.sif+'|'+x.caixas+'cx|'+x.kg+'kg').join(' // '):'',
+      devoluções:e.devTotalNF?'DEVOLUÇÃO TOTAL DA NF|Motivos:'+fmtMotivos(e.devTotalMotivos)+'|'+(e.devTotalProc||'N/A')+(e.devList&&e.devList.length?' // '+e.devList.map(x=>x.produto+'|SIF:'+x.sif+'|Av:'+x.avaliado+'|Pb:'+x.problema+'|Inc:'+x.incidencia+'|'+x.caixas+'cx|'+x.kg+'kg|'+x.motivo).join(' // '):''):(e.devList?e.devList.map(x=>x.produto+'|SIF:'+x.sif+'|Av:'+x.avaliado+'|Pb:'+x.problema+'|Inc:'+x.incidencia+'|'+x.caixas+'cx|'+x.kg+'kg|'+x.motivo).join(' // '):''),
+      produto_dev:e.devTotalNF?'NF COMPLETA (TOTAL)':(e.devList?e.devList.map(x=>x.produto).join(' // '):''),
+      motivo_dev:e.devTotalNF?(fmtMotivos(e.devTotalMotivos)+(e.devList&&e.devList.length?' // '+e.devList.map(x=>x.motivo).join(' // '):'')):(e.devList?e.devList.map(x=>x.motivo).join(' // '):''),
+      restricoes:e.restTotalNF?'RESTRIÇÃO TOTAL DA NF|Motivos:'+fmtMotivos(e.restTotalMotivos)+'|'+(e.restTotalProc||'N/A'):(e.restList?e.restList.map(x=>x.produto+'|SIF:'+x.sif+'|Av:'+x.avaliado+'|Pb:'+x.problema+'|Inc:'+x.incidencia+'|'+x.caixas+'cx|'+x.kg+'kg|Motivo:'+x.motivo+'|Tipo:'+(x.tipoDev||'Parcial')+'|'+(x.restProcedente||'N/A')).join(' // '):''),
+      // Novos campos para dashboard
+      estadoCliente:e.estadoCliente||'', cidadeCliente:e.cidadeCliente||'',
+      localReclamacao:e.localReclamacao||'', tipoItem:e.tipoItem||'',
+      rest1RecebimentoRestricao:e.rest1yn||'Não', rest1MotivoRestricao:e.rest1motivo||'', rest1DetalheRestricao:e.rest1detalhe||'',
+      rest2RecebimentoRestricao:e.rest2yn||'Não', rest2MotivoRestricao:e.rest2motivo||'', rest2DetalheRestricao:e.rest2detalhe||'',
+      restricaoProcedente:e.restProcedente||'',
+      criadoEm:e.criadoEm||'', criadoPor:e.criadoPor||''
+    };
+    await fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
+  } catch(err){ console.warn('Sheets offline'); }
+}
+
+let registrando=false;
+async function registrar(){
+  if(registrando) return;  // bloqueia clique duplo
+  registrando=true;
+  const btnReg=document.getElementById('btn-registrar');
+  if(btnReg){btnReg.disabled=true;btnReg.style.opacity='0.6';btnReg.textContent='Registrando... aguarde';}
+  try{
+    await _registrarInterno();
+  } finally {
+    registrando=false;
+    if(btnReg){btnReg.disabled=false;btnReg.style.opacity='1';btnReg.textContent='Registrar e gerar resumo';}
+  }
+}
+
+async function _registrarInterno(){
+  const sif=g('f-sif-unid');
+  const nf=g('f-nf');
+
+  // Valida campos obrigatórios
+  const tecnico=g('f-tecnico');
+  const cliente=g('f-cliente');
+  const sifUnid=sif.trim();
+
+  if(!tecnico.trim()){
+    const el=document.getElementById('f-tecnico');
+    if(el){el.style.borderColor='var(--red)';}
+    document.getElementById('tec-aviso').style.display='block';
+    if(curStep!==0) irPasso(0);
+    return;
+  }
+  if(!cliente.trim()){
+    const el=document.getElementById('f-cliente');
+    if(el){el.style.borderColor='var(--red)';el.focus();}
+    document.getElementById('cli-aviso').style.display='block';
+    if(curStep!==0) irPasso(0);
+    return;
+  }
+  if(!sifUnid){
+    const el=document.getElementById('f-sif-unid');
+    if(el){el.style.borderColor='var(--red)';el.focus();}
+    document.getElementById('sif-aviso').style.display='block';
+    if(curStep!==0) irPasso(0);
+    return;
+  }
+  if(!nf.trim()){
+    const el=document.getElementById('f-nf');
+    if(el){el.style.borderColor='var(--red)';}
+    document.getElementById('nf-aviso').style.display='block';
+    // Sem NF: gera os resumos mas NÃO envia ao Sheets nem salva no histórico.
+    // O rascunho permanece para o técnico completar a NF depois.
+    const sifNumSN=SIF_MAP[sif.toUpperCase()]||'';
+    const sifFmtSN=sif+(sifNumSN?'/'+sifNumSN:'');
+    const abrDSN=g('f-abr-dev'), abrRSN=g('f-abr-rest');
+    const devSCSN=abrDSN==='total'&&chk('f-dev-sem-cortes');
+    const eSN={
+      id:0, data:g('f-data'), tecnico:g('f-tecnico'), cliente:g('f-cliente'),
+      codterceiro:g('f-codterceiro'), tipo:g('f-tipo'), sif:sifFmtSN, nf:'(NF pendente)',
+      placa:g('f-placa'), lacre:g('f-lacre'),
+      termnum:g('f-termnum'), termtemp:g('f-termtemp'),
+      prodtemp:g('f-prodtemp').trim(),
+      padrao:parseFloat(g('f-padrao'))||0,
+      tempFora:false, presencial:!chk('f-presencial'),
+      local:g('f-local'), status:g('f-status'), obs:g('f-obs'),
+      atendimento:g('f-atendimento'), dataprod:g('f-dataprod'),
+      volNF:parseKgBR(g('f-vol-nf')), valNF:g('f-val-nf'),
+      volDev:parseKgBR(g('f-vol-dev')), volRec:parseKgBR(g('f-vol-rec')),
+      volRev:parseKgBR(g('f-vol-rev')), reversao:g('f-reversao'),
+      devprocedente:g('f-devprocedente'),
+      devTotalNF:abrDSN==='total', restTotalNF:abrRSN==='total', devSemCortes:devSCSN,
+      abrDev:abrDSN, abrRest:abrRSN,
+      devTotalMotivos:(abrDSN==='total'&&devSCSN)?getMotivos('devtotmo'):[],
+      restTotalMotivos:abrRSN==='total'?getMotivos('resttotmo'):[],
+      devTotalProc:abrDSN==='total'?g('f-devtot-proc'):'',
+      restTotalProc:abrRSN==='total'?g('f-resttot-proc'):'',
+      devList:abrDSN==='na'||devSCSN?[]:getItems('dev',devIds),
+      restList:abrRSN==='parcial'?getItems('rest',restIds):[],
+      okList:getItemsOk(),
+      alto:(parseKgBR(g('f-vol-dev')))>=3000,
+      volRestKg:abrRSN==='total'?parseKgBR(g('f-vol-nf')):getItems('rest',restIds).reduce((s,x)=>s+(x.kg||0),0),
+      estadoCliente:g('f-estado-cliente'), cidadeCliente:g('f-cidade-cliente'),
+      localReclamacao:g('f-local-reclamacao'), tipoItem:g('f-tipo-item'),
+      rest1yn:'', rest1motivo:'', rest1detalhe:'', rest2yn:'', rest2motivo:'', rest2detalhe:'',
+      restProcedente:'', criadoEm:'', criadoPor:g('f-tecnico')
+    };
+    document.getElementById('res-texto').textContent=gerarTexto(eSN);
+    document.getElementById('res-box').style.display='block';
+    if(eSN.alto){
+      document.getElementById('alerta-texto').textContent=gerarAlerta(eSN);
+      document.getElementById('alerta-box').style.display='block';
+    } else { document.getElementById('alerta-box').style.display='none'; }
+    document.getElementById('panorama-texto').textContent=gerarPanorama(eSN);
+    document.getElementById('panorama-box').style.display='block';
+    document.getElementById('nf-aviso').innerHTML='⚠️ <strong>Nota Fiscal obrigatória para salvar no Sheets.</strong> Resumos gerados — preencha a NF e clique em "Registrar" novamente para salvar.';
+    if(curStep!==2) irPasso(2);
+    window.scrollTo(0,0);
+    return;
+  }
+
+  // Normaliza as chaves para comparação.
+  // IMPORTANTE: a planilha grava o SIF já formatado (SIGLA/Número). A chave de
+  // comparação precisa usar o MESMO formato — senão a duplicata nunca é
+  // encontrada e o lançamento é inserido de novo (gerando linhas repetidas).
+  const sifKeyNum=SIF_MAP[sif.toUpperCase()]||'';
+  const sifKey=(sif+(sifKeyNum?'/'+sifKeyNum:'')).trim();
+  const nfKey=nf.trim();
+  const tecnicoKey=g('f-tecnico').trim();
+
+  // Monta o objeto entrega
+  const abrDevSel=g('f-abr-dev'), abrRestSel=g('f-abr-rest');
+  const devSemCortes=abrDevSel==='total'&&chk('f-dev-sem-cortes');
+  const devList=(abrDevSel==='na'||devSemCortes)?[]:getItems('dev',devIds);
+  const restList=abrRestSel==='parcial'?getItems('rest',restIds):[];
+  const okList=getItemsOk();
+  // Aviso: itens de devolução/restrição lançados sem o produto selecionado
+  const semProduto=[...devList,...restList].filter(x=>x.produto==='(produto não informado)').length;
+  if(semProduto){
+    if(!confirm('⚠️ Há '+semProduto+' item de devolução/restrição sem o PRODUTO selecionado.\n\nNo resumo ele vai aparecer como "(produto não informado)".\n\nOK = registrar assim mesmo\nCancelar = voltar e selecionar o produto')) return;
+  }
+  // prodtemp guardado como texto para suportar intervalos ("ex: -0,4 a 1,6")
+  const prodtempTxt = g('f-prodtemp').trim();
+  // Para tempFora, extrai todos os números do texto e compara o maior com o padrão
+  const padrao=parseFloat(g('f-padrao'));
+  const prodtempNums = [...prodtempTxt.matchAll(/-?[\d]+[,\.]?[\d]*/g)].map(m=>parseFloat(m[0].replace(',','.'))).filter(n=>!isNaN(n));
+  const prodtempMax = prodtempNums.length ? Math.max(...prodtempNums) : NaN;
+  const tempFora = !isNaN(prodtempMax) && prodtempMax > padrao;
+  const prodtemp = prodtempTxt; // armazena o texto completo (ex: "-0,4 a 1,6")
+  const volDev=parseKgBR(g('f-vol-dev'));
+  const volRec=parseKgBR(g('f-vol-rec'));
+
+  // SIF padronizado: SIGLA/NúmeroSIF
+  const sifNum=SIF_MAP[sif.toUpperCase()]||'';
+  const sifFormatado=sif+(sifNum?'/'+sifNum:'');
+
+  const abrDev=abrDevSel==='total';
+  const abrRest=abrRestSel==='total';
+  const devTotalMotivos=(abrDev&&devSemCortes)?getMotivos('devtotmo'):[];
+  const restTotalMotivos=abrRest?getMotivos('resttotmo'):[];
+  const devTotalProc=abrDev?g('f-devtot-proc'):'';
+  const restTotalProc=abrRest?g('f-resttot-proc'):'';
+
+  // Volume total recebido em restrição (kg): soma os itens parciais de restrição,
+  // ou usa o volume total da NF quando a restrição é da NF inteira.
+  const volRestKg=abrRest?parseKgBR(g('f-vol-nf')):restList.reduce((s,x)=>s+(x.kg||0),0);
+
+  // presencial: o checkbox diz "Descarga NÃO acompanhada" — quando marcado = NÃO presencial
+  // portanto presencial = !checkbox
+  const naoPresencial = chk('f-presencial');
+
+  const e={
+    id:Date.now(), data:g('f-data'), tecnico:g('f-tecnico'), cliente:g('f-cliente'),
+    codterceiro:g('f-codterceiro'),
+    tipo:g('f-tipo'), sif:sifFormatado, nf, placa:g('f-placa'), lacre:g('f-lacre'),
+    termnum:g('f-termnum'), termtemp:g('f-termtemp'), prodtemp, padrao, tempFora,
+    presencial:!naoPresencial,
+    local:g('f-local'), status:g('f-status'), obs:g('f-obs'), email:chk('f-email'),
+    atendimento:g('f-atendimento'), dataprod:g('f-dataprod'),
+    volNF:parseKgBR(g('f-vol-nf')), valNF:g('f-val-nf'),
+    volDev, volRec, volRev:parseKgBR(g('f-vol-rev')),
+    reversao:g('f-reversao'), reversaoCortesMotivos:g('f-reversao-cortes'),
+    devprocedente:(abrDev&&devTotalProc)?devTotalProc:g('f-devprocedente'),
+    devTotalNF:abrDev, restTotalNF:abrRest, devSemCortes,
+    abrDev:abrDevSel, abrRest:abrRestSel,
+    devTotalMotivos, restTotalMotivos, devTotalProc, restTotalProc,
+    devList, restList, okList, alto:volDev>=3000, volRestKg,
+    // Novos campos para dashboard
+    estadoCliente:g('f-estado-cliente'), cidadeCliente:g('f-cidade-cliente'),
+    localReclamacao:g('f-local-reclamacao'), tipoItem:g('f-tipo-item'),
+    rest1yn:'', rest1motivo:'', rest1detalhe:'',
+    rest2yn:'', rest2motivo:'', rest2detalhe:'',
+    restProcedente:(abrRest&&restTotalProc)?restTotalProc:'',
+    criadoEm:new Date().toLocaleString('pt-BR'), criadoPor:g('f-tecnico')
+  };
+
+  // Espelho no formato do rascunho — permite reabrir e editar este lançamento depois
+  e._draft = construirDraft();
+
+  // Verifica duplicata no Sheets
+  let mode='insert', existingRow=null;
+  if(sifKey && nfKey){
+    const check=await verificarDuplicata(sifKey, nfKey, '');
+    if(check.exists){
+      const escolha=confirm(
+        '⚠️ Atenção!\n\nJá existe um registro com:\nSIF: '+sif+'\nNF: '+nf+
+        '\n\nDeseja ATUALIZAR o registro existente?\n\nOK = Atualizar\nCancelar = Cancelar o envio'
+      );
+      if(!escolha) return;
+      mode='update';
+      existingRow=check.row;
+      const dados=getData();
+      const existente=dados.find(x=>x.sif.trim()===sifKey&&x.nf.trim()===nfKey);
+      if(existente) e.id=existente.id;
+    }
+  }
+
+  // Salva localmente (atualiza se já existe)
+  const dados=getData();
+  const idx=dados.findIndex(x=>x.sif.trim()===sifKey&&x.nf.trim()===nfKey);
+  if(idx>=0) dados[idx]=e; else dados.push(e);
+  save(dados);
+
+  // Envia para Sheets
+  enviarSheets(e, mode, existingRow);
+
+  // Mostra resumos
+  document.getElementById('res-texto').textContent=gerarTexto(e);
+  document.getElementById('res-box').style.display='block';
+  if(e.alto){
+    document.getElementById('alerta-texto').textContent=gerarAlerta(e);
+    document.getElementById('alerta-box').style.display='block';
+  } else {
+    document.getElementById('alerta-box').style.display='none';
+  }
+  document.getElementById('panorama-texto').textContent=gerarPanorama(e);
+  document.getElementById('panorama-box').style.display='block';
+
+  // Disponibiliza os dados de identificação para a aba Quebra de peso
+  ultimoRegistro={
+    tecnico:e.tecnico, cliente:e.cliente, codterceiro:e.codterceiro,
+    sif:sif, nf:e.nf, placa:e.placa, lacre:e.lacre, data:e.data
+  };
+  document.getElementById('quebra-prompt-sel').value='';
+  document.getElementById('quebra-prompt-btn').style.display='none';
+  document.getElementById('quebra-prompt-box').style.display='block';
+
+  limparRascunho();
+  const eb=document.getElementById('edit-banner');
+  if(eb) eb.remove();
+  window.scrollTo(0,0);
+}
+
+let ultimoRegistro=null;
+function qPromptToggle(){
+  const v=document.getElementById('quebra-prompt-sel').value;
+  document.getElementById('quebra-prompt-btn').style.display=v==='Sim'?'block':'none';
+}
+function qIrComDados(){
+  if(ultimoRegistro){
+    qPendente=ultimoRegistro;
+  }
+  showView('quebra', document.querySelectorAll('.nav-btn')[2]);
+}
+
+function renderDash(){
+  const dias=parseInt(document.getElementById('dash-periodo').value);
+  let dados=getData();
+  if(dias){const c=new Date();c.setDate(c.getDate()-dias);dados=dados.filter(e=>new Date(e.data)>=c);}
+  const tv=dados.reduce((s,e)=>s+(e.volDev||0),0);
+  const tf=dados.filter(e=>e.tempFora).length;
+  const ta=dados.filter(e=>e.alto).length;
+  document.getElementById('m-total').textContent=dados.length;
+  document.getElementById('m-vol').textContent=tv.toLocaleString('pt-BR',{maximumFractionDigits:0})+' kg';
+  document.getElementById('m-temp').textContent=tf;
+  document.getElementById('m-alertas').textContent=ta;
+  if(!dados.length)return;
+  const bd={};dados.forEach(e=>{if(e.data)bd[e.data]=(bd[e.data]||0)+(e.volDev||0);});
+  const lb=Object.keys(bd).sort();
+  if(cvol)cvol.destroy();
+  cvol=new Chart(document.getElementById('chart-vol'),{type:'bar',data:{labels:lb.map(fmt),datasets:[{data:lb.map(l=>bd[l]),backgroundColor:'#14274E80',borderColor:'#14274E',borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  const mc={};dados.forEach(e=>{[...(e.devList||[]),...(e.restList||[])].forEach(x=>{if(x.motivo)mc[x.motivo]=(mc[x.motivo]||0)+1;});[...(e.devTotalMotivos||[]),...(e.restTotalMotivos||[])].forEach(m=>{const k=m.mot+(m.det?' — '+m.det:'');if(k)mc[k]=(mc[k]||0)+1;});});
+  const me=Object.entries(mc).sort((a,b)=>b[1]-a[1]);
+  const mw=document.getElementById('chart-motivos-wrap');
+  document.getElementById('sem-motivos').style.display=me.length?'none':'block';
+  mw.style.display=me.length?'block':'none';
+  if(me.length){mw.style.height=Math.max(160,me.length*36+40)+'px';if(cmot)cmot.destroy();cmot=new Chart(document.getElementById('chart-motivos'),{type:'bar',data:{labels:me.map(e=>e[0]),datasets:[{data:me.map(e=>e[1]),backgroundColor:'#2d6a4f99',borderColor:'#2d6a4f',borderWidth:1}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});}
+  const cm={};dados.forEach(e=>{[...(e.devList||[]),...(e.restList||[])].forEach(x=>{if(!x.produto||!x.avaliado)return;if(!cm[x.produto])cm[x.produto]={t:0,p:0,o:0};cm[x.produto].t+=x.avaliado;cm[x.produto].p+=x.problema;cm[x.produto].o++;});});
+  const cr=Object.entries(cm).map(([k,v])=>({k,pct:v.t>0?v.p/v.t*100:0,...v})).sort((a,b)=>b.pct-a.pct);
+  const bg=p=>p>10?'var(--red-bg)':p>5?'var(--amber-bg)':'var(--green-bg)';
+  const tc=p=>p>10?'var(--red-text)':p>5?'var(--amber-text)':'var(--green-text)';
+  document.getElementById('tbl-cortes').innerHTML=cr.length?'<table><thead><tr><th>Produto</th><th>Aval.</th><th>Prob.</th><th>%</th></tr></thead><tbody>'+cr.map(r=>'<tr><td style="font-size:11px;max-width:130px;word-break:break-word">'+r.k+'</td><td>'+r.t+'</td><td>'+r.p+'</td><td><span style="background:'+bg(r.pct)+';color:'+tc(r.pct)+';padding:2px 7px;border-radius:20px;font-size:11px">'+r.pct.toFixed(1)+'%</span></td></tr>').join('')+'</tbody></table>':'<div class="empty-state">Sem dados ainda</div>';
+  const ct={};dados.forEach(e=>{const t=e.tecnico||'N/I';if(!ct[t])ct[t]={r:0,v:0,tf:0};ct[t].r++;ct[t].v+=e.volDev||0;if(e.tempFora)ct[t].tf++;});
+  const tr2=Object.entries(ct).sort((a,b)=>b[1].v-a[1].v);
+  document.getElementById('tbl-tecnicos').innerHTML=tr2.length?'<table><thead><tr><th>Técnico</th><th>Reg.</th><th>Vol. dev.</th><th>Temp.</th></tr></thead><tbody>'+tr2.map(([t,d])=>'<tr><td>'+t+'</td><td>'+d.r+'</td><td>'+d.v.toLocaleString('pt-BR',{maximumFractionDigits:0})+' kg</td><td>'+(d.tf>0?'<span class="badge badge-danger">'+d.tf+'</span>':'<span class="badge badge-ok">0</span>')+'</td></tr>').join('')+'</tbody></table>':'<div class="empty-state">Sem dados</div>';
+  const cc={};dados.forEach(e=>{const c=e.cliente||'N/I';if(!cc[c])cc[c]={v:0,al:0,n:0};cc[c].n++;cc[c].v+=e.volDev||0;if(e.alto)cc[c].al++;});
+  const cr2=Object.entries(cc).sort((a,b)=>b[1].v-a[1].v);
+  document.getElementById('tbl-clientes').innerHTML=cr2.length?'<table><thead><tr><th>Cliente</th><th>Vis.</th><th>Vol. dev.</th><th>Alertas</th></tr></thead><tbody>'+cr2.map(([c,d])=>'<tr><td style="max-width:120px;word-break:break-word">'+c+'</td><td>'+d.n+'</td><td>'+d.v.toLocaleString('pt-BR',{maximumFractionDigits:0})+' kg</td><td>'+(d.al>0?'<span class="badge badge-warn">'+d.al+'</span>':'—')+'</td></tr>').join('')+'</tbody></table>':'<div class="empty-state">Sem dados</div>';
+}
+
+function renderHist(){
+  let d=getData().slice().reverse();
+  const w=document.getElementById('hist-lista');
+  const buscaEl=document.getElementById('hist-busca');
+  const q=buscaEl?buscaEl.value.trim().toLowerCase():'';
+  if(q){
+    d=d.filter(e=>[e.nf,e.sif,e.cliente,e.tecnico].some(v=>String(v||'').toLowerCase().includes(q)));
+  }
+  if(!d.length){w.innerHTML='<div class="empty-state">'+(q?'Nenhum registro encontrado para essa busca.':'Nenhum registro ainda.')+'</div>';return;}
+  w.innerHTML=d.map(e=>'<div class="section" style="margin-bottom:10px">'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:8px">'
+    +'<div><div style="font-size:14px;font-weight:500">'+(e.cliente||'—')+'</div>'
+    +'<div style="font-size:12px;color:var(--text2)">'+fmt(e.data)+' · '+(e.tecnico||'—')+'</div>'
+    +'<div style="font-size:12px;color:var(--text2)">NF '+(e.nf||'—')+' · SIF '+(e.sif||'—')+'</div></div>'
+    +'<div>'+(e.alto?'<span class="badge badge-danger">+3 ton</span>':'')+(e.tempFora?'<span class="badge badge-warn" style="margin-left:4px">Temp.</span>':'')+'</div></div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button class="btn-outline" style="font-size:12px;margin-top:0;flex:1" onclick="verRes('+e.id+',\'resumo\')">📋 Resumo WhatsApp</button>'
+    +'<button class="btn-outline" style="font-size:12px;margin-top:0;flex:1" onclick="verRes('+e.id+',\'panorama\')">📊 Panorama</button>'
+    +'</div>'
+    +'<button class="btn-outline" style="font-size:12px;margin-top:8px;width:100%" onclick="editarLancamento('+e.id+')">✏️ Editar lançamento</button>'
+    +(e.alto?'<button class="btn-outline" style="font-size:12px;margin-top:8px;width:100%;border-color:#fca5a5;color:var(--red-text);background:var(--red-bg)" onclick="verRes('+e.id+',\'alerta\')">🔴 Alerta — Devolução +3 ton</button>':'')
+    +'</div>'
+  ).join('');
+}
+
+// ─── EDIÇÃO DE UM LANÇAMENTO JÁ REGISTRADO ────────────────────────────────────
+function editarLancamento(id){
+  const e=getData().find(x=>x.id===id);
+  if(!e){alert('Lançamento não encontrado.');return;}
+  // Vai para a aba de Registro
+  showView('form', document.querySelector('.nav-btn'));
+  // Limpa as listas dinâmicas para os itens não se acumularem
+  ['dev-lista','rest-lista','ok-lista','motivos-wrap-devtotmo','motivos-wrap-resttotmo'].forEach(cid=>{
+    const c=document.getElementById(cid); if(c) c.innerHTML='';
+  });
+  devIds=[]; restIds=[]; okIds=[];
+  if(e._draft){
+    _aplicarRascunho(e._draft);
+  } else {
+    // Registros criados antes desta função não têm o espelho: recupera o básico
+    const map={'f-tecnico':e.tecnico,'f-cliente':e.cliente,'f-nf':e.nf,
+               'f-sif-unid':String(e.sif||'').split('/')[0],'f-data':e.data,
+               'f-placa':e.placa,'f-lacre':e.lacre,'f-obs':e.obs,'f-codterceiro':e.codterceiro};
+    Object.entries(map).forEach(([k,v])=>{const el=document.getElementById(k);if(el&&v!=null)el.value=v;});
+    alert('Este lançamento foi criado antes da função de edição, então recuperei só os campos principais. Confira tudo (produtos, volumes e motivos) antes de regravar.');
+  }
+  mostrarBannerEdicao(e);
+  if(typeof irPasso==='function') irPasso(0);
+  window.scrollTo(0,0);
+}
+
+function mostrarBannerEdicao(e){
+  const antigo=document.getElementById('edit-banner');
+  if(antigo) antigo.remove();
+  const vf=document.getElementById('view-form');
+  const b=document.createElement('div');
+  b.id='edit-banner';
+  b.style.cssText='background:var(--amber-bg,#fef3c7);border:1px solid var(--yellow,#d97706);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:var(--amber-text,#92400e);display:flex;justify-content:space-between;align-items:center;gap:8px';
+  b.innerHTML='<span>✏️ <strong>Editando</strong> a entrega da NF '+(e.nf||'—')+' · SIF '+(e.sif||'—')+'. Ao tocar em <strong>Registrar</strong>, o lançamento existente será atualizado (não cria um novo).</span>'
+    +'<button onclick="cancelarEdicao()" style="background:none;border:1px solid var(--yellow,#d97706);border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;color:inherit;white-space:nowrap">Cancelar</button>';
+  vf.insertBefore(b, vf.firstChild);
+}
+
+function cancelarEdicao(){
+  const b=document.getElementById('edit-banner');
+  if(b) b.remove();
+  showView('hist', document.querySelectorAll('.nav-btn')[2]);
+}
+
+function verRes(id, tipo){
+  const e=getData().find(x=>x.id===id);if(!e)return;
+  const titulo=tipo==='panorama'?'Panorama':(tipo==='alerta'?'Alerta — Devolução +3 ton':'Resumo WhatsApp');
+  const texto=tipo==='panorama'?gerarPanorama(e):(tipo==='alerta'?gerarAlerta(e):gerarTexto(e));
+  const corBtn=tipo==='panorama'?'#b45309':(tipo==='alerta'?'#c0392b':'#2d6a4f');
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end';
+  overlay.innerHTML=
+    '<div style="background:#fff;width:100%;max-height:85vh;overflow-y:auto;border-radius:12px 12px 0 0;padding:20px">'
+    +'<div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#9b9a95;margin-bottom:10px">'+titulo+'</div>'
+    +'<textarea id="modal-texto" style="width:100%;font-family:Courier New,monospace;font-size:12px;line-height:1.7;white-space:pre-wrap;border:1px solid #D2D9E6;border-radius:8px;padding:10px;resize:vertical;min-height:260px;color:#14274E;background:#DCE2ED;outline:none">'+texto.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</textarea>'
+    +'<button onclick="(function(btn){const ta=document.getElementById(\'modal-texto\');const txt=ta.value;if(navigator.clipboard&&location.protocol===\'https:\'){navigator.clipboard.writeText(txt).then(()=>{btn.textContent=\'Copiado! ✓\';setTimeout(()=>btn.textContent=\'Copiar para WhatsApp\',2500);})}else{ta.select();try{document.execCommand(\'copy\');btn.textContent=\'Copiado! ✓\';setTimeout(()=>btn.textContent=\'Copiar para WhatsApp\',2500);}catch(ex){}}})(this)" style="width:100%;padding:12px;background:'+corBtn+';color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin-top:10px;margin-bottom:8px;font-family:'Inter',sans-serif">Copiar para WhatsApp</button>'
+    +'<button onclick="this.parentElement.parentElement.remove()" style="width:100%;padding:10px;background:transparent;border:1px solid #D2D9E6;border-radius:8px;font-size:14px;cursor:pointer;font-family:'Inter',sans-serif">Fechar</button>'
+    +'</div>';
+  document.body.appendChild(overlay);
+}
+
+function exportarExcel(){
+  const d=getData();if(!d.length){alert('Sem dados.');return;}
+  const rows=d.map(e=>({'Data':fmt(e.data),'Técnico':e.tecnico,'Cliente':e.cliente,'Cód. Terceiro':e.codterceiro,'SIF':e.sif,'NF':e.nf,'Placa':e.placa,'Lacre':e.lacre,'Local':e.local,'Tipo':e.tipo,'Atendimento':e.atendimento,'Temp Termógrafo':e.termtemp,'Temp Produto':e.prodtemp,'Temp Fora':e.tempFora?'Sim':'Não','Presencial':e.presencial?'Sim':'Não','Vol NF':e.volNF,'Valor NF':e.valNF,'Vol Dev':e.volDev,'Vol Rec':e.volRec,'Vol Restrição (kg)':e.volRestKg||0,'Vol Rev':e.volRev,'Reversão':e.reversao,'Reversão Sem Restrição - Cortes e Motivos':e.reversaoCortesMotivos||'','Devolução':e.devprocedente,'Status':e.status,'Obs':e.obs,'Data Produção':e.dataprod,'Alto Volume':e.alto?'Sim':'Não','Qtd Dev':e.devList?e.devList.length:0,'Qtd Rest':e.restList?e.restList.length:0,'Qtd Conforme':e.okList?e.okList.length:0,'Recebidos Conformes':e.okList?e.okList.map(x=>x.produto+'|SIF:'+x.sif+'|'+x.caixas+'cx|'+x.kg+'kg').join(' // '):'','Dev Total NF':e.devTotalNF?'Sim':'Não','Rest Total NF':e.restTotalNF?'Sim':'Não','Devoluções':e.devTotalNF?'DEVOLUÇÃO TOTAL DA NF|Motivos:'+fmtMotivos(e.devTotalMotivos)+'|'+(e.devTotalProc||'N/A')+(e.devList&&e.devList.length?' // '+e.devList.map(x=>x.produto+'|SIF:'+x.sif+'|'+x.caixas+'cx|'+x.kg+'kg|'+x.motivo).join(' // '):''):(e.devList?e.devList.map(x=>x.produto+'|SIF:'+x.sif+'|'+x.caixas+'cx|'+x.kg+'kg|'+x.motivo).join(' // '):''),'Produto Dev':e.devTotalNF?('NF COMPLETA (TOTAL)'+(e.devList&&e.devList.length?': '+e.devList.map(x=>x.produto).join(' // '):'')):(e.devList?e.devList.map(x=>x.produto).join(' // '):''),'Motivo Dev':e.devTotalNF?(fmtMotivos(e.devTotalMotivos)+(e.devList&&e.devList.length?' // '+e.devList.map(x=>x.motivo).join(' // '):'')):(e.devList?e.devList.map(x=>x.motivo).join(' // '):''),'Restrições':e.restTotalNF?'RESTRIÇÃO TOTAL DA NF|Motivos:'+fmtMotivos(e.restTotalMotivos)+'|'+(e.restTotalProc||'N/A'):(e.restList?e.restList.map(x=>x.produto+'|SIF:'+x.sif+'|'+x.caixas+'cx|'+x.kg+'kg|'+x.motivo).join(' // '):''),'Estado Cliente':e.estadoCliente||'','Cidade Cliente':e.cidadeCliente||'','Local Reclamação':e.localReclamacao||'','Tipo de Item':e.tipoItem||'','Rest.1 Recebimento':e.rest1yn||'','Rest.1 Motivo':e.rest1motivo||'','Rest.1 Detalhe':e.rest1detalhe||'','Rest.2 Recebimento':e.rest2yn||'','Rest.2 Motivo':e.rest2motivo||'','Rest.2 Detalhe':e.rest2detalhe||'','Restrição Procedente':e.restProcedente||'','Criado em':e.criadoEm||'','Criado por':e.criadoPor||''}));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Atos de Entrega');
+  XLSX.writeFile(wb,'atos_entrega_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+function limpar(){
+  if(confirm('Apagar todos os registros? Esta ação não pode ser desfeita.')){localStorage.removeItem(KEY);renderHist();}
+}
+
+document.getElementById('f-data').valueAsDate=new Date();
+// Seletores de motivo para devolução/restrição TOTAL da NF
+document.getElementById('dev-total-motivos').innerHTML=motivoSel('devtotmo');
+document.getElementById('rest-total-motivos').innerHTML=motivoSel('resttotmo');
+// Mantém o "Devolução procedente?" do passo 4 em sincronia quando for total
+document.getElementById('f-devtot-proc').addEventListener('change',function(){
+  if(g('f-abr-dev')==='total'&&this.value)document.getElementById('f-devprocedente').value=this.value;
+});
+carregarProdutosSheets();
+
+// ─── RASCUNHO AUTOMÁTICO COMPLETO ─────────────────────────────────────────
+const DRAFT_KEY = 'ato_draft_v2';
+
+// Coleta todos os motivos dinâmicos de um item (dev/rest/ok)
+function coletarMotivos(baseId){
+  const wrap = document.getElementById('motivos-wrap-'+baseId);
+  if(!wrap) return [];
+  const blocos = wrap.querySelectorAll('[id^="motblk-'+baseId+'-"]');
+  return Array.from(blocos).map(blk=>{
+    const mid = blk.id.split('-').pop();
+    return {
+      mot: (document.getElementById(baseId+'-mot-'+mid)||{}).value||'',
+      det: (document.getElementById(baseId+'-det-'+mid)||{}).value||'',
+      av:  (document.getElementById(baseId+'-mav-'+mid)||{}).value||'',
+      pb:  (document.getElementById(baseId+'-mpb-'+mid)||{}).value||'',
+      ic:  (document.getElementById(baseId+'-mic-'+mid)||{}).value||'',
+      un:  (document.getElementById(baseId+'-mun-'+mid)||{}).value||'cx'
+    };
+  });
+}
+
+// Coleta todos os itens dinâmicos de devolução, restrição ou conformes
+function coletarItens(pfx, ids){
+  return ids.map(id=>({
+    id,
+    produto:  (document.getElementById(pfx+'p'+id)||{}).value||'',
+    produtoBusca: (document.getElementById(pfx+'s'+id)||{}).value||'',
+    su:   (document.getElementById(pfx+'su'+id)||{}).value||'',
+    sn:   (document.getElementById(pfx+'sn'+id)||{}).value||'',
+    nfcx: (document.getElementById(pfx+'nfcx'+id)||{}).value||'',
+    nfkg: (document.getElementById(pfx+'nfkg'+id)||{}).value||'',
+    cx:   (document.getElementById(pfx+'cx'+id)||{}).value||'',
+    kg:   (document.getElementById(pfx+'kg'+id)||{}).value||'',
+    td:   (document.getElementById(pfx+'td'+id)||{}).value||'',
+    rpr:  (document.getElementById(pfx+'rpr'+id)||{}).value||'',
+    motivos: coletarMotivos(pfx+'mo'+id)
+  }));
+}
+
+function coletarItensOk(ids){
+  return ids.map(id=>({
+    id,
+    produto: (document.getElementById('okp'+id)||{}).value||'',
+    produtoBusca: (document.getElementById('oks'+id)||{}).value||'',
+    su: (document.getElementById('oksu'+id)||{}).value||'',
+    sn: (document.getElementById('oksn'+id)||{}).value||'',
+    cx: (document.getElementById('okcx'+id)||{}).value||'',
+    kg: (document.getElementById('okkg'+id)||{}).value||''
+  }));
+}
+
+// Coleta motivos do bloco de devolução/restrição total
+function coletarMotivosTotal(baseId){
+  const wrap = document.getElementById('motivos-wrap-'+baseId);
+  if(!wrap) return [];
+  const blocos = wrap.querySelectorAll('[id^="motblk-'+baseId+'-"]');
+  return Array.from(blocos).map(blk=>{
+    const mid = blk.id.split('-').pop();
+    return {
+      mot: (document.getElementById(baseId+'-mot-'+mid)||{}).value||'',
+      det: (document.getElementById(baseId+'-det-'+mid)||{}).value||''
+    };
+  });
+}
+
+// Monta o objeto no formato do rascunho a partir do estado atual do formulário.
+// Usado tanto pelo rascunho automático quanto pelo "espelho" salvo em cada
+// lançamento, que permite reabrir e editar o registro depois.
+function construirDraft(){
+  const ids = ['f-tecnico','f-cliente','f-codterceiro','f-data','f-tipo','f-sif-unid',
+                'f-nf','f-placa','f-lacre','f-termnum','f-termtemp','f-prodtemp','f-padrao',
+                'f-local','f-status','f-atendimento','f-dataprod','f-obs',
+                'f-vol-nf','f-val-nf','f-vol-rev','f-reversao','f-reversao-cortes','f-devprocedente',
+                'f-abr-dev','f-abr-rest','f-devtot-proc','f-resttot-proc',
+                'f-estado-cliente','f-cidade-cliente','f-local-reclamacao','f-tipo-item'];
+  const chks = ['f-presencial','f-email','f-dev-sem-cortes'];
+  const draft = {};
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)draft[id]=el.value;});
+  chks.forEach(id=>{const el=document.getElementById(id);if(el)draft[id]=el.checked;});
+  draft._step = curStep;
+  draft._cnt = cnt;
+  draft._devIds = devIds;
+  draft._restIds = restIds;
+  draft._okIds = okIds;
+  // Salva itens dinâmicos
+  draft._devItens = coletarItens('dev', devIds);
+  draft._restItens = coletarItens('rest', restIds);
+  draft._okItens = coletarItensOk(okIds);
+  // Salva motivos dos totais
+  draft._devTotalMotivos = coletarMotivosTotal('devtotmo');
+  draft._restTotalMotivos = coletarMotivosTotal('resttotmo');
+  return draft;
+}
+
+function salvarRascunho(){
+  try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(construirDraft())); } catch(e){}
+}
+
+// Restaura motivos em um bloco dinâmico
+function restaurarMotivos(baseId, motivos){
+  if(!motivos||!motivos.length) return;
+  motivos.forEach(m=>{
+    addMotivo(baseId);
+    const wrap = document.getElementById('motivos-wrap-'+baseId);
+    if(!wrap) return;
+    const blocos = wrap.querySelectorAll('[id^="motblk-'+baseId+'-"]');
+    const blk = blocos[blocos.length-1];
+    if(!blk) return;
+    const mid = blk.id.split('-').pop();
+    const elMot = document.getElementById(baseId+'-mot-'+mid);
+    if(elMot){ elMot.value = m.mot; atualizarDetalhes(baseId, mid); }
+    const elDet = document.getElementById(baseId+'-det-'+mid);
+    if(elDet) elDet.value = m.det||'';
+    const elUn = document.getElementById(baseId+'-mun-'+mid);
+    if(elUn){ elUn.value = m.un||'cx'; atualizarUnidade(baseId, mid); }
+    const elAv = document.getElementById(baseId+'-mav-'+mid);
+    if(elAv) elAv.value = m.av||'';
+    const elPb = document.getElementById(baseId+'-mpb-'+mid);
+    if(elPb) elPb.value = m.pb||'';
+    const elIc = document.getElementById(baseId+'-mic-'+mid);
+    if(elIc) elIc.value = m.ic||'';
+  });
+}
+
+// Restaura os motivos do bloco de devolução/restrição TOTAL da NF
+// (mesma estrutura dinâmica do restaurarMotivos, mas só guarda mot+det,
+// que é o que coletarMotivosTotal salva)
+function restaurarMotivosTotal(baseId, motivos){
+  if(!motivos||!motivos.length) return;
+  motivos.forEach(m=>{
+    addMotivo(baseId);
+    const wrap = document.getElementById('motivos-wrap-'+baseId);
+    if(!wrap) return;
+    const blocos = wrap.querySelectorAll('[id^="motblk-'+baseId+'-"]');
+    const blk = blocos[blocos.length-1];
+    if(!blk) return;
+    const mid = blk.id.split('-').pop();
+    const elMot = document.getElementById(baseId+'-mot-'+mid);
+    if(elMot){ elMot.value = m.mot; atualizarDetalhes(baseId, mid); }
+    const elDet = document.getElementById(baseId+'-det-'+mid);
+    if(elDet) elDet.value = m.det||'';
+  });
+}
+
+// Restaura itens de devolução/restrição
+function restaurarItens(pfx, listaId, itens){
+  if(!itens||!itens.length) return;
+  itens.forEach(item=>{
+    // Força o uso do ID original do item
+    const id = item.id;
+    if(pfx==='dev'){ if(!devIds.includes(id)) devIds.push(id); }
+    else { if(!restIds.includes(id)) restIds.push(id); }
+    if(id >= cnt) cnt = id + 1;
+
+    const c = document.getElementById(listaId);
+    const d = document.createElement('div');
+    d.className='dev-item'; d.id=pfx+id;
+    const labelTipo = pfx==='rest'?'restrição':'devolução';
+    let html='<button class="dev-remove" onclick="rmItem(\''+pfx+id+'\',\''+pfx+'\','+id+')">×</button>'
+      +'<div class="field"><label>Produto (código ou nome)</label>'
+      +'<div class="search-wrapper">'
+      +'<input type="text" id="'+pfx+'s'+id+'" placeholder="Digite código ou nome..." oninput="busca(\''+pfx+'\','+id+')" autocomplete="off">'
+      +'<div class="search-results" id="'+pfx+'r'+id+'"></div></div></div>'
+      +'<input type="hidden" id="'+pfx+'p'+id+'" value="">'
+      +'<div class="row2">'
+      +'<div class="field"><label>Unidade (sigla)</label><input type="text" id="'+pfx+'su'+id+'" placeholder="ex: MZL" maxlength="5" oninput="this.value=this.value.toUpperCase();fillSIF(\''+pfx+'su'+id+'\',\''+pfx+'sn'+id+'\')"></div>'
+      +'<div class="field"><label>Nº SIF</label><input type="text" id="'+pfx+'sn'+id+'" placeholder="automático" readonly></div></div>'
+      +'<div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:10px 0 6px">Qtd do corte na NF</div>'
+      +'<div class="row2">'
+      +'<div class="field"><label>Caixas na NF</label><input type="number" min="0" id="'+pfx+'nfcx'+id+'" placeholder="cx"></div>'
+      +'<div class="field"><label>Peso na NF (kg)</label><input type="text" inputmode="text" id="'+pfx+'nfkg'+id+'" placeholder="kg" onblur="fmtKgInput(this)"></div>'
+      +'</div>'
+      +'<div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:10px 0 6px">Não conformidades</div>'
+      +'<div class="field">'+motivoSel(pfx+'mo'+id)+'</div>'
+      +'<div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:10px 0 6px">Quantidade '+(pfx==='rest'?'em restrição':'devolvida')+'</div>'
+      +'<div class="row2">'
+      +'<div class="field"><label>Caixas</label><input type="number" min="0" id="'+pfx+'cx'+id+'"></div>'
+      +'<div class="field"><label>Peso (kg)</label><input type="text" inputmode="text" id="'+pfx+'kg'+id+'" oninput="calcVolumes()" onblur="fmtKgInput(this);calcVolumes()"></div></div>'
+      +'<div class="field"><label>Tipo de '+(pfx==='rest'?'restrição':'devolução')+'</label>'
+      +'<select id="'+pfx+'td'+id+'" style="width:100%">'
+      +'<option value="Parcial">Parcial</option>'
+      +'<option value="Total do corte">Total do corte</option>'
+      +'</select></div>';
+    if(pfx==='rest'){
+      html+='<div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px">'
+        +'<div class="field"><label>Restrição procedente?</label>'
+        +'<select id="'+pfx+'rpr'+id+'" style="width:100%"><option value="">N/A</option><option value="Procedente">Procedente</option><option value="Improcedente">Improcedente</option></select></div>'
+        +'</div>';
+    }
+    d.innerHTML = html;
+    c.appendChild(d);
+
+    // Preenche os valores
+    const set = (eid, val)=>{ const el=document.getElementById(eid); if(el&&val!==undefined) el.value=val; };
+    set(pfx+'s'+id, item.produtoBusca);
+    set(pfx+'p'+id, item.produto);
+    set(pfx+'su'+id, item.su); fillSIF(pfx+'su'+id, pfx+'sn'+id);
+    set(pfx+'sn'+id, item.sn);
+    set(pfx+'nfcx'+id, item.nfcx);
+    set(pfx+'nfkg'+id, item.nfkg);
+    set(pfx+'cx'+id, item.cx);
+    set(pfx+'kg'+id, item.kg);
+    set(pfx+'td'+id, item.td);
+    if(pfx==='rest') set(pfx+'rpr'+id, item.rpr);
+    restaurarMotivos(pfx+'mo'+id, item.motivos);
+  });
+}
+
+function restaurarItensOk(itens){
+  if(!itens||!itens.length) return;
+  itens.forEach(item=>{
+    const id = item.id;
+    if(!okIds.includes(id)) okIds.push(id);
+    if(id >= cnt) cnt = id + 1;
+
+    const c = document.getElementById('ok-lista');
+    const d = document.createElement('div');
+    d.className='dev-item'; d.id='ok'+id;
+    d.innerHTML='<button class="dev-remove" onclick="rmItemOk('+id+')">×</button>'
+      +'<div class="field"><label>Produto (código ou nome)</label>'
+      +'<div class="search-wrapper">'
+      +'<input type="text" id="oks'+id+'" placeholder="Digite código ou nome..." oninput="busca(\'ok\','+id+')" autocomplete="off">'
+      +'<div class="search-results" id="okr'+id+'"></div></div></div>'
+      +'<input type="hidden" id="okp'+id+'" value="">'
+      +'<div class="row2">'
+      +'<div class="field"><label>Unidade (sigla)</label><input type="text" id="oksu'+id+'" placeholder="ex: MZL" maxlength="5" oninput="this.value=this.value.toUpperCase();fillSIF(\'oksu'+id+'\',\'oksn'+id+'\')"></div>'
+      +'<div class="field"><label>Nº SIF</label><input type="text" id="oksn'+id+'" placeholder="automático" readonly></div></div>'
+      +'<div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:10px 0 6px">Quantidade recebida</div>'
+      +'<div class="row2">'
+      +'<div class="field"><label>Caixas</label><input type="number" min="0" id="okcx'+id+'"></div>'
+      +'<div class="field"><label>Peso (kg)</label><input type="text" inputmode="text" id="okkg'+id+'" onblur="fmtKgInput(this)"></div></div>';
+    c.appendChild(d);
+
+    const set = (eid, val)=>{ const el=document.getElementById(eid); if(el&&val!==undefined) el.value=val; };
+    set('oks'+id, item.produtoBusca);
+    set('okp'+id, item.produto);
+    set('oksu'+id, item.su); fillSIF('oksu'+id, 'oksn'+id);
+    set('oksn'+id, item.sn);
+    set('okcx'+id, item.cx);
+    set('okkg'+id, item.kg);
+  });
+}
+
+function restaurarRascunho(){
+  let draft;
+  try{ draft=JSON.parse(localStorage.getItem(DRAFT_KEY)); }catch(e){return;}
+  if(!draft) return;
+  // Pergunta antes de restaurar
+  if(draft['f-cliente']||draft['f-nf']){
+    // Cria modal de confirmação
+    const overlay = document.createElement('div');
+    overlay.id = 'draft-modal';
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.innerHTML=`
+      <div style="background:#fff;border-radius:14px;padding:24px 20px;max-width:340px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.18)">
+        <div style="font-size:28px;text-align:center;margin-bottom:10px">📋</div>
+        <div style="font-weight:700;font-size:15px;text-align:center;margin-bottom:6px">Rascunho encontrado</div>
+        <div style="font-size:13px;color:#555;text-align:center;margin-bottom:20px">
+          Há um lançamento em andamento de<br>
+          <strong>${draft['f-cliente']||''}</strong>${draft['f-nf']?' · NF '+draft['f-nf']:''}
+        </div>
+        <button id="draft-continuar" style="width:100%;padding:13px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px">Continuar lançamento</button>
+        <button id="draft-descartar" style="width:100%;padding:13px;background:#fff;color:#c0392b;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">Descartar e começar do zero</button>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    document.getElementById('draft-continuar').onclick = function(){
+      overlay.remove();
+      _aplicarRascunho(draft);
+    };
+    document.getElementById('draft-descartar').onclick = function(){
+      overlay.remove();
+      limparRascunho();
+    };
+  }
+}
+
+function _aplicarRascunho(draft){
+  // IMPORTANTE: estas duas listas precisam ficar IGUAIS às de salvarRascunho() —
+  // todo campo salvo lá tem que aparecer aqui, com o MESMO id, para ser restaurado.
+  const ids=['f-tecnico','f-cliente','f-codterceiro','f-data','f-tipo','f-sif-unid',
+              'f-nf','f-placa','f-lacre','f-termnum','f-termtemp','f-prodtemp','f-padrao',
+              'f-local','f-status','f-atendimento','f-dataprod','f-obs',
+              'f-vol-nf','f-val-nf','f-vol-rev','f-reversao','f-reversao-cortes','f-devprocedente',
+              'f-abr-dev','f-abr-rest','f-devtot-proc','f-resttot-proc',
+              'f-estado-cliente','f-cidade-cliente','f-local-reclamacao','f-tipo-item'];
+  const chks=['f-presencial','f-email','f-dev-sem-cortes'];
+  ids.forEach(id=>{const el=document.getElementById(id);if(el&&draft[id]!==undefined)el.value=draft[id];});
+  chks.forEach(id=>{const el=document.getElementById(id);if(el&&draft[id]!==undefined)el.checked=draft[id];});
+  toggleReversaoCortes();
+  if(draft._cnt !== undefined) cnt = draft._cnt;
+  if(draft._devItens && draft._devItens.length) restaurarItens('dev','dev-lista', draft._devItens);
+  if(draft._restItens && draft._restItens.length) restaurarItens('rest','rest-lista', draft._restItens);
+  if(draft._okItens && draft._okItens.length) restaurarItensOk(draft._okItens);
+  restaurarMotivosTotal('devtotmo', draft._devTotalMotivos);
+  restaurarMotivosTotal('resttotmo', draft._restTotalMotivos);
+  // Recalcula tudo que depende da Abrangência (seção de devoluções visível,
+  // checkboxes "total da NF" travados e o Vol. devolvido automático) agora
+  // que f-abr-dev/f-abr-rest e f-vol-nf já foram restaurados acima.
+  toggleAbrangencia('dev');
+  toggleAbrangencia('rest');
+  if(draft._step !== undefined && draft._step !== curStep) irPasso(draft._step);
+}
+
+function limparRascunho(){
+  localStorage.removeItem(DRAFT_KEY);
+  const b = document.getElementById('draft-banner');
+  if(b) b.remove();
+}
+
+// Salva ao mudar qualquer campo
+document.getElementById('view-form').addEventListener('input', salvarRascunho);
+document.getElementById('view-form').addEventListener('change', salvarRascunho);
+
+// Salva também ao sair da aba/fechar o navegador
+window.addEventListener('beforeunload', salvarRascunho);
+// Salva ao mudar de visibilidade (troca de aba ou bloquear tela no celular)
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') salvarRascunho(); });
+
+// Limpa rascunho ao registrar com sucesso (patch no final de registrar)
+const _registrarOrig = registrar;
+window._registrarOrig = _registrarOrig;
+
+// Restaura ao carregar a página
+restaurarRascunho();
+</script>
+
+<script>
+/* ===================================================================
+   MÓDULO QUEBRA DE PESO (POP-04) — autocontido
+   Reaproveita globais já definidos: SIF_MAP, PRODUTOS, parseKgBR,
+   fmtKgBR, fmtKgInput, fillSIF, copiar, fmt.
+   =================================================================== */
+const Q_KEY='quebra_peso_v1';
+const Q_TECNICOS=Array.from(document.querySelectorAll('#f-tecnico option'))
+  .map(o=>o.value).filter(Boolean);
+
+let qInited=false;
+let qPendente=null;
+function qInit(){
+  if(!qInited){
+    // popula técnicos
+    const sel=document.getElementById('q-tecnico');
+    Q_TECNICOS.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;sel.appendChild(o);});
+    // data de hoje
+    const dt=document.getElementById('q-data'); if(dt&&!dt.value) dt.valueAsDate=new Date();
+    qInited=true;
+  }
+  if(qPendente){
+    qPreencherDoRegistro(qPendente);
+    qPendente=null;
+  }
+  qRenderHist();
+}
+
+// Preenche os campos comuns (Identificação) com os dados do ato de entrega
+// recém-registrado, evitando que o técnico digite tudo de novo.
+function qPreencherDoRegistro(d){
+  const set=(id,val)=>{const el=document.getElementById(id); if(el&&val!==undefined&&val!==null&&val!=='') el.value=val;};
+  set('q-tecnico', d.tecnico);
+  set('q-cliente', d.cliente);
+  set('q-codterceiro', d.codterceiro);
+  set('q-placa', d.placa);
+  set('q-lacre', d.lacre);
+  set('q-data', d.data);
+  // sif vem como "SIGLA/NUMERO" ou só "SIGLA" — separa a sigla
+  const sigla=String(d.sif||'').split('/')[0];
+  set('q-sif-unid', sigla);
+  if(sigla) fillSIF('q-sif-unid','q-sif-num');
+  set('q-nf', d.nf);
+  const banner=document.getElementById('q-preenchido-banner');
+  if(banner) banner.style.display='block';
+}
+
+/* ---------- helpers de número ---------- */
+function qNum(id){return parseKgBR((document.getElementById(id)||{}).value||'');}
+function qVal(id){return ((document.getElementById(id)||{}).value||'').trim();}
+function qKg(n){return fmtKgBR(n)+' kg';}
+
+/* ---------- diferença NF × cliente ---------- */
+function qCalcDifNF(){
+  const nf=qNum('q-pl-nf'), cli=qNum('q-pl-cliente');
+  const el=document.getElementById('q-dif-nf');
+  if(!nf&&!cli){el.value='';return;}
+  const dif=cli-nf; // negativo = falta de peso no cliente
+  el.value=(dif>=0?'+':'')+fmtKgBR(dif)+' kg';
+  el.style.color=dif<0?'var(--red)':'var(--green)';
+}
+
+/* ---------- nota do balanção ---------- */
+function qBalancaoNota(){
+  const v=qVal('q-balancao');
+  const box=document.getElementById('q-balancao-nota');
+  if(v===''){box.style.display='none';return;}
+  const n=parseKgBR(v);
+  box.style.display='block';
+  if(n<0){
+    box.style.background='var(--red-bg)';box.style.color='var(--red-text)';box.style.border='1px solid #fca5a5';
+    box.innerHTML='⚠️ Valor negativo: o veículo saiu da Unidade com diferença de peso em relação à NF.';
+  } else {
+    box.style.background='var(--green-bg)';box.style.color='var(--green-text)';box.style.border='1px solid #a7f3d0';
+    box.innerHTML='✔️ Sem indício de divergência na saída da Unidade pelo balanção.';
+  }
+}
+
+/* =========================================================
+   PALETES (Determinação da tara → peso líquido por palete)
+   ========================================================= */
+let qPaleteCnt=0; let qPaleteIds=[];
+function qAddPalete(){
+  const id=qPaleteCnt++; qPaleteIds.push(id);
+  const c=document.getElementById('q-palete-lista');
+  const d=document.createElement('div');
+  d.className='dev-item'; d.id='qpal'+id;
+  d.innerHTML=
+    '<button class="dev-remove" onclick="qRmPalete('+id+')">×</button>'
+    +'<div class="row2">'
+    +'<div class="field"><label>Nº palete (ficha)</label><input type="text" id="qpal-num'+id+'" placeholder="ex: 1737757"></div>'
+    +'<div class="field"><label>Produto / corte</label><input type="text" id="qpal-prod'+id+'" placeholder="ex: 08357 CONTRA FILE"></div>'
+    +'</div>'
+    +'<div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:10px 0 6px">Pesos (kg)</div>'
+    +'<div class="row2">'
+    +'<div class="field"><label>Peso bruto na balança</label><input type="text" inputmode="text" id="qpal-bruto'+id+'" placeholder="ex: 1.008,47" oninput="qCalcPalete('+id+')" onblur="fmtKgInput(this);qCalcPalete('+id+')"></div>'
+    +'<div class="field"><label>Palete (madeira)</label><input type="text" inputmode="text" id="qpal-mad'+id+'" placeholder="ex: 21,46" oninput="qCalcPalete('+id+')" onblur="fmtKgInput(this);qCalcPalete('+id+')"></div>'
+    +'</div>'
+    +'<div class="row2">'
+    +'<div class="field"><label>Strech</label><input type="text" inputmode="text" id="qpal-str'+id+'" placeholder="ex: 1,00" oninput="qCalcPalete('+id+')" onblur="fmtKgInput(this);qCalcPalete('+id+')"></div>'
+    +'<div class="field"><label>Caixas (papelão)</label><input type="text" inputmode="text" id="qpal-cx'+id+'" placeholder="ex: 38,95" oninput="qCalcPalete('+id+')" onblur="fmtKgInput(this);qCalcPalete('+id+')"></div>'
+    +'</div>'
+    +'<div class="row2">'
+    +'<div class="field"><label>Embalagem primária</label><input type="text" inputmode="text" id="qpal-emb'+id+'" placeholder="ex: 6,39" oninput="qCalcPalete('+id+')" onblur="fmtKgInput(this);qCalcPalete('+id+')"></div>'
+    +'<div class="field"><label>Peso líq. na ficha palete</label><input type="text" inputmode="text" id="qpal-fic'+id+'" placeholder="ex: 940,67" oninput="qCalcPalete('+id+')" onblur="fmtKgInput(this);qCalcPalete('+id+')"></div>'
+    +'</div>'
+    +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;margin-top:6px;font-size:12px">'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Peso líquido calculado</span><b id="qpal-plcalc'+id+'">—</b></div>'
+    +'<div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Divergência (calc. × ficha)</span><b id="qpal-div'+id+'">—</b></div>'
+    +'</div>';
+  c.appendChild(d);
+}
+function qRmPalete(id){const e=document.getElementById('qpal'+id);if(e)e.remove();qPaleteIds=qPaleteIds.filter(x=>x!==id);}
+function qCalcPalete(id){
+  const bruto=qNum('qpal-bruto'+id);
+  const taras=qNum('qpal-mad'+id)+qNum('qpal-str'+id)+qNum('qpal-cx'+id)+qNum('qpal-emb'+id);
+  const plcalc=bruto-taras;
+  const fic=qNum('qpal-fic'+id);
+  const elc=document.getElementById('qpal-plcalc'+id);
+  const eld=document.getElementById('qpal-div'+id);
+  if(bruto>0){elc.textContent=fmtKgBR(plcalc)+' kg';}else{elc.textContent='—';}
+  if(bruto>0&&fic>0){
+    const dv=plcalc-fic;
+    eld.textContent=(dv>=0?'+':'')+fmtKgBR(dv)+' kg';
+    eld.style.color=Math.abs(dv)<0.5?'var(--green)':(dv<0?'var(--red)':'var(--amber)');
+  } else {eld.textContent='—';eld.style.color='';}
+}
+function qGetPaletes(){
+  return qPaleteIds.map(id=>{
+    const bruto=qNum('qpal-bruto'+id);
+    if(!bruto&&!qVal('qpal-num'+id))return null;
+    const taras=qNum('qpal-mad'+id)+qNum('qpal-str'+id)+qNum('qpal-cx'+id)+qNum('qpal-emb'+id);
+    const plcalc=bruto-taras;
+    const fic=qNum('qpal-fic'+id);
+    return {num:qVal('qpal-num'+id),prod:qVal('qpal-prod'+id),bruto,mad:qNum('qpal-mad'+id),
+      str:qNum('qpal-str'+id),cx:qNum('qpal-cx'+id),emb:qNum('qpal-emb'+id),plcalc,fic,div:fic>0?plcalc-fic:null};
+  }).filter(Boolean);
+}
+
+/* =========================================================
+   AMOSTRAGEM POR CORTE (contraprova)
+   ========================================================= */
+let qCorteCnt=0; let qCorteIds=[];
+function qAddCorte(){
+  const id=qCorteCnt++; qCorteIds.push(id);
+  const c=document.getElementById('q-corte-lista');
+  const d=document.createElement('div');
+  d.className='dev-item'; d.id='qcorte'+id;
+  d.innerHTML=
+    '<button class="dev-remove" onclick="qRmCorte('+id+')">×</button>'
+    +'<div class="field"><label>Corte / produto (código ou nome)</label>'
+    +'<div class="search-wrapper">'
+    +'<input type="text" id="qcs'+id+'" placeholder="Digite código ou nome..." oninput="qBuscaProd('+id+')" autocomplete="off">'
+    +'<div class="search-results" id="qcr'+id+'"></div></div></div>'
+    +'<input type="hidden" id="qcp'+id+'" value="">'
+    +'<div class="field"><label>Total de caixas do corte na NF</label><input type="number" min="0" id="qc-totnf'+id+'" placeholder="ex: 180" oninput="qCalcCorte('+id+')"></div>'
+    +'<div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:10px 0 6px">Caixas amostradas</div>'
+    +'<div id="qc-caixas'+id+'"></div>'
+    +'<button type="button" onclick="qAddCaixa('+id+')" style="font-size:11px;color:var(--text2);background:none;border:1px dashed var(--border);border-radius:var(--radius-sm);padding:5px 10px;cursor:pointer;width:100%;margin-top:4px">+ Adicionar caixa amostrada</button>'
+    +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;margin-top:10px;font-size:12px">'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Caixas amostradas</span><b id="qc-n'+id+'">0</b></div>'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Quebra média por caixa</span><b id="qc-media'+id+'">—</b></div>'
+    +'<div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Quebra total do corte (× NF)</span><b id="qc-total'+id+'">—</b></div>'
+    +'</div>';
+  c.appendChild(d);
+  qAddCaixa(id);
+}
+function qRmCorte(id){const e=document.getElementById('qcorte'+id);if(e)e.remove();qCorteIds=qCorteIds.filter(x=>x!==id);}
+
+function qBuscaProd(id){
+  const q=document.getElementById('qcs'+id).value.toLowerCase().trim();
+  const r=document.getElementById('qcr'+id);
+  if(!q){r.style.display='none';return;}
+  const base=(typeof getProdutosTodos==='function')?getProdutosTodos():PRODUTOS;
+  let m=base.filter(p=>String(p.cod).includes(q)||String(p.nome).toLowerCase().includes(q));
+  m.sort((a,b)=>{
+    const ca=String(a.cod), cb=String(b.cod);
+    const score=c=>c===q?0:(c.startsWith(q)?1:2);
+    return score(ca)-score(cb);
+  });
+  m=m.slice(0,8);
+  if(!m.length){r.style.display='none';return;}
+  r.innerHTML=m.map(p=>'<div class="search-item" onclick="qSelProd('+id+',\''+p.cod+'\',\''+p.nome.replace(/'/g,"\\'")+'\')">'+p.cod+' — '+p.nome+'</div>').join('');
+  r.style.display='block';
+}
+function qSelProd(id,cod,nome){
+  document.getElementById('qcs'+id).value=cod+' — '+nome;
+  document.getElementById('qcp'+id).value=cod+' — '+nome;
+  document.getElementById('qcr'+id).style.display='none';
+}
+
+let qCaixaCnt=0;
+function qAddCaixa(corteId){
+  const cid=qCaixaCnt++;
+  const wrap=document.getElementById('qc-caixas'+corteId);
+  const idx=wrap.children.length+1;
+  const d=document.createElement('div');
+  d.id='qcx-'+corteId+'-'+cid;
+  d.style.cssText='border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;margin-bottom:6px;background:var(--bg)';
+  d.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+    +'<span style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Caixa '+idx+'</span>'
+    +'<button type="button" onclick="qRmCaixa(\''+corteId+'\',\''+cid+'\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px">×</button></div>'
+    +'<div class="row2">'
+    +'<div class="field"><label style="font-size:11px">Nº de peças</label><input type="number" min="0" id="qcx-pc-'+corteId+'-'+cid+'" oninput="qCalcCorte('+corteId+')"></div>'
+    +'<div class="field"><label style="font-size:11px">Peso unit. emb. primária (kg)</label><input type="text" inputmode="text" id="qcx-emb-'+corteId+'-'+cid+'" placeholder="ex: 0,012" oninput="qCalcCorte('+corteId+')"></div>'
+    +'</div>'
+    +'<div class="row2">'
+    +'<div class="field"><label style="font-size:11px">Peso líq. etiqueta/testeira (kg)</label><input type="text" inputmode="text" id="qcx-et-'+corteId+'-'+cid+'" placeholder="ex: 22,09" oninput="qCalcCorte('+corteId+')"></div>'
+    +'<div class="field"><label style="font-size:11px">Peso na balança — peças+emb. (kg)</label><input type="text" inputmode="text" id="qcx-bal-'+corteId+'-'+cid+'" placeholder="ex: 22,11" oninput="qCalcCorte('+corteId+')"></div>'
+    +'</div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-top:2px">'
+    +'<span>PL na balança (s/ emb.): <b id="qcx-plb-'+corteId+'-'+cid+'">—</b></span>'
+    +'<span>Quebra: <b id="qcx-qb-'+corteId+'-'+cid+'">—</b></span></div>';
+  wrap.appendChild(d);
+  qCalcCorte(corteId);
+}
+function qRmCaixa(corteId,cid){const e=document.getElementById('qcx-'+corteId+'-'+cid);if(e)e.remove();qReindexCaixas(corteId);qCalcCorte(corteId);}
+function qReindexCaixas(corteId){
+  const wrap=document.getElementById('qc-caixas'+corteId);
+  Array.from(wrap.children).forEach((ch,i)=>{const lbl=ch.querySelector('span');if(lbl)lbl.textContent='Caixa '+(i+1);});
+}
+function qCaixasDoCorte(corteId){
+  const wrap=document.getElementById('qc-caixas'+corteId);
+  if(!wrap)return [];
+  return Array.from(wrap.children).map(ch=>{
+    const cid=ch.id.split('-').slice(-1)[0];
+    return cid;
+  });
+}
+function qCalcCorte(corteId){
+  const cids=qCaixasDoCorte(corteId);
+  let somaQuebra=0, nValidas=0;
+  cids.forEach(cid=>{
+    const pc=parseFloat((document.getElementById('qcx-pc-'+corteId+'-'+cid)||{}).value)||0;
+    const embu=parseKgBR((document.getElementById('qcx-emb-'+corteId+'-'+cid)||{}).value||'');
+    const et=parseKgBR((document.getElementById('qcx-et-'+corteId+'-'+cid)||{}).value||'');
+    const bal=parseKgBR((document.getElementById('qcx-bal-'+corteId+'-'+cid)||{}).value||'');
+    const somEmb=pc*embu;
+    const plb=bal-somEmb;
+    const elPlb=document.getElementById('qcx-plb-'+corteId+'-'+cid);
+    const elQb=document.getElementById('qcx-qb-'+corteId+'-'+cid);
+    if(bal>0){
+      elPlb.textContent=fmtKgBR(plb)+' kg';
+      if(et>0){
+        const qb=plb-et;
+        elQb.textContent=(qb>=0?'+':'')+qb.toLocaleString('pt-BR',{minimumFractionDigits:3,maximumFractionDigits:3})+' kg';
+        elQb.style.color=qb<0?'var(--red)':'var(--green)';
+        somaQuebra+=qb; nValidas++;
+      } else {elQb.textContent='—';}
+    } else {elPlb.textContent='—';elQb.textContent='—';}
+  });
+  const media=nValidas>0?somaQuebra/nValidas:null;
+  const totNF=parseFloat((document.getElementById('qc-totnf'+corteId)||{}).value)||0;
+  document.getElementById('qc-n'+corteId).textContent=nValidas;
+  const elM=document.getElementById('qc-media'+corteId);
+  const elT=document.getElementById('qc-total'+corteId);
+  if(media!==null){
+    elM.textContent=(media>=0?'+':'')+media.toLocaleString('pt-BR',{minimumFractionDigits:3,maximumFractionDigits:3})+' kg';
+    elM.style.color=media<0?'var(--red)':'var(--green)';
+    if(totNF>0){
+      const tot=media*totNF;
+      elT.textContent=(tot>=0?'+':'')+fmtKgBR(tot)+' kg';
+      elT.style.color=tot<0?'var(--red)':'var(--green)';
+    } else {elT.textContent='— (informe o total de caixas da NF)';elT.style.color='var(--text3)';}
+  } else {elM.textContent='—';elT.textContent='—';}
+}
+function qGetCortes(){
+  return qCorteIds.map(id=>{
+    const cids=qCaixasDoCorte(id);
+    let somaQuebra=0,nVal=0; const caixas=[];
+    cids.forEach(cid=>{
+      const pc=parseFloat((document.getElementById('qcx-pc-'+id+'-'+cid)||{}).value)||0;
+      const embu=parseKgBR((document.getElementById('qcx-emb-'+id+'-'+cid)||{}).value||'');
+      const et=parseKgBR((document.getElementById('qcx-et-'+id+'-'+cid)||{}).value||'');
+      const bal=parseKgBR((document.getElementById('qcx-bal-'+id+'-'+cid)||{}).value||'');
+      if(bal>0&&et>0){const plb=bal-pc*embu;const qb=plb-et;somaQuebra+=qb;nVal++;caixas.push({pc,embu,et,bal,plb,qb});}
+    });
+    const prod=qVal('qcp'+id)||qVal('qcs'+id);
+    const totNF=parseFloat((document.getElementById('qc-totnf'+id)||{}).value)||0;
+    if(!prod&&!nVal)return null;
+    const media=nVal>0?somaQuebra/nVal:null;
+    return {prod:prod||'(corte não informado)',totNF,nAmostra:nVal,media,total:(media!==null&&totNF>0)?media*totNF:null,caixas};
+  }).filter(Boolean);
+}
+
+/* =========================================================
+   COLETA + TEXTOS
+   ========================================================= */
+function qColeta(){
+  const sif=qVal('q-sif-unid');
+  const sifNum=SIF_MAP[sif.toUpperCase()]||'';
+  return {
+    id:Date.now(), data:qVal('q-data'), tecnico:qVal('q-tecnico'),
+    cliente:qVal('q-cliente'), codterceiro:qVal('q-codterceiro'),
+    sif:sif+(sifNum?'/'+sifNum:''), nf:qVal('q-nf'), placa:qVal('q-placa'), lacre:qVal('q-lacre'),
+    tipoDiv:qVal('q-tipo-div'), abrangencia:qVal('q-abrangencia'),
+    plNF:qNum('q-pl-nf'), plCli:qNum('q-pl-cliente'), difNF:qNum('q-pl-cliente')-qNum('q-pl-nf'),
+    balancao:qVal('q-balancao'), balancaoN:parseKgBR(qVal('q-balancao')),
+    certValido:qVal('q-cert-valido'), serie:qVal('q-balanca-serie'),
+    serieConfere:qVal('q-serie-confere'), manutencao:qVal('q-manutencao'),
+    conferencia:qVal('q-conferencia'), paletesDisp:qVal('q-paletes-disp'),
+    repesar:qVal('q-repesar'), qtdCaixas:qVal('q-qtd-caixas'),
+    usaFicha:qVal('q-usa-ficha'), infoOk:qVal('q-info-ok'), infoErro:qVal('q-info-erro'),
+    fezAmostragem:qVal('q-fez-amostragem'),
+    paletes:qGetPaletes(), cortes:qGetCortes()
+  };
+}
+
+function qSimNao(v){return v?v:'—';}
+
+function qGerarResumo(e){
+  let t='*Quebra de Peso — '+e.cliente+'*'
+    +'\n'+fmt(e.data)
+    +'\nUnidade emissora NF: *'+e.sif+'*'
+    +'\nNF: '+e.nf+(e.placa?' · Placa: '+e.placa:'')+(e.lacre?' · Lacre: '+e.lacre:'')
+    +'\nTipo de divergência: *'+e.tipoDiv+'*'
+    +'\nAbrangência: '+e.abrangencia;
+  if(e.plNF||e.plCli){
+    t+='\nPeso líq. NF: '+qKg(e.plNF)+' · Cliente: '+qKg(e.plCli)
+      +'\nDiferença NF × cliente: *'+(e.difNF>=0?'+':'')+fmtKgBR(e.difNF)+' kg*';
+  }
+  t+='\n\n*Avaliação prévia*';
+  if(e.balancao!==''){
+    t+='\n• Ticket balanção (Unidade): *'+e.balancao+' kg*'
+      +(e.balancaoN<0?' — _saiu da Unidade com divergência_':' — _sem divergência na saída_');
+  }
+  t+='\n• Balança do cliente: certificado '+qSimNao(e.certValido)
+    +(e.serie?' · série '+e.serie:'')
+    +' · confere c/ certificado: '+qSimNao(e.serieConfere)
+    +' · manutenção ok: '+qSimNao(e.manutencao);
+
+  t+='\n\n*Investigação*'
+    +'\n• Conferência no dia da entrega: '+qSimNao(e.conferencia)
+    +'\n• Paletes disponibilizados p/ pesagem: '+qSimNao(e.paletesDisp)
+    +'\n• Foi possível repesar toda a carga: '+qSimNao(e.repesar)
+    +'\n• Quantidade de caixas correta: '+qSimNao(e.qtdCaixas)
+    +'\n• Cliente usa a ficha palete da JBS: '+qSimNao(e.usaFicha)
+    +'\n• Etiqueta palete correta/coerente: '+qSimNao(e.infoOk)
+    +(e.infoOk==='Não'&&e.infoErro?' — '+e.infoErro:'')
+    +'\n• Amostragem de peso líquido realizada: '+qSimNao(e.fezAmostragem);
+
+  if(e.paletes.length){
+    t+='\n\n*Pesagem de paletes (peso líquido)*';
+    e.paletes.forEach(p=>{
+      t+='\n• Palete '+(p.num||'—')+(p.prod?' ('+p.prod+')':'')
+        +'\n   Bruto '+qKg(p.bruto)+' − taras '+qKg(p.mad+p.str+p.cx+p.emb)+' = *'+qKg(p.plcalc)+'*'
+        +(p.fic>0?'\n   Ficha: '+qKg(p.fic)+' | Divergência: *'+(p.div>=0?'+':'')+fmtKgBR(p.div)+' kg*':'');
+    });
+  }
+  if(e.cortes.length){
+    t+='\n\n*Amostragem por corte (contraprova)*';
+    e.cortes.forEach(c=>{
+      t+='\n• *'+c.prod+'*';
+      if(c.media!==null){
+        t+='\n   Amostra: '+c.nAmostra+' cx | Quebra média/cx: *'+(c.media>=0?'+':'')+c.media.toLocaleString('pt-BR',{minimumFractionDigits:3,maximumFractionDigits:3})+' kg*';
+        if(c.total!==null){
+          t+='\n   '+c.totNF+' cx na NF → quebra total do corte: *'+(c.total>=0?'+':'')+fmtKgBR(c.total)+' kg*';
+        }
+      } else {t+='\n   _sem caixas amostradas válidas_';}
+    });
+  }
+  t+='\n\n_Achados de quebra de peso descritos separadamente, conforme POP-04 — não somados a outros achados._'
+    +'\n\nAtt,\n'+e.tecnico+'.';
+  return t;
+}
+
+function qGerarEmail(e){
+  const SEP='───────────────────────────';
+  const L=[];
+  L.push('Assunto: Quebra de peso — '+e.cliente+' — NF '+e.nf+' — Unidade '+e.sif);
+  L.push('');
+  L.push('');
+  L.push('Prezados,');
+  L.push('');
+  L.push('Segue o resultado da análise de quebra/falta de peso identificada no recebimento abaixo.');
+  L.push('');
+  L.push(SEP);
+  L.push('*DADOS DA OCORRÊNCIA*');
+  L.push(SEP);
+  L.push('');
+  L.push('*Cliente/CD:* '+e.cliente+(e.codterceiro?' (cód. terceiro '+e.codterceiro+')':''));
+  L.push('*Data:* '+fmt(e.data));
+  L.push('*Unidade emissora da NF:* '+e.sif);
+  L.push('*NF:* '+e.nf+(e.placa?'    *Placa:* '+e.placa:'')+(e.lacre?'    *Lacre:* '+e.lacre:''));
+  L.push('*Tipo de divergência:* '+e.tipoDiv);
+  L.push('*Abrangência:* '+e.abrangencia);
+  if(e.plNF||e.plCli){
+    L.push('');
+    L.push('*Peso líquido faturado (NF):* '+qKg(e.plNF));
+    L.push('*Peso líquido conferido pelo cliente:* '+qKg(e.plCli));
+    L.push('*Diferença:* '+(e.difNF>=0?'+':'')+fmtKgBR(e.difNF)+' kg');
+  }
+  L.push('');
+  L.push('');
+  L.push(SEP);
+  L.push('*1. AVALIAÇÃO PRÉVIA*');
+  L.push(SEP);
+  L.push('');
+  if(e.balancao!=='') {
+    L.push('•  *Ticket balanção da Unidade:* '+e.balancao+' kg'+(e.balancaoN<0?' — saiu com divergência em relação à NF':' — sem divergência na saída'));
+    L.push('');
+  }
+  L.push('•  *Balança do cliente*');
+  L.push('    Certificado de calibração: '+qSimNao(e.certValido)
+    +(e.serie?'  |  nº de série: '+e.serie:''));
+  L.push('    Série confere com o certificado: '+qSimNao(e.serieConfere));
+  L.push('    Condições de manutenção: '+qSimNao(e.manutencao));
+  L.push('');
+  L.push('');
+  L.push(SEP);
+  L.push('*2. INVESTIGAÇÃO*');
+  L.push(SEP);
+  L.push('');
+  L.push('•  Conferência no dia da entrega: '+qSimNao(e.conferencia));
+  L.push('•  Todos os paletes disponibilizados para pesagem: '+qSimNao(e.paletesDisp));
+  L.push('•  Foi possível repesar toda a carga: '+qSimNao(e.repesar));
+  L.push('•  Quantidade de caixas correta: '+qSimNao(e.qtdCaixas));
+  L.push('•  Cliente utiliza as informações da ficha palete da JBS: '+qSimNao(e.usaFicha));
+  L.push('•  Etiqueta palete correta e coerente: '+qSimNao(e.infoOk)+(e.infoOk==='Não'&&e.infoErro?' — '+e.infoErro:''));
+  L.push('•  Amostragem de peso líquido realizada: '+qSimNao(e.fezAmostragem));
+  if(e.paletes.length){
+    L.push('');
+    L.push('');
+    L.push(SEP);
+    L.push('*3. PESAGEM DE PALETES* (peso líquido por palete)');
+    L.push(SEP);
+    e.paletes.forEach(p=>{
+      L.push('');
+      L.push('•  *Palete '+(p.num||'—')+'*'+(p.prod?'  —  '+p.prod:''));
+      L.push('    Peso bruto na balança: '+qKg(p.bruto));
+      L.push('    Taras (madeira + strech + caixas + emb. primária): '+qKg(p.mad+p.str+p.cx+p.emb));
+      L.push('    *Peso líquido calculado:* '+qKg(p.plcalc)
+        +(p.fic>0?'\n    Ficha palete: '+qKg(p.fic)+'  |  *Divergência:* '+(p.div>=0?'+':'')+fmtKgBR(p.div)+' kg':''));
+    });
+  }
+  if(e.cortes.length){
+    L.push('');
+    L.push('');
+    L.push(SEP);
+    L.push('*4. AMOSTRAGEM DE PESO LÍQUIDO POR CORTE* (contraprova)');
+    L.push(SEP);
+    e.cortes.forEach(c=>{
+      L.push('');
+      L.push('•  *Corte:* '+c.prod);
+      if(c.media!==null){
+        L.push('    Caixas amostradas: '+c.nAmostra);
+        L.push('    Quebra média por caixa: '+(c.media>=0?'+':'')+c.media.toLocaleString('pt-BR',{minimumFractionDigits:3,maximumFractionDigits:3})+' kg');
+        if(c.total!==null) L.push('    *Projeção para '+c.totNF+' caixas da NF:* quebra total do corte de '+(c.total>=0?'+':'')+fmtKgBR(c.total)+' kg');
+      } else {L.push('    (sem caixas amostradas válidas)');}
+    });
+  }
+  L.push('');
+  L.push('');
+  L.push(SEP);
+  L.push('_Observação: conforme POP-04, as informações complementares (ticket balanção, desvio de etiqueta, determinação do peso das peças) são descritas separadamente e não devem ser somadas a outros achados._');
+  L.push('');
+  L.push('');
+  L.push('Atenciosamente,');
+  L.push('');
+  L.push('*'+(e.tecnico||'')+'*');
+  L.push('Consultoria Técnica – GQ/CRM');
+  return L.join('\n');
+}
+
+/* =========================================================
+   GERAR / SALVAR / HISTÓRICO
+   ========================================================= */
+function qGetData(){try{return JSON.parse(localStorage.getItem(Q_KEY)||'[]');}catch{return[];}}
+function qSave(d){localStorage.setItem(Q_KEY,JSON.stringify(d));}
+
+function qGerar(){
+  const tec=qVal('q-tecnico'), cli=qVal('q-cliente'), sif=qVal('q-sif-unid'), nf=qVal('q-nf');
+  if(!tec){alert('Selecione o técnico responsável.');return;}
+  if(!cli){alert('Preencha o CD / Cliente.');return;}
+  if(!sif){alert('Preencha a unidade emissora da NF (sigla).');return;}
+  if(!nf){alert('Preencha a Nota Fiscal.');return;}
+  const e=qColeta();
+  // salva (atualiza se já existe SIF+NF)
+  const dados=qGetData();
+  const idx=dados.findIndex(x=>x.sif===e.sif&&x.nf===e.nf);
+  if(idx>=0){e.id=dados[idx].id;dados[idx]=e;}else{dados.push(e);}
+  qSave(dados);
+  document.getElementById('q-res-texto').textContent=qGerarResumo(e);
+  document.getElementById('q-res-box').style.display='block';
+  document.getElementById('q-email-texto').textContent=qGerarEmail(e);
+  document.getElementById('q-email-box').style.display='block';
+  qRenderHist();
+  window.scrollTo(0,0);
+}
+
+function qRenderHist(){
+  const w=document.getElementById('q-hist-lista');
+  if(!w)return;
+  const d=qGetData().slice().reverse();
+  if(!d.length){w.innerHTML='<div class="empty-state" style="padding:20px 0">Nenhuma análise registrada ainda.</div>';return;}
+  w.innerHTML=d.map(e=>'<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;margin-bottom:8px">'
+    +'<div style="font-size:13px;font-weight:500">'+(e.cliente||'—')+'</div>'
+    +'<div style="font-size:12px;color:var(--text2)">'+fmt(e.data)+' · NF '+(e.nf||'—')+' · '+(e.sif||'—')+'</div>'
+    +'<div style="display:flex;gap:8px;margin-top:8px">'
+    +'<button class="btn-outline" style="font-size:12px;margin-top:0;flex:1" onclick="qVerRes('+e.id+',\'resumo\')">📋 Resumo</button>'
+    +'<button class="btn-outline" style="font-size:12px;margin-top:0;flex:1" onclick="qVerRes('+e.id+',\'email\')">📧 E-mail</button>'
+    +'</div></div>').join('');
+}
+
+function qVerRes(id,tipo){
+  const e=qGetData().find(x=>x.id===id);if(!e)return;
+  const titulo=tipo==='email'?'E-mail para a Unidade':'Resumo WhatsApp';
+  const texto=tipo==='email'?qGerarEmail(e):qGerarResumo(e);
+  const corBtn=tipo==='email'?'#1f3a5f':'#2d6a4f';
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end';
+  overlay.innerHTML='<div style="background:#fff;width:100%;max-height:85vh;overflow-y:auto;border-radius:12px 12px 0 0;padding:20px">'
+    +'<div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#9b9a95;margin-bottom:10px">'+titulo+'</div>'
+    +'<textarea id="q-modal-texto" style="width:100%;font-family:Courier New,monospace;font-size:12px;line-height:1.7;white-space:pre-wrap;border:1px solid #D2D9E6;border-radius:8px;padding:10px;resize:vertical;min-height:260px;color:#14274E;background:#DCE2ED;outline:none">'+texto.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</textarea>'
+    +'<button onclick="(function(btn){const ta=document.getElementById(\'q-modal-texto\');const txt=ta.value;if(navigator.clipboard&&location.protocol===\'https:\'){navigator.clipboard.writeText(txt).then(()=>{btn.textContent=\'Copiado! ✓\';setTimeout(()=>btn.textContent=\'Copiar\',2500);})}else{ta.select();try{document.execCommand(\'copy\');btn.textContent=\'Copiado! ✓\';setTimeout(()=>btn.textContent=\'Copiar\',2500);}catch(ex){}}})(this)" style="width:100%;padding:12px;background:'+corBtn+';color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin-top:10px;margin-bottom:8px;font-family:'Inter',sans-serif">Copiar</button>'
+    +'<button onclick="this.parentElement.parentElement.remove()" style="width:100%;padding:10px;background:transparent;border:1px solid #D2D9E6;border-radius:8px;font-size:14px;cursor:pointer;font-family:'Inter',sans-serif">Fechar</button>'
+    +'</div>';
+  document.body.appendChild(overlay);
+}
+
+function qLimparForm(){
+  if(!confirm('Limpar o formulário de quebra de peso? (o histórico é mantido)'))return;
+  ['q-cliente','q-codterceiro','q-placa','q-lacre','q-sif-unid','q-sif-num','q-nf','q-pl-nf','q-pl-cliente','q-dif-nf',
+   'q-balancao','q-balanca-serie','q-info-erro'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['q-cert-valido','q-serie-confere','q-manutencao','q-conferencia','q-paletes-disp','q-repesar',
+   'q-qtd-caixas','q-usa-ficha','q-info-ok','q-fez-amostragem','q-tipo-div','q-abrangencia'].forEach(id=>{const el=document.getElementById(id);if(el)el.selectedIndex=0;});
+  document.getElementById('q-palete-lista').innerHTML='';qPaleteIds=[];
+  document.getElementById('q-corte-lista').innerHTML='';qCorteIds=[];
+  document.getElementById('q-info-erro-wrap').style.display='none';
+  document.getElementById('q-balancao-nota').style.display='none';
+  document.getElementById('q-res-box').style.display='none';
+  document.getElementById('q-email-box').style.display='none';
+  window.scrollTo(0,0);
+}
+
+// fecha dropdowns de busca de produto ao clicar fora
+document.addEventListener('click',function(e){
+  document.querySelectorAll('#view-quebra .search-results').forEach(r=>{if(!r.contains(e.target))r.style.display='none';});
+});
+</script>
+
+<script>
+/* ===================================================================
+   MÓDULO LEITOR DE LAUDO PDF (PariPassu / Clicq)
+   Usa a API da Anthropic para ler PDFs enviados pelo cliente e
+   preencher automaticamente o formulário de Registro (via _aplicarRascunho).
+   NF fica sempre em branco — o técnico preenche manualmente depois.
+   =================================================================== */
+
+let laudoArquivos = [];
+let laudoDadosExtraidos = null;
+
+function laudoInit(){ /* nada a inicializar */ }
+
+function laudoHandleFiles(files){
+  for(const f of files){
+    if(f.type==='application/pdf' && !laudoArquivos.find(x=>x.name===f.name)){
+      laudoArquivos.push(f);
+    }
+  }
+  laudoRenderFileList();
+}
+
+function laudoRenderFileList(){
+  const el=document.getElementById('laudo-file-list');
+  const btn=document.getElementById('laudo-btn-processar');
+  if(!laudoArquivos.length){el.innerHTML='';btn.style.display='none';return;}
+  el.innerHTML=laudoArquivos.map((f,i)=>
+    `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;font-size:12px">
+      <span>📄 ${f.name}</span>
+      <button type="button" onclick="laudoRemoverArquivo(${i})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px">×</button>
+    </div>`).join('');
+  btn.style.display='block';
+}
+
+function laudoRemoverArquivo(idx){
+  laudoArquivos.splice(idx,1);
+  laudoRenderFileList();
+}
+
+function laudoLimpar(){
+  laudoArquivos=[];
+  laudoDadosExtraidos=null;
+  laudoRenderFileList();
+  document.getElementById('laudo-status').innerHTML='';
+  document.getElementById('laudo-previa').style.display='none';
+  document.getElementById('laudo-file-input').value='';
+}
+
+async function laudoProcessar(){
+  if(!laudoArquivos.length) return;
+  const btn=document.getElementById('laudo-btn-processar');
+  const status=document.getElementById('laudo-status');
+  btn.disabled=true; btn.textContent='⏳ Lendo laudos...';
+  status.innerHTML='<div style="font-size:12px;color:var(--text2)">Carregando leitor de PDF...</div>';
+
+  try{
+    // Carrega PDF.js sob demanda (só na primeira vez)
+    await laudoCarregarPdfJs();
+
+    status.innerHTML='<div style="font-size:12px;color:var(--text2)">Extraindo texto dos PDFs...</div>';
+
+    // Extrai texto de cada PDF
+    const textos = await Promise.all(laudoArquivos.map(f => laudoExtrairTextoPDF(f)));
+
+    status.innerHTML='<div style="font-size:12px;color:var(--text2)">Interpretando dados...</div>';
+
+    // Faz o parsing de cada laudo e agrega
+    const laudos = textos.map((txt, i) => laudoParsearTexto(txt, laudoArquivos[i].name));
+    const agregado = laudoAgregarLaudos(laudos);
+
+    laudoDadosExtraidos = agregado;
+    status.innerHTML='';
+    laudoMostrarPrevia(agregado);
+
+  }catch(err){
+    status.innerHTML=`<div style="background:var(--red-bg);border:1px solid var(--red);border-radius:var(--radius-sm);padding:10px;font-size:12px;color:var(--red-text)">❌ Erro: ${err.message}</div>`;
+    console.error(err);
+  }finally{
+    btn.disabled=false; btn.textContent='🔍 Ler e preencher formulário';
+  }
+}
+
+// ── Carrega PDF.js via CDN (uma só vez) ───────────────────────────────────
+function laudoCarregarPdfJs(){
+  if(window.pdfjsLib) return Promise.resolve();
+  return new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload=()=>{
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc=
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      res();
+    };
+    s.onerror=()=>rej(new Error('Falha ao carregar leitor de PDF'));
+    document.head.appendChild(s);
+  });
+}
+
+// ── Extrai texto bruto de um PDF ──────────────────────────────────────────
+async function laudoExtrairTextoPDF(file){
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await window.pdfjsLib.getDocument({data: arrayBuffer}).promise;
+  let texto = '';
+  for(let i=1; i<=pdf.numPages; i++){
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    // Junta os itens de texto com espaço, preservando quebras de linha aproximadas
+    const items = content.items;
+    let lastY = null;
+    for(const item of items){
+      const y = item.transform[5];
+      if(lastY !== null && Math.abs(y - lastY) > 3) texto += '\n';
+      texto += item.str + ' ';
+      lastY = y;
+    }
+    texto += '\n\n';
+  }
+  return texto;
+}
+
+// ── Helpers de parsing ────────────────────────────────────────────────────
+function laudoBuscar(texto, ...padroes){
+  for(const p of padroes){
+    const m = texto.match(p);
+    if(m && m[1] && m[1].trim()) return m[1].trim();
+  }
+  return '';
+}
+
+function laudoNormalizarData(str){
+  // aceita DD/MM/YY, DD/MM/YYYY, YYYY-MM-DD
+  if(!str) return '';
+  const m1 = str.match(/(\d{2})\/(\d{2})\/(\d{2,4})/);
+  if(m1){
+    let ano = m1[3]; if(ano.length===2) ano='20'+ano;
+    return `${ano}-${m1[2]}-${m1[1]}`;
+  }
+  const m2 = str.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if(m2) return str.substring(0,10);
+  return '';
+}
+
+function laudoNormalizarDataProd(str){
+  // retorna DD/MM/YYYY para exibição
+  if(!str) return '';
+  const m = str.match(/(\d{2})\/(\d{2})\/(\d{2,4})/);
+  if(m){
+    let ano = m[3]; if(ano.length===2) ano='20'+ano;
+    return `${m[1]}/${m[2]}/${ano}`;
+  }
+  return str;
+}
+
+function laudoMapearMotivo(texto){
+  const t = texto.toUpperCase();
+  if(t.includes('TEMPERATURA') && (t.includes('TRANSPORTE')||t.includes('TERMÓGRAFO')||t.includes('TERMOGRAFO')))
+    return {motivo:'TEMPERATURA FORA DO PADRÃO', detalhe: t.includes('ABAIXO')||t.includes('-')?'PRODUTO ABAIXO DE 0 ºC':'TRANSPORTE FORA DO RANGE'};
+  if(t.includes('PADRÃO')||t.includes('PADRAO')||t.includes('TOALETE')||t.includes('TOILETTE')||t.includes('REFILE')||t.includes('GORDURA')||t.includes('ACIDEZ'))
+    return {motivo:'PADRÃO DO PRODUTO', detalhe:''};
+  if(t.includes('VÁCUO')||t.includes('VACUO'))
+    return {motivo:'AUSÊNCIA DE VÁCUO', detalhe:''};
+  if(t.includes('EMBALAGEM')||t.includes('CAIXA'))
+    return {motivo:'EMBALAGEM', detalhe:''};
+  if(t.includes('ROTULAGEM')||t.includes('ETIQUETA')||t.includes('RÓTULO'))
+    return {motivo:'ROTULAGEM', detalhe:''};
+  if(t.includes('ODOR'))
+    return {motivo:'ODOR ALTERADO', detalhe:''};
+  if(t.includes('LIMOSIDADE'))
+    return {motivo:'LIMOSIDADE', detalhe:''};
+  if(t.includes('EXSUDAÇÃO')||t.includes('EXSUDACAO')||t.includes('LÍQUIDO')||t.includes('LIQUIDO'))
+    return {motivo:'EXSUDAÇÃO', detalhe:''};
+  return {motivo:'', detalhe:''};
+}
+
+// ── Parser principal de um laudo PariPassu/Clicq ──────────────────────────
+function laudoParsearTexto(texto, nomeArquivo){
+  const t = texto;
+
+  // Código do produto — número no início do título (ex: "4951 - PALETA PORCIONADO")
+  const codProduto = laudoBuscar(t,
+    /^\s*(\d{3,6})\s*[-–]\s*(?!AB_)/im,  // código antes do nome, que não seja "1 - AB_..."
+    /^\s*\d+\s*[-–]\s*AB[_\s]\S+\s*(\d{4,6})/im
+  ) || '';
+
+  // Nome do produto — primeira linha significativa do título
+  const nomeProduto = laudoBuscar(t,
+    /^\s*\d+\s*[-–]\s*AB[_\s]([A-ZÁÉÍÓÚÃÕÂÊÔÇ\s\/]+?)\s*\n/im,
+    /^\s*\d+\s*[-–]\s*([A-ZÁÉÍÓÚÃÕÂÊÔÇ\s\/]+(?:RESFRIADO|CONGELADO|PORCIONADO)[A-ZÁÉÍÓÚÃÕÂÊÔÇ\s\/]*)/im
+  ) || nomeArquivo.replace(/\.pdf$/i,'').replace(/[-_]/g,' ').trim();
+
+  // Tipo (resfriado/congelado)
+  const tipo = /CONGELADO/i.test(nomeProduto+t) ? 'Congelado' : 'Resfriado';
+
+  // Data — layout real: "DATA\n\n♦ 06/07/26 09:11:27"
+  const dataStr = laudoBuscar(t,
+    /DATA\s*\n\n[♦▸►◆\s]*(\d{2}\/\d{2}\/\d{2,4})/i,
+    /DATA\s*\n[\s\S]{0,10}(\d{2}\/\d{2}\/\d{2,4})/i,
+    /DATA\s*[▸►◆♦\|]?\s*(\d{2}\/\d{2}\/\d{2,4})/i
+  );
+
+  // SIF — extrai o número de "175_JBS_RO" e busca a sigla no SIF_MAP invertido
+  const avaliado = laudoBuscar(t,
+    /AVALIADO\s*\n\n(?:UNIDADE[\s\S]{0,30}?)?\n\n[♦▸►◆\s]*(\d+_JBS[^\s]*)/i,
+    /AVALIADO\s*\n\n[♦▸►◆\s]*(\d+_[^\s]+)/i,
+    /♦\s*(\d{4}_JBS[^\s]*)/i,
+    /(\d{3,4})_JBS/i
+  );
+  const sifNumero = (avaliado.match(/^(\d+)_/)||[,''])[1] || avaliado.replace(/[^\d]/g,'').substring(0,4) || '';
+  // Busca a sigla correspondente ao número no SIF_MAP invertido
+  const sifSigla = Object.entries(typeof SIF_MAP!=='undefined'?SIF_MAP:{}).find(([,v])=>v===sifNumero)?.[0] || '';
+  const sif = sifSigla || sifNumero; // usa sigla se encontrada, senão o número bruto
+
+  // Placa — no layout real, os valores de Transporte aparecem APÓS todos os rótulos.
+  // Layout: "1.1 - Placa...\n\n1.2 - Condições...\n\n2 ♦ Temperatura...\n\nRyw4i03\n\nConforme"
+  // Estratégia: pegar o primeiro token alfanumérico (≥6 chars) após os rótulos de Transporte
+  const placaMatch = t.match(/1\.2[^\n]*\n\n[\s\S]{0,300}?\n\n([A-Z]{3}[A-Z0-9]{4,5})\s*\n/i)
+    || t.match(/Condi[cç][oõ]es[^\n]*\n\n[\s\S]{0,200}?\n\n([A-Z]{3}[A-Z0-9]{4,5})\s*\n/i);
+  const placa = placaMatch ? placaMatch[1] : laudoBuscar(t,
+    /Placa\s+do\s+Ve[íi]culo\s+([A-Z]{3}[A-Z0-9]{4,5})/i
+  );
+
+  // Temperatura termógrafo e produto — PDF.js extrai TODOS os rótulos primeiro,
+  // depois TODOS os valores. Layout real:
+  //   "2.1 - Registro...\n\n2.2 - Temperatura Registrada Termógrafo (ºC)\n\n
+  //    2.3 - Temperatura do Produto\n\n2.4 - ...\n\nNão\n\n-3,00\n\n-0,1\n\nSim"
+  // Estratégia: localizar o bloco "2 ♦ Temperatura" e capturar os valores numéricos
+  // na ordem em que aparecem (2.1=Sim/Não, 2.2=termógrafo, 2.3=produto, 2.4=Sim/Não)
+  let termtemp = '', prodtemp = '';
+  const blocoTemp = t.match(/2\s*[♦▸►◆]?\s*Temperatura[\s\S]{0,1200}?(?=3\s*[♦▸►◆]?\s*Rotulagem)/i)
+    || t.match(/2\s*[♦▸►◆]?\s*Temperatura[\s\S]{0,800}/i);
+  if(blocoTemp){
+    const bloco = blocoTemp[0];
+    // Extrai valores numéricos com decimal, excluindo APENAS os números de item conhecidos
+    // (2.1, 2.2, 2.3, 2.4) — não filtrar valores como 0.6 que podem ser temperatura real
+    const itemNums = new Set(['2.1','2.2','2.3','2.4','1.1','1.2','3.1','3.2','3.3','3.4','3.6','3.7','3.8','4.1','4.2','4.3']);
+    const nums = [...bloco.matchAll(/(-?[\d]+[,\.][\d]+)/g)]
+      .map(m=>m[1].replace(',','.'))
+      .filter(n => !itemNums.has(n));
+    // item 2.2 = nums[0] (termógrafo), item 2.3 = nums[1] (produto)
+    if(nums.length >= 1) termtemp = nums[0];
+    if(nums.length >= 2) prodtemp = nums[1];
+  }
+  // Fallback: busca direta se o bloco não foi encontrado
+  if(!termtemp) termtemp = laudoBuscar(t,
+    /Term[oó]grafo\s*\(ºC\)[^\n]*\n\n(-?[\d]+[,\.][\d]+)/i
+  ).replace(',','.');
+  if(!prodtemp) prodtemp = laudoBuscar(t,
+    /Temperatura\s+do\s+Produto[^\n]*\n\n(-?[\d]+[,\.][\d]+)/i
+  ).replace(',','.');
+
+  // Data de produção (item 3.6)
+  const dataprodStr = laudoBuscar(t,
+    /Data\s+Produ[cç][aã]o\s+1\s+(\d{2}\/\d{2}\/\d{2,4})/i,
+    /3\.6[^\n]*\n\s*(\d{2}\/\d{2}\/\d{2,4})/i
+  );
+
+  // Status final (item 4.3) — inclui "Devolvido Parcial" quando presente
+  const statusRaw = laudoBuscar(t,
+    /Avalia[cç][aã]o\s+Final\s+(Aprovado[^\n]*|Reprovado[^\n]*)/i,
+    /4\.3[^\n]*\n\s*(Aprovado[^\n]*|Reprovado[^\n]*)/i
+  );
+  const temDevolucao = /Devolvido\s+Parcial/i.test(statusRaw) || /Devolvido\s+Total/i.test(statusRaw);
+  const status = statusRaw.includes('Restrição')||statusRaw.includes('Restricao')
+    ? 'Aprovado com Restrição'
+    : statusRaw.toLowerCase().includes('reprovado') ? 'Reprovado' : 'Aprovado';
+
+  // Principal Defeito (item 4.8) — layout colunar: rótulos 4.6/4.7/4.8/4.9 primeiro, depois valores
+  // Sequência de valores: Custo(R$) | Marca | Tipo Produto | *Principal Defeito* | Formato
+  // Estratégia: pegar o bloco após "4.8 - Principal Defeito Frios" e extrair o 3º valor não-numérico
+  let defeito = '';
+  const bloco48 = t.match(/4\.8[^\n]*\n\n4\.9[^\n]*\n\n([\s\S]{0,300})/i);
+  if(bloco48){
+    // Os valores aparecem nessa ordem: [custo R$], Marca, Tipo Produto, *Defeito*, Formato
+    const linhas = bloco48[1].split('\n\n').map(l=>l.trim()).filter(l=>l&&!/^\d/.test(l)&&!/Fotos/i.test(l)&&!/Desenvolvido/i.test(l));
+    // pula linhas de custo (contêm vírgula e número), marca ("Marca Regular"), tipo ("Sem Tempero")
+    // o defeito é a primeira linha que contém palavras-chave de não conformidade
+    defeito = linhas.find(l=>
+      /Temperatura|Vácuo|Vacuum|Ausência|Embalagem|Padrão|Odor|Limosidade|Exsudação/i.test(l)
+    ) || linhas[2] || '';
+  }
+  if(!defeito) defeito = laudoBuscar(t,
+    /Principal\s+Defeito\s+Frios\s+([^\n]+)/i
+  );
+  // Observação do 4.3 (obs da avaliação final) e 4.8
+  const obsMatch = t.match(/Avalia[cç][aã]o\s+Final[\s\S]{0,200}?Observa[cç][aã]o:\s*([^\n]{10,})/i)
+    || t.match(/Observa[cç][aã]o:\s*([^\n]{10,})/i);
+  const obs = obsMatch ? obsMatch[1].trim() : defeito;
+
+  // Amostragem individual (item 4.2) — quantidade de amostras avaliadas
+  // Usado para calcular incidência quando a análise é por peça
+  const amostrasMatch = t.match(/4\.2[^\n]*\n\nAmostras:\s*(\d+)/i)
+    || t.match(/Amostras:\s*(\d+)/i);
+  const qtdAmostras = amostrasMatch ? parseInt(amostrasMatch[1]) : 0;
+
+  // Defeitos — conta parâmetros com problemas (item 4.1)
+  const parametrosMatch = t.match(/Parâmetros[\s\S]{0,100}?\n\n(\d+)\s*\n/i);
+  const qtdDefeitos = parametrosMatch ? parseInt(parametrosMatch[1]) : 0;
+  const caixasMatch = t.match(/Total\s+de\s+embalagens\s*\nrecebidas\s*\n(\d{2,}\.?\d*)/i)
+    || t.match(/recebidas\s*\n(\d{2,}\.?\d*)/i);
+  const caixas = caixasMatch ? parseFloat(caixasMatch[1]) : 0;
+
+  // Devolução parcial — item 4.4: caixas devolvidas e kg (na observação)
+  // Layout: "4.4 - Quantidade Total Devolvida (Caixas)\n\n2\n\nObservação: 48,78"
+  let devolucaoCaixas = 0, devolucaoKg = 0;
+  if(temDevolucao){
+    const devCxMatch = t.match(/4\.4[^\n]*\n\n(\d+)\s*\n/i);
+    if(devCxMatch) devolucaoCaixas = parseInt(devCxMatch[1]);
+    // kg está na observação do item 4.4
+    const devKgMatch = t.match(/4\.4[\s\S]{0,100}?Observa[cç][aã]o:\s*([\d,\.]+)/i);
+    if(devKgMatch) devolucaoKg = parseFloat(devKgMatch[1].replace(',','.'));
+  }
+
+  // Defeitos encontrados
+  const defeitosTexto = laudoBuscar(t,
+    /Fora\s+de\s+padr[aã]o[^\n]*Observa[cç][aã]o:\s*([^\n]+)/i,
+    /Defeitos\s+Leves[\s\S]{0,300}?Observa[cç][aã]o:\s*([^\n]+)/i
+  ) || (defeito && defeito !== obs ? defeito : '');
+
+  // Motivo mapeado
+  const {motivo, detalhe} = laudoMapearMotivo(obs || defeito);
+
+  // Cliente — tenta detectar pela unidade logística ou nome do arquivo
+  let cliente = laudoBuscar(t, /UNIDADE\s+LOG[IÍ]STICA\s*[▸►◆♦\|]?\s*([A-Z]{2,}(?:\s*[-–]\s*[A-Z]{2})?)/i);
+  // PTF-SP = Carrefour nesse caso, mas deixamos o texto bruto pra revisão
+  if(!cliente) cliente = '';
+
+  // Incidência calculada quando análise é por peça (amostras individuais)
+  const incidencia = qtdAmostras > 0 && qtdDefeitos > 0
+    ? (qtdDefeitos/qtdAmostras*100).toFixed(2)+'%'
+    : '';
+
+  return {
+    nomeProduto, codProduto, tipo, dataStr, sif, placa,
+    termtemp, prodtemp, dataprodStr, status, temDevolucao, obs, defeito,
+    caixas, devolucaoCaixas, devolucaoKg, defeitosTexto, motivo, detalhe,
+    cliente, qtdAmostras, qtdDefeitos, incidencia
+  };
+}
+
+// ── Agrega múltiplos laudos da mesma entrega ──────────────────────────────
+function laudoAgregarLaudos(laudos){
+  if(!laudos.length) throw new Error('Nenhum laudo pôde ser lido.');
+  const base = laudos[0];
+
+  // Temperatura do produto: coleta todas separadas por ";" (cada laudo = um produto diferente)
+  const todosProd = laudos.map(l=>l.prodtemp).filter(Boolean);
+  const prodtempStr = [...new Set(todosProd)].join('; ') || '';
+  // Para o campo do formulário usa o maior (mais crítico para validação)
+  const maxProdtemp = todosProd.reduce((max,v)=>{const n=parseFloat(v)||0; return n>max?n:max;}, -Infinity);
+  const prodtempForm = isFinite(maxProdtemp) ? String(maxProdtemp) : (todosProd[0]||'');
+
+  // Status geral: prioriza o mais crítico
+  const statusPrio = s => s==='Reprovado'?2:s==='Aprovado com Restrição'?1:0;
+  let piorStatus = base.status;
+  laudos.forEach(l=>{ if(statusPrio(l.status)>statusPrio(piorStatus)) piorStatus=l.status; });
+
+  // Obs: concatena se diferentes
+  const obsSet = [...new Set(laudos.map(l=>l.obs).filter(Boolean))];
+  const obs = obsSet.join(' | ');
+
+  // Motivo: usa o primeiro não-vazio
+  const laudoComMotivo = laudos.find(l=>l.motivo) || base;
+
+  // Determina abrangências
+  const temDevQualquer = laudos.some(l=>l.temDevolucao);
+  const temRestQualquer = laudos.some(l=>l.status==='Aprovado com Restrição');
+
+  // Produtos — inclui código se extraído
+  const produtos = laudos.map(l=>({
+    nome: (l.codProduto ? l.codProduto+' — ' : '') + l.nomeProduto,
+    caixas: l.caixas,
+    resultado: l.status,
+    defeitos: l.defeitosTexto || l.defeito,
+    prodtemp: l.prodtemp,
+    temDevolucao: l.temDevolucao,
+    devolucaoCaixas: l.devolucaoCaixas,
+    devolucaoKg: l.devolucaoKg,
+    motivo: l.motivo,
+    detalhe: l.detalhe,
+    sif: l.sif
+  }));
+
+  // Helper: monta motivo com dados de amostragem quando disponível
+  function motItem(l){
+    const un = l.qtdAmostras > 0 ? 'pç' : 'cx';
+    const av = l.qtdAmostras > 0 ? String(l.qtdAmostras) : '';
+    const pb = l.qtdDefeitos > 0 ? String(l.qtdDefeitos) : '';
+    return l.motivo ? [{mot: l.motivo, det: l.detalhe, un, av, pb, inc: l.incidencia||''}] : [];
+  }
+
+  // Monta itens de devolução (um por produto com Devolvido Parcial/Total)
+  let devItens = [];
+  let idCnt = 0;
+  laudos.filter(l=>l.temDevolucao).forEach(l=>{
+    devItens.push({
+      id: idCnt++,
+      produtoBusca: (l.codProduto ? l.codProduto+' — '+l.nomeProduto : l.nomeProduto),
+      produto: (l.codProduto ? l.codProduto+' — '+l.nomeProduto : l.nomeProduto),
+      su: l.sif, sn: '',
+      nfcx: l.caixas > 0 ? String(l.caixas) : '',
+      nfkg: '',
+      cx: l.devolucaoCaixas > 0 ? String(l.devolucaoCaixas) : '',
+      kg: l.devolucaoKg > 0 ? String(l.devolucaoKg) : '',
+      td: 'Parcial', rpr: '',
+      motivos: motItem(l)
+    });
+  });
+
+  // Monta itens de restrição (um por produto com restrição mas sem devolução)
+  let restItens = [];
+  laudos.filter(l=>l.status==='Aprovado com Restrição'&&!l.temDevolucao).forEach(l=>{
+    restItens.push({
+      id: idCnt++,
+      produtoBusca: (l.codProduto ? l.codProduto+' — '+l.nomeProduto : l.nomeProduto),
+      produto: (l.codProduto ? l.codProduto+' — '+l.nomeProduto : l.nomeProduto),
+      su: l.sif, sn: '',
+      nfcx: l.caixas > 0 ? String(l.caixas) : '',
+      nfkg: '', cx: '', kg: '',
+      td: 'Parcial', rpr: '',
+      motivos: motItem(l)
+    });
+  });
+
+  // Se um produto tem devolução E restrição, também entra em restrição
+  laudos.filter(l=>l.temDevolucao&&l.status==='Aprovado com Restrição').forEach(l=>{
+    restItens.push({
+      id: idCnt++,
+      produtoBusca: (l.codProduto ? l.codProduto+' — '+l.nomeProduto : l.nomeProduto),
+      produto: (l.codProduto ? l.codProduto+' — '+l.nomeProduto : l.nomeProduto),
+      su: l.sif, sn: '',
+      nfcx: l.caixas > 0 ? String(l.caixas) : '',
+      nfkg: '', cx: '', kg: '',
+      td: 'Parcial', rpr: '',
+      motivos: motItem(l)
+    });
+  });
+
+  return {
+    data: laudoNormalizarData(base.dataStr),
+    cliente: base.cliente,
+    sif: base.sif,
+    placa: base.placa,
+    termtemp: base.termtemp,
+    prodtemp: prodtempForm,
+    prodtempDisplay: prodtempStr,
+    dataprod: laudoNormalizarDataProd(base.dataprodStr),
+    status: piorStatus,
+    obs,
+    tipo: base.tipo,
+    motivo_rest: laudoComMotivo.motivo,
+    detalhe_rest: laudoComMotivo.detalhe,
+    abrDev: temDevQualquer ? 'parcial' : 'na',
+    abrRest: temRestQualquer ? 'parcial' : 'na',
+    devItens,
+    restItens,
+    produtos
+  };
+}
+
+function laudoMostrarPrevia(d){
+  const prods=(d.produtos||[]).map(p=>{
+    const devInfo = p.temDevolucao && p.devolucaoCaixas
+      ? ` <span style="color:var(--red-text);font-size:11px">DEV: ${p.devolucaoCaixas}cx${p.devolucaoKg?' / '+p.devolucaoKg+'kg':''}</span>`
+      : '';
+    return `<div style="margin-top:6px;padding:6px 8px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)">
+      <b>${p.nome}</b>${p.caixas?' — '+p.caixas+' cx NF':''}${p.prodtemp?' — '+p.prodtemp+'°C':''} — <span style="color:${p.resultado==='Aprovado'?'var(--green)':'var(--amber-text)'}">${p.resultado||''}</span>${devInfo}
+      ${p.defeitos?`<br><span style="color:var(--text3);font-size:11px">${p.defeitos}</span>`:''}
+      ${p.motivo?`<br><span style="color:var(--text2);font-size:11px">→ ${p.motivo}</span>`:''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('laudo-previa-conteudo').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:10px">
+      <div><span style="color:var(--text3)">Data</span><br><b>${d.data||'—'}</b></div>
+      <div><span style="color:var(--text3)">Cliente</span><br><b>${d.cliente||'—'}</b></div>
+      <div><span style="color:var(--text3)">SIF</span><br><b>${d.sif||'—'}</b></div>
+      <div><span style="color:var(--text3)">Placa</span><br><b>${d.placa||'—'}</b></div>
+      <div><span style="color:var(--text3)">Temp. produto (°C)</span><br><b>${d.prodtempDisplay||d.prodtemp||'—'}</b></div>
+      <div><span style="color:var(--text3)">Temp. termógrafo (°C)</span><br><b>${d.termtemp||'—'}</b></div>
+      <div><span style="color:var(--text3)">Data produção</span><br><b>${d.dataprod||'—'}</b></div>
+      <div><span style="color:var(--text3)">Status geral</span><br><b>${d.status||'—'}</b></div>
+      <div style="grid-column:1/-1"><span style="color:var(--text3)">Motivo restrição</span><br><b>${d.motivo_rest||'—'}</b>${d.detalhe_rest?' → '+d.detalhe_rest:''}</div>
+      <div style="grid-column:1/-1"><span style="color:var(--text3)">Observações</span><br>${d.obs||'—'}</div>
+    </div>
+    <div><span style="color:var(--text3)">Produtos lidos (${(d.produtos||[]).length} laudo${(d.produtos||[]).length!==1?'s':''})</span>${prods}</div>
+    <div style="margin-top:10px;padding:8px 10px;background:var(--amber-bg);border:1px solid #fcd34d;border-radius:var(--radius-sm);font-size:11px;color:var(--amber-text)">
+      ⚠️ <b>Nota Fiscal em branco</b> — preencha-a no Registro antes de enviar ao Sheets.
+    </div>`;
+  document.getElementById('laudo-previa').style.display='block';
+}
+
+function laudoImportar(){
+  const d=laudoDadosExtraidos; if(!d) return;
+
+  const draft={
+    'f-data': d.data||'',
+    'f-cliente': d.cliente||'',
+    'f-sif-unid': d.sif||'',  // já é a sigla (ex: SMG), não precisa de split
+    'f-placa': d.placa||'',
+    'f-nf': '',
+    'f-prodtemp': String(d.prodtemp||''),
+    'f-termtemp': String(d.termtemp||''),
+    'f-dataprod': d.dataprod||'',
+    'f-status': d.status||'',
+    'f-obs': d.obs||'',
+    'f-atendimento': 'Ato de entrega',
+    'f-tipo': d.tipo||'',
+    'f-abr-dev': d.abrDev||'na',
+    'f-abr-rest': d.abrRest||'na',
+    _step: 0
+  };
+
+  // Converte itens do formato do laudo para o formato do coletarItens/restaurarItens
+  function converterItens(lista){
+    return (lista||[]).map((l,i)=>({
+      id: l.id !== undefined ? l.id : i,
+      produto: l.produto||'',
+      produtoBusca: l.produtoBusca||l.produto||'',
+      su: String(l.sif||l.su||d.sif||'').split('/')[0],
+      sn: '',
+      nfcx: String(l.nfcx||l.caixas||''),
+      nfkg: String(l.nfkg||''),
+      cx: String(l.cx||l.devolucaoCaixas||''),
+      kg: String(l.kg||l.devolucaoKg||''),
+      td: l.td||'Parcial',
+      rpr: l.rpr||'',
+      motivos: (l.motivos||[]).map(m=>({
+        mot: m.mot||m.motivo||'',
+        det: m.det||m.detalhe||'',
+        un: m.un||m.avaliado||'cx',
+        av: m.av||'', pb: m.pb||'', inc: m.inc||''
+      }))
+    }));
+  }
+
+  if(d.devItens && d.devItens.length) draft._devItens = converterItens(d.devItens);
+  if(d.restItens && d.restItens.length) draft._restItens = converterItens(d.restItens);
+
+  _aplicarRascunho(draft);
+  salvarRascunho();
+
+  // Navega para o Registro
+  showView('form', document.querySelectorAll('.nav-btn')[0]);
+
+  // Banner de confirmação
+  setTimeout(()=>{
+    const old=document.getElementById('laudo-origem-banner'); if(old) old.remove();
+    const banner=document.createElement('div');
+    banner.id='laudo-origem-banner';
+    banner.style.cssText='background:var(--green-bg);border:1px solid #a7f3d0;border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--green-text);margin-bottom:12px';
+    banner.innerHTML='✅ <b>Dados do laudo importados.</b> Confira os campos, preencha a <b>Nota Fiscal</b> e depois registre normalmente.';
+    const vf=document.getElementById('view-form');
+    vf.insertBefore(banner, vf.firstChild);
+  },100);
+}
+</script>
+
+
+</body>
+</html>
