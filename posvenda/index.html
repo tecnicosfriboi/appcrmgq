@@ -155,6 +155,12 @@ td{padding:8px 6px;border-bottom:1px solid var(--border);color:var(--text)}
     <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:4px">Conclusão desta unidade</label>
     <textarea id="conclusao-unidade" rows="3" oninput="atualizarConclusaoUnidade()" style="width:100%;font-size:13px;padding:8px" placeholder="Conclusão específica para este SIF..."></textarea>
   </div>
+  <div class="res-box" id="res-submeter" style="border-color:#0f766e;display:none">
+    <div class="sec-lbl" style="color:#0f766e;margin-bottom:8px">📦 Lotes a submeter à indústria</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5">Datas de produção/validade diferentes são <b>lotes diferentes</b>, mesmo com o mesmo SIF. Marque só os lotes que vão para a indústria decidir a retirada — os <b>desmarcados saem do resumo (WhatsApp), do e-mail e do laudo Word</b>. O checklist assinado continua mostrando tudo o que foi analisado.</p>
+    <div id="submeter-lotes-check"></div>
+    <div id="submeter-aviso" style="display:none;font-size:12px;margin-top:8px;line-height:1.5;padding:8px 10px;border-radius:8px"></div>
+  </div>
   <div class="res-box" id="res-whats">
     <div class="sec-lbl" style="color:var(--green-text);margin-bottom:8px">📱 Escalonamento — WhatsApp</div>
     <div class="res-texto" id="txt-whats"></div>
@@ -266,6 +272,13 @@ td{padding:8px 6px;border-bottom:1px solid var(--border);color:var(--text)}
         <div class="field"><label>Código de terceiro</label><input type="number" id="v-codterceiro" placeholder="ex: 32615"></div>
       </div>
         <div class="field"><label>Cidade / UF</label><input type="text" id="v-cidade" placeholder="ex: São Paulo / SP"></div>
+      </div>
+      <div class="field"><label>Reclamação foi em</label>
+        <select id="v-local-reclamacao" onchange="salvarRascunho()">
+          <option value="">Selecione...</option>
+          <option>Loja</option>
+          <option>CD</option>
+        </select>
       </div>
       <div class="row2">
       <div id="acomp-lista">
@@ -420,6 +433,15 @@ td{padding:8px 6px;border-bottom:1px solid var(--border);color:var(--text)}
       <div class="sec-lbl">Dados da NF</div>
       <div id="nfs-lista"></div>
       <button class="btn-add" onclick="addNF()">+ Adicionar outra NF</button>
+    </div>
+    <div class="section">
+      <div class="field"><label>Produto entregue em</label>
+        <select id="v-local-entrega" onchange="salvarRascunho()">
+          <option value="">Selecione...</option>
+          <option>CD</option>
+          <option>Loja</option>
+        </select>
+      </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:12px">
       <button class="btn-outline" onclick="irPasso(0)" style="margin-top:0">← Voltar</button>
@@ -2275,7 +2297,8 @@ async function registrar(){
     acomp:(getAcompanhantes()[0]||{}).nome||'',acompCargo:(getAcompanhantes()[0]||{}).cargo||'',acompanhantes:getAcompanhantes(),acompTexto:acompanhantesTexto(),motivo:motivoCompleto,motivoCod,detalheCod,detalheNome,modalidade:g('v-modalidade'),acompanhamento:g('v-acompanhamento'),
     vacuoMantido:g('v-vacuo-mantido'),
     codTerceiro:g('v-codterceiro'),projeto:g('v-projeto'),
-    tipoEntrega:g('v-tipo-entrega'),tipoConf:g('v-tipo-conf'),
+    tipoEntrega:g('v-local-entrega'),tipoConf:g('v-tipo-conf'),
+    localReclamacao:g('v-local-reclamacao'),localEntrega:g('v-local-entrega'),
     nfs,nf:p.num,dataNF:p.data,placa:p.placa,transp:p.transp,
     carga:p.carga,dataChegada:p.chegada,dataEntrega:p.entrega,
     dataCD:p.cd,qtdNF:p.qtd,
@@ -2335,6 +2358,7 @@ async function registrar(){
     document.getElementById('res-whats').style.display='none';
     document.getElementById('res-parecer').style.display='none';
     document.getElementById('res-panorama').style.display='none';
+    document.getElementById('res-submeter').style.display='none';
     const emailHtml=gerarEmailValor(e);
     window._emailHtml=emailHtml;
     const iframe=document.getElementById('txt-email');
@@ -2370,6 +2394,9 @@ async function registrar(){
   // Detecta múltiplas unidades/SIFs e configura o seletor
   window._ultimaVisitaCompleta=e;
   const temMultiUnidade=configurarSeletorUnidade(e);
+
+  // Seleção de lotes/datas para submeter à indústria (aparece se houver +1 lote)
+  popularSubmeterChecks(e);
 
   // E-mail — se houver múltiplas unidades, gera para a primeira; senão para todos
   let eParaEmail=e;
@@ -2667,16 +2694,20 @@ function descreverSensorialHtml(l){
 }
 
 // Agrupa os lotes pela NF vinculada (para exibição nos documentos)
+// Lotes marcados para submeter à indústria (l.submeter !== false => incluído por padrão)
+function lotesSubmetidos(e){ return ((e&&e.lotes)||[]).filter(l=>l.submeter!==false); }
+
 function agruparLotesPorNF(e){
   const nfs=e.nfs||[];
+  const _lotes=lotesSubmetidos(e);   // respeita a marcação "Lotes a submeter à indústria"
   const grupos=[];
   nfs.forEach(nf=>{
-    const ls=(e.lotes||[]).filter(l=>l.nfRef!=null&&String(l.nfRef)===String(nf.id));
+    const ls=_lotes.filter(l=>l.nfRef!=null&&String(l.nfRef)===String(nf.id));
     if(ls.length)grupos.push({nf,lotes:ls});
   });
-  const semRef=(e.lotes||[]).filter(l=>l.nfRef==null||!nfs.some(nf=>String(nf.id)===String(l.nfRef)));
+  const semRef=_lotes.filter(l=>l.nfRef==null||!nfs.some(nf=>String(nf.id)===String(l.nfRef)));
   if(semRef.length)grupos.push({nf:null,lotes:semRef});
-  return grupos.length?grupos:[{nf:null,lotes:e.lotes||[]}];
+  return grupos.length?grupos:[{nf:null,lotes:_lotes}];
 }
 
 function gerarWhats(e){
@@ -2888,7 +2919,7 @@ function trocarUnidadeDoc(manterConclusao){
 
 function gerarAssuntoEmail(e){
   const nf1=e.nfs&&e.nfs[0]||{};
-  const l0=e.lotes&&e.lotes[0]||{};
+  const l0=lotesSubmetidos(e)[0]||(e.lotes&&e.lotes[0])||{};
   const uf=e._unidadeFiltrada;
   // Prioriza o SIF/sigla da unidade filtrada; senão o do 1º lote; por fim o da NF
   const sif=(uf&&uf.sif)||l0.sifUprod||l0.sifNum||nf1.sif||'—';
@@ -2905,7 +2936,7 @@ function gerarAssuntoEmail(e){
 function gerarEmail(e){
   const dataRef=e.dataReclamacao||e.data||new Date().toISOString().split('T')[0];
   const nf1=e.nfs&&e.nfs[0]||{};
-  const l0u=e.lotes&&e.lotes[0]||{};
+  const l0u=lotesSubmetidos(e)[0]||(e.lotes&&e.lotes[0])||{};
   const unidProd=l0u.uprod?(l0u.uprod+(l0u.sifUprod?' (SIF '+l0u.sifUprod+')':'')):'—';
 
   // helpers de célula para tabela zebrada
@@ -3270,7 +3301,7 @@ function gerarParecer(e){
   const d=e.dataEmail?diffDias(e.dataEmail,hoje):null;
   return `PARECER PENDENTE
 Cliente: ${e.cliente}
-Produto: ${e.lotes&&e.lotes[0]?e.lotes[0].produto:'—'}
+Produto: ${lotesSubmetidos(e)[0]?lotesSubmetidos(e)[0].produto:(e.lotes&&e.lotes[0]?e.lotes[0].produto:'—')}
 NF: ${e.nf} | Data visita: ${fmt(e.data)}
 Data e-mail ind.: ${fmt(e.dataEmail)}
 Dias aguardando: ${d!==null?d+' dias':'—'}
@@ -3329,7 +3360,7 @@ function aplicarTemplateChecklist(){
 
 function gerarEmailImprocedente(e){
   const nf1=e.nfs&&e.nfs[0]||{};
-  const lotesTxt=e.lotes.map(l=>`Produto: ${l.produto}
+  const lotesTxt=lotesSubmetidos(e).map(l=>`Produto: ${l.produto}
 Unid. produtora: ${l.uprod} (SIF ${l.sifUprod}) | Abate: ${l.uabate} (SIF ${l.sifUabate})
 Fabricação: ${fmt(l.fab)} | Validade: ${fmt(l.val)} | Shelf: ${l.shelf}d
 Temp. produto: ${e.tempProduto||'—'} | Câmara: ${e.tempCamara||'—'}°C | PDV: ${e.tempPdv||'—'}°C`).join('\n\n---\n\n');
@@ -3361,6 +3392,78 @@ function popularParecerChecks(e){
   box.style.display='block';
   box.innerHTML='<div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px">Selecione o que vai na planilha de parecer pendente (Excel):</div>'+
     lotes.map((l,i)=>`<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;margin-bottom:5px;line-height:1.4"><input type="checkbox" class="parecer-lote-chk" data-idx="${i}" checked style="margin-top:2px"><span>${l.produto||'—'} — SIF ${l.sifUprod||l.sifNum||'—'} (${l.uprod||'—'})</span></label>`).join('');
+}
+
+// ─── SELEÇÃO DE LOTES/DATAS PARA SUBMETER À INDÚSTRIA ───────────────────────
+// Monta a lista de lotes com caixinhas. Só aparece quando há mais de um lote.
+function popularSubmeterChecks(e){
+  const box=document.getElementById('res-submeter');
+  const cont=document.getElementById('submeter-lotes-check');
+  if(!box||!cont)return;
+  const lotes=(e&&e.lotes)||[];
+  if(lotes.length<=1){box.style.display='none';cont.innerHTML='';return;}
+  box.style.display='block';
+  cont.innerHTML=lotes.map((l,i)=>{
+    const sif=l.sifUprod||l.sifNum||'—';
+    const un=l.uprod?' ('+l.uprod+')':'';
+    const datas='Fab '+(fmt(l.fab)||'—')+' · Val '+(fmt(l.val)||'—');
+    const checked=(l.submeter!==false)?'checked':'';
+    return '<label style="display:flex;gap:9px;align-items:flex-start;font-size:12.5px;margin-bottom:8px;line-height:1.45;cursor:pointer">'+
+      '<input type="checkbox" class="submeter-lote-chk" data-idx="'+i+'" '+checked+' onchange="toggleSubmeterLote('+i+',this.checked)" style="margin-top:2px;width:16px;height:16px;accent-color:#0f766e;flex:0 0 auto">'+
+      '<span><b>'+(l.produto||'—')+'</b> — SIF '+sif+un+'<br>'+
+      '<span style="color:var(--text3);font-family:\'JetBrains Mono\',monospace;font-size:11px">'+datas+'</span></span></label>';
+  }).join('');
+  atualizarAvisoSubmeter();
+}
+
+// Marca/desmarca um lote e regera as saídas na hora.
+function toggleSubmeterLote(idx,checked){
+  const eC=window._ultimaVisitaCompleta||window._ultimaVisita;
+  if(eC&&eC.lotes&&eC.lotes[idx])eC.lotes[idx].submeter=checked;
+  atualizarAvisoSubmeter();
+  regenerarSaidasSubmeter();
+}
+
+// Aviso conforme quantos lotes estão marcados.
+function atualizarAvisoSubmeter(){
+  const aviso=document.getElementById('submeter-aviso');
+  if(!aviso)return;
+  const eC=window._ultimaVisitaCompleta||window._ultimaVisita;
+  const lotes=(eC&&eC.lotes)||[];
+  const marc=lotes.filter(l=>l.submeter!==false).length;
+  if(!marc){
+    aviso.style.display='block';aviso.style.background='#fee2e2';aviso.style.color='#991b1b';
+    aviso.textContent='⚠️ Nenhum lote marcado — os documentos sairão sem lotes. Marque ao menos um.';
+  }else if(marc<lotes.length){
+    aviso.style.display='block';aviso.style.background='#e7f5f3';aviso.style.color='#0f5a53';
+    aviso.textContent='ℹ️ '+(lotes.length-marc)+' lote(s) fora da submissão — resumo, e-mail e laudo sairão só com os '+marc+' marcado(s).';
+  }else{
+    aviso.style.display='none';
+  }
+}
+
+// Regera WhatsApp + e-mail (mantendo o SIF e a conclusão que já estiverem selecionados).
+function regenerarSaidasSubmeter(){
+  const eAtiva=window._ultimaVisita||window._ultimaVisitaCompleta;
+  if(!eAtiva)return;
+  const whatsBox=document.getElementById('res-whats');
+  if(whatsBox&&whatsBox.style.display!=='none'){
+    const tw=document.getElementById('txt-whats');
+    if(tw)tw.textContent=gerarWhats(eAtiva);
+  }
+  const emailBox=document.getElementById('res-email');
+  if(emailBox&&emailBox.style.display!=='none'){
+    if(window._docPorUnidade){
+      trocarUnidadeDoc(true); // reaproveita a lógica do seletor de SIF (regenera e-mail + assunto)
+    }else{
+      const emailHtml=gerarEmail(eAtiva);
+      window._emailHtml=emailHtml;
+      const iframe=document.getElementById('txt-email');
+      if(iframe){iframe.srcdoc='';setTimeout(function(){iframe.srcdoc=emailHtml;},50);}
+      const assuntoEl=document.getElementById('txt-assunto-email');
+      if(assuntoEl)assuntoEl.textContent=gerarAssuntoEmail(eAtiva);
+    }
+  }
 }
 
 function copiar(tid,bid){
@@ -3521,7 +3624,7 @@ function renderHist(){
 }
 
 function verWhats(id){const e=getData().find(x=>x.id===id);if(e)abrirModal(gerarWhats(e));}
-function verEmail(id){const e=getData().find(x=>x.id===id);if(e){window._emailHtml=gerarEmail(e);window._ultimaVisita=e;showView('form',document.querySelector('.nav-btn'));setTimeout(()=>{document.getElementById('res-email').style.display='block';const iframe=document.getElementById('txt-email');if(iframe){iframe.srcdoc='';setTimeout(()=>{iframe.srcdoc=window._emailHtml;},50);}document.getElementById('res-email').scrollIntoView({behavior:'smooth'});},100);}}
+function verEmail(id){const e=getData().find(x=>x.id===id);if(e){window._emailHtml=gerarEmail(e);window._ultimaVisita=e;window._ultimaVisitaCompleta=e;window._docPorUnidade=null;const _sb=document.getElementById('res-submeter');if(_sb)_sb.style.display='none';showView('form',document.querySelector('.nav-btn'));setTimeout(()=>{document.getElementById('res-email').style.display='block';const iframe=document.getElementById('txt-email');if(iframe){iframe.srcdoc='';setTimeout(()=>{iframe.srcdoc=window._emailHtml;},50);}document.getElementById('res-email').scrollIntoView({behavior:'smooth'});},100);}}
 
 // ─── PARECER FINAL POR LOTE (tela "Finalizar e Enviar para Sheets") ─────────
 // Cada lote da visita ganha seu próprio conjunto de campos, pois um lote pode
@@ -3530,9 +3633,24 @@ function verEmail(id){const e=getData().find(x=>x.id===id);if(e){window._emailHt
 const MPF_LISTAS={
   parecer:['PROCEDENTE','IMPROCEDENTE','AGUARDANDO'],
   enviado:['SIM','NÃO'],
+  restricao:['SIM','NÃO','NÃO INFORMADO'],
   area:['COMERCIAL','QUALIDADE','LOGÍSTICA','DIRETORIA','GI'],
   motivo:['Reclamação pontual frente ao volume entregue','Sem desvios na unidade e sem RAs relacionados','Reclamação fora do prazo (3/3)','Temperaturas elevadas no cliente','Sem produto disponível para avaliação','Produto conforme','Produto vencido','Produto não conforme','Dentro do prazo de retirada do projeto','Dentro do prazo de retirada pelo CD','Recebido com restrição','Veículo aguardando no cliente para descarregar por mais de 5 dias']
 };
+// Mesma tabela de motivos da página 1 (27 motivos), em ordem alfabética, para o
+// campo "Motivo da restrição". O detalhe reaproveita o DETALHES_MAP.
+const MOTIVOS_LISTA=Object.entries(MOTIVOS_NOME).map(function(par){return {c:par[0],d:par[1]};}).sort(function(a,b){return a.d.localeCompare(b.d,'pt');});
+// Cascata Motivo → Detalhe da restrição (por lote), igual à página 1.
+function atualizarDetalheRestricao(loteId){
+  const cod=(document.getElementById('mpf-motivo-restricao-'+loteId)||{}).value||'';
+  const campo=document.getElementById('mpf-campo-detalhe-restricao-'+loteId);
+  const sel=document.getElementById('mpf-detalhe-restricao-'+loteId);
+  if(!sel||!campo)return;
+  const detalhes=DETALHES_MAP[cod]||[];
+  if(!cod||!detalhes.length){campo.style.display='none';sel.innerHTML='<option value="">Selecione...</option>';return;}
+  sel.innerHTML='<option value="">Selecione...</option>'+detalhes.map(function(d){return '<option value="'+d.c+'">'+d.d+'</option>';}).join('');
+  campo.style.display='block';
+}
 function _mpfSelect(id,list,sel){
   return `<select id="${id}"><option value="">Selecione...</option>`+
     list.map(o=>`<option ${o===sel?'selected':''}>${o}</option>`).join('')+
@@ -3550,6 +3668,18 @@ function _mpfBlocoLote(loteId,label,v){
     <div class="field"><label>Área de aprovação</label>${_mpfSelect('mpf-area-'+loteId,MPF_LISTAS.area,v.area)}</div>
     <div class="field"><label>Nome do aprovador</label><input type="text" id="mpf-aprovador-${loteId}" placeholder="ex: Márcio Silveira" value="${v.aprovador||''}"></div>
     <div class="field"><label>Data que recebeu todas as informações corretas</label><input type="date" id="mpf-data-infos-${loteId}" value="${v.dataInfos||''}"></div>
+    <div class="field"><label>Preço do produto (R$)</label><input type="number" step="0.01" min="0" id="mpf-preco-${loteId}" placeholder="ex: 29.90" value="${v.preco||''}"></div>
+    <div class="field"><label>Recebimento com restrição</label>${_mpfSelect('mpf-restricao-'+loteId,MPF_LISTAS.restricao,v.restricao)}</div>
+    <div class="field"><label>Motivo da restrição</label>
+      <select id="mpf-motivo-restricao-${loteId}" onchange="atualizarDetalheRestricao('${loteId}')">
+        <option value="">Selecione...</option>
+        ${MOTIVOS_LISTA.map(m=>`<option value="${m.c}" ${String(m.c)===String(v.motivoRestricaoCod)?'selected':''}>${m.d}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field" id="mpf-campo-detalhe-restricao-${loteId}" style="display:none">
+      <label>Detalhe da restrição</label>
+      <select id="mpf-detalhe-restricao-${loteId}"><option value="">Selecione...</option></select>
+    </div>
   </div>`;
 }
 
@@ -3580,6 +3710,16 @@ function abrirParecerFinal(id){
     return _mpfBlocoLote(loteId,label,v);
   }).join('');
   document.getElementById('mpf-lotes-container').innerHTML=html;
+  // Reabre a cascata Motivo→Detalhe da restrição para lotes com valor salvo
+  lotes.forEach((l,idx)=>{
+    const loteId=l.id!=null?l.id:'unico';
+    const v=(e._pareceresPorLote||{})[loteId];
+    if(v&&v.motivoRestricaoCod){
+      atualizarDetalheRestricao(loteId);
+      const dsel=document.getElementById('mpf-detalhe-restricao-'+loteId);
+      if(dsel&&v.detalheRestricaoCod)dsel.value=v.detalheRestricaoCod;
+    }
+  });
   document.getElementById('mpf-status').textContent='';
   document.getElementById('modal-parecer-final').style.display='flex';
 }
@@ -3597,11 +3737,18 @@ async function confirmarEnvioSheets(){
   const pareceresPorLote={};
   for(const l of lotes){
     const loteId=l.id!=null?l.id:'unico';
+    const _mrCod=g2('mpf-motivo-restricao',loteId);
+    const _drCod=g2('mpf-detalhe-restricao',loteId);
+    const _mrNome=_mrCod?(MOTIVOS_NOME[_mrCod]||''):'';
+    const _drNome=(_drCod&&_mrCod)?(((DETALHES_MAP[_mrCod]||[]).find(function(d){return String(d.c)===String(_drCod);})||{}).d||''):'';
     pareceresPorLote[loteId]={
       parecer:g2('mpf-parecer',loteId), motivo:g2('mpf-motivo',loteId),
       enviado:g2('mpf-enviado',loteId), dataEnvio:g2('mpf-data-envio',loteId),
       dataParecer:g2('mpf-data-parecer',loteId), area:g2('mpf-area',loteId),
-      aprovador:g2('mpf-aprovador',loteId), dataInfos:g2('mpf-data-infos',loteId)
+      aprovador:g2('mpf-aprovador',loteId), dataInfos:g2('mpf-data-infos',loteId),
+      preco:g2('mpf-preco',loteId), restricao:g2('mpf-restricao',loteId),
+      motivoRestricaoCod:_mrCod, detalheRestricaoCod:_drCod,
+      motivoRestricao:_mrNome+(_drNome?' — '+_drNome:'')
     };
   }
   e._pareceresPorLote=pareceresPorLote;
@@ -3647,8 +3794,8 @@ async function confirmarEnvioSheets(){
         CLIENTE:            e.cliente||'',
         ESTADO_CLIENTE:     (e.cidade||'').split('/')[1]||'',
         CIDADE_CLIENTE:     (e.cidade||'').split('/')[0]||'',
-        LOCAL_ENTREGA:      e.tipoEntrega||'',
-        LOCAL_RECLAMACAO:   e.tipoEntrega||'',
+        LOCAL_ENTREGA:      e.localEntrega||'',
+        LOCAL_RECLAMACAO:   e.localReclamacao||'',
         MOTIVO_RECLAMACAO:  e.motivo||'',
         DETALHE_RECLAMACAO: e.detalheNome||'',
         VACUO_MANTIDO:      vacuoMantido,
@@ -3676,9 +3823,9 @@ async function confirmarEnvioSheets(){
         QDE_RECEBIDA_CD:    '',
         QDE_RECEBIDA_LOJA:  (l.volFech||'')+' '+(l.volFechUnid||'kg'),
         QT_RECLAMADA:       l.recl||'',
-        PRECO_PRODUTO:      '',
-        RECEBIMENTO_RESTRICAO: '',
-        MOTIVO_RESTRICAO:   '',
+        PRECO_PRODUTO:      pl.preco||'',
+        RECEBIMENTO_RESTRICAO: pl.restricao||'',
+        MOTIVO_RESTRICAO:   pl.motivoRestricao||'',
         PARECER_FINAL:      pl.parecer||'',
         MOTIVO_PARECER_FINAL: pl.motivo||'',
         ENVIADO_FABRICA:    pl.enviado||'',
@@ -4550,6 +4697,7 @@ async function gerarDossieValorPPT(){
 async function gerarLaudoWord(){
   const e=window._ultimaVisita;
   if(!e){alert('Registre primeiro para gerar o laudo.');return;}
+  if(!lotesSubmetidos(e).length){alert('Nenhum lote está marcado para submeter à indústria. Marque ao menos um lote em "Lotes a submeter à indústria" antes de gerar o laudo.');return;}
   const btn=document.getElementById('btn-laudo');
   btn.textContent='Gerando...';btn.disabled=true;
 
