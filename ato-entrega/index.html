@@ -1445,12 +1445,13 @@ function gerarTexto(e){
 
   const restProd=r=>{
     const motTxt=r.motivosArr&&r.motivosArr.length?motLinhas(r.motivosArr):(r.motivo||'—');
-    return '⚠️ *'+r.produto+'*\nSIF: '+r.sif+(r.nfcx||r.nfkg?'\nQtd na NF: '+r.nfcx+' cx — '+r.nfkg+' kg':'')+'\nEm restrição: *'+r.tipoDev+'* — '+r.caixas+' cx — '+r.kg+' kg\nNão conformidades:\n'+motTxt+(r.restProcedente?'\nRestrição: *'+r.restProcedente+'*':'');
+    // NUNCA mostrar procedência aqui — só informa que foi recebido com restrição,
+    // não se é procedente ou não (isso vai para o grupo antes do parecer oficial).
+    return '⚠️ *'+r.produto+'*\nSIF: '+r.sif+(r.nfcx||r.nfkg?'\nQtd na NF: '+r.nfcx+' cx — '+r.nfkg+' kg':'')+'\nEm restrição: *'+r.tipoDev+'* — '+r.caixas+' cx — '+r.kg+' kg\nNão conformidades:\n'+motTxt;
   };
   const restTxt=e.restTotalNF
     ?'‼️ *RESTRIÇÃO TOTAL DA NF*'
       +'\nMotivo(s):\n'+motLinhas(e.restTotalMotivos)
-      +(e.restTotalProc?'\nRestrição: *'+e.restTotalProc+'*':'')
     :(e.restList&&e.restList.length
     ?e.restList.map(restProd).join('\n\n')
     :'');  // vazio quando não há restrição
@@ -1531,7 +1532,8 @@ function gerarAlerta(e){
     ?'*DEVOLUÇÃO TOTAL DA NF*'
       +(e.volNF?'\n   Volume NF: '+e.volNF.toLocaleString('pt-BR')+' kg':'')
       +(e.devTotalMotivos&&e.devTotalMotivos.length?'\n   Motivo(s) gerais: '+fmtMotivos(e.devTotalMotivos):'')
-      +(e.devTotalProc?'\n   Devolução: *'+e.devTotalProc+'*':'')
+      // NUNCA mostrar procedência aqui — este alerta vai para o grupo de
+      // escalonamento ANTES do parecer oficial; a procedência não pode circular.
       // Mesmo em devolução total, mostra os cortes analisados (é onde ficam os motivos)
       +(e.devList&&e.devList.length?'\n\n'+e.devList.map(corteLinha).join('\n\n'):'')
     :(e.devList&&e.devList.length
