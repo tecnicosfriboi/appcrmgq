@@ -2415,6 +2415,8 @@ async function registrar(){
     if(iframe){iframe.srcdoc='';setTimeout(()=>{iframe.srcdoc=emailHtml;},50);}
     document.getElementById('res-email').style.display='block';
     document.querySelector('#res-email .sec-lbl').textContent='📧 Relatório — Visita de Valor';
+    const assuntoElValor=document.getElementById('txt-assunto-email');
+    if(assuntoElValor)assuntoElValor.textContent=gerarAssuntoEmailValor(e);
     document.getElementById('res-laudo').style.display='block';
     document.getElementById('res-dossie-ppt').style.display='block';
     document.getElementById('res-checklist').style.display='block';
@@ -2811,6 +2813,16 @@ ${lotesTxt}
 Att, ${e.tecnico}.`;
 }
 
+// Assunto padronizado para o e-mail da Visita de Valor.
+// Padrão: Visita de Valor - Cliente [nome/loja] - [Cidade/UF]
+// Dica: se o técnico incluir o número da loja no campo "Cliente" (ex: "Atacadão - Loja 648"),
+// ele aparece automaticamente no assunto.
+function gerarAssuntoEmailValor(e){
+  const cliente=(e.cliente||'—').trim();
+  const cidade=(e.cidade||'—').trim();
+  return `Visita de Valor - Cliente ${cliente} - ${cidade}`;
+}
+
 function gerarEmailValor(e){
   const vv=e.vv||{};
   const cL=(txt)=>`<td style="padding:6px 10px;background:#f5f5f5;font-size:12px;font-weight:bold;color:#333;width:45%;border-bottom:1px solid #e8e8e8">${txt}</td>`;
@@ -2827,6 +2839,9 @@ function gerarEmailValor(e){
   <tr><td style="background:#b45309;padding:16px 20px">
     <div style="color:#fff;font-size:17px;font-weight:bold">⭐ RELATÓRIO DE VISITA DE VALOR</div>
     <div style="color:#fef3c7;font-size:12px;margin-top:4px">Garantia da Qualidade — Consultoria Técnica CRM Friboi</div>
+  </td></tr>
+  <tr><td style="padding:16px 20px 0;font-size:13px;color:#1a1a1a;line-height:1.6">
+    Bom dia,<br>Segue abaixo considerações sobre a visita de valor ao cliente <b>${(e.cliente||'—').trim()}</b>.
   </td></tr>
   <tr><td style="padding:12px 20px 0">
   <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #ccc">
@@ -5276,7 +5291,7 @@ function baixarChecklistPDF(){
       const macro=pecas.filter(p=>p.vac==='Excesso de macrobolhas').length;
       const perda=pecas.filter(p=>p.vac==='Perda de vácuo').length;
       const na=pecas.filter(p=>p.vac==='NA (não se aplica)').length;
-      const odorNC=pecas.filter(p=>p.odor&&p.odor!=='Normal').length;
+      const odorNC=pecas.filter(p=>p.odor&&p.odor!=='Sem alteração de odor').length;
       const linhas=pecas.slice(0,14).map((p,j)=>`<tr><td>${j+1}</td><td>${p.vac||'—'}</td><td>${p.odor||'—'}</td></tr>`).join('');
       return `<div class="lote-bloco"><div class="lt">Lote ${i+1} — ${l.produto||'—'} | SIF: ${l.sifUprod||l.sifNum||'—'}</div>
         <table class="tl"><tr><td><b>Qtd peças:</b> ${n||'—'}</td><td><b>Temp. interna:</b> ${e.tempProduto||'—'}°C</td>
