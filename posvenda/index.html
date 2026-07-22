@@ -318,7 +318,7 @@ td{padding:8px 6px;border-bottom:1px solid var(--border);color:var(--text)}
       </div>
         <div class="field"><label>Cidade / UF</label><input type="text" id="v-cidade" placeholder="ex: São Paulo / SP"></div>
       </div>
-      <div class="field"><label>Reclamação foi em</label>
+      <div class="field" id="campo-local-reclamacao"><label>Reclamação foi em</label>
         <select id="v-local-reclamacao" onchange="salvarRascunho()">
           <option value="">Selecione...</option>
           <option>Loja</option>
@@ -1102,6 +1102,10 @@ function toggleModalidade(){
   // Motivo só aparece quando não é visita de valor
   const secMotivo=document.getElementById('sec-motivo');
   if(secMotivo)secMotivo.style.display=isValor?'none':'block';
+
+  // "Reclamação foi em" (Loja/CD) só faz sentido quando há reclamação — não aparece na Visita de Valor
+  const campoLocalReclamacao=document.getElementById('campo-local-reclamacao');
+  if(campoLocalReclamacao)campoLocalReclamacao.style.display=isValor?'none':'block';
 
   // Bloco visita de valor
   const secValor=document.getElementById('sec-visita-valor');
