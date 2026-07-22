@@ -1756,7 +1756,7 @@ async function _registrarInterno(){
       restList:abrRSN==='parcial'?getItems('rest',restIds):[],
       okList:getItemsOk(),
       alto:(parseKgBR(g('f-vol-dev')))>=3000,
-      volRestKg:abrRSN==='total'?parseKgBR(g('f-vol-nf')):getItems('rest',restIds).reduce((s,x)=>s+(x.kg||0),0),
+      volRestKg:abrRSN==='total'?Math.max(0,parseKgBR(g('f-vol-nf'))-parseKgBR(g('f-vol-dev'))):getItems('rest',restIds).reduce((s,x)=>s+(x.kg||0),0),
       estadoCliente:g('f-estado-cliente'), cidadeCliente:g('f-cidade-cliente'),
       localReclamacao:g('f-local-reclamacao'), tipoItem:g('f-tipo-item'),
       rest1yn:'', rest1motivo:'', rest1detalhe:'', rest2yn:'', rest2motivo:'', rest2detalhe:'',
@@ -1819,8 +1819,9 @@ async function _registrarInterno(){
   const restTotalProc=abrRest?g('f-resttot-proc'):'';
 
   // Volume total recebido em restrição (kg): soma os itens parciais de restrição,
-  // ou usa o volume total da NF quando a restrição é da NF inteira.
-  const volRestKg=abrRest?parseKgBR(g('f-vol-nf')):restList.reduce((s,x)=>s+(x.kg||0),0);
+  // ou usa o volume total da NF menos o que já foi devolvido, quando a restrição
+  // é da NF inteira (senão o panorama contava o volume devolvido duas vezes).
+  const volRestKg=abrRest?Math.max(0,parseKgBR(g('f-vol-nf'))-volDev):restList.reduce((s,x)=>s+(x.kg||0),0);
 
   // presencial: o checkbox diz "Descarga NÃO acompanhada" — quando marcado = NÃO presencial
   // portanto presencial = !checkbox
