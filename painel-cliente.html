@@ -299,6 +299,49 @@ function __toggleSwitcher(e){
     .farol-opt{font-size:10.5px;padding:8px 2px;gap:3px;}
   }
 
+  /* ===== seletor de regionais / clientes em caixinhas ===== */
+  .uf-grid{
+    display:flex;flex-wrap:wrap;gap:6px;
+    border:1px solid var(--border);border-radius:8px;
+    padding:9px 10px;background:var(--surface);
+  }
+  .uf-chk{
+    display:inline-flex;align-items:center;gap:5px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;
+    border:1px solid var(--border);border-radius:6px;
+    padding:4px 8px;cursor:pointer;background:var(--bg);
+    color:var(--ink);margin:0;
+  }
+  .uf-chk input{width:auto;margin:0;}
+  .uf-chk:has(input:checked){background:var(--brand);border-color:var(--brand);color:#fff;}
+  .uf-chk.nacional{font-family:'Inter',sans-serif;font-weight:600;}
+  .cli-box{
+    max-height:190px;overflow-y:auto;
+    border:1px solid var(--border);border-radius:8px;
+    padding:8px 10px;background:var(--surface);
+    display:flex;flex-direction:column;gap:1px;
+  }
+  .cli-chk{
+    display:flex;align-items:center;gap:7px;
+    font-size:13px;font-weight:400;color:var(--ink);
+    padding:3px 2px;cursor:pointer;margin:0;border-radius:5px;
+  }
+  .cli-chk input{width:auto;margin:0;flex:0 0 auto;}
+  .cli-chk:hover{background:var(--surface-muted);}
+  .pre-wrap{white-space:pre-wrap;}
+  .sel-item{width:auto;margin:0 8px 0 0;flex:0 0 auto;transform:scale(1.15);cursor:pointer;}
+  .sel-bar{
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+    background:var(--brand-soft);border:1px solid var(--border);
+    border-radius:8px;padding:10px 12px;margin-bottom:14px;
+  }
+  .sel-bar .conta{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);}
+  .ata-campo{
+    font-family:'JetBrains Mono',monospace;font-size:11px;
+    letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint);
+    margin:8px 0 2px;
+  }
+
   /* ===== identidade padrão App CRM/GQ ===== */
   .app-switcher{position:relative;display:inline-block;}
   .app-switcher-btn{background:transparent;border:none;color:#fff;font-size:15px;font-weight:400;letter-spacing:.03em;cursor:pointer;display:flex;align-items:center;gap:7px;padding:0;font-family:'Oswald',sans-serif;text-transform:uppercase;}
@@ -355,7 +398,7 @@ function __toggleSwitcher(e){
       <a href="painel.html"><span class="ico">&#128225;</span>Painel de Programa&ccedil;&otilde;es</a>
       <a href="ato-entrega/index.html"><span class="ico">&#128230;</span>Ato de Entrega</a>
       <a href="posvenda/index.html"><span class="ico">&#128722;</span>Visita P&oacute;s-Venda</a>
-      <a href="painel-cliente.html" class="current"><span class="ico">&#128721;</span>Painel do Cliente</a>
+      <a href="painel-cliente.html" class="current"><span class="ico">&#128451;&#65039;</span>Painel do Cliente</a>
       <a href="links.html"><span class="ico">&#128279;</span>Links &Uacute;teis</a>
       <a href="index.html"><span class="ico">&#127968;</span>Todos os apps</a>
     </div>
@@ -385,7 +428,7 @@ function __toggleSwitcher(e){
   </header>
 
   <nav class="tabs">
-    <button data-tab="busca">🔎 Buscar</button>
+    <button data-tab="busca">🗂️ Painel do cliente</button>
     <button data-tab="nova" class="active">Nova anotação</button>
     <button data-tab="anotacoes">Anotações</button>
     <button data-tab="resumo">Resumo &amp; farol</button>
@@ -398,15 +441,14 @@ function __toggleSwitcher(e){
       <p class="section-title">Buscar no histórico</p>
       <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Escolha um cliente para ver o dossiê completo, ou digite uma palavra para procurar em anotações e atas de reunião ao mesmo tempo.</p>
 
-      <div class="row">
-        <div>
-          <label for="b-cliente">Cliente</label>
-          <select id="b-cliente"><option value="">Todos os clientes</option></select>
-        </div>
-        <div>
-          <label for="b-uf">Regional</label>
-          <select id="b-uf"><option value="">Todas as regionais</option></select>
-        </div>
+      <label for="b-cliente">Cliente</label>
+      <select id="b-cliente"><option value="">Todos os clientes</option></select>
+
+      <label>Regionais (pode marcar mais de uma &mdash; nenhuma marcada = todas)</label>
+      <div class="uf-grid" id="b-ufs"></div>
+      <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
+        <button type="button" class="ghost" data-ufs-all="b-ufs">Marcar todas</button>
+        <button type="button" class="ghost" data-ufs-none="b-ufs">Limpar regionais</button>
       </div>
 
       <label for="b-termo">Palavra-chave (opcional)</label>
@@ -423,16 +465,16 @@ function __toggleSwitcher(e){
 
   <section class="panel active" id="tab-nova">
     <div class="card">
-      <div class="row">
-        <div>
-          <label for="n-cliente">Cliente</label>
-          <select id="n-cliente"></select>
-        </div>
-        <div>
-          <label for="n-uf">Regional</label>
-          <select id="n-uf"></select>
-        </div>
+      <label for="n-cliente">Cliente</label>
+      <select id="n-cliente"></select>
+
+      <label>Regionais (pode marcar mais de uma)</label>
+      <div class="uf-grid" id="n-ufs"></div>
+      <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
+        <button type="button" class="ghost" data-ufs-all="n-ufs">Marcar todas</button>
+        <button type="button" class="ghost" data-ufs-none="n-ufs">Limpar regionais</button>
       </div>
+      <p class="hint" style="margin-top:6px;">Se marcar v&aacute;rias regionais, a mesma anota&ccedil;&atilde;o &eacute; registrada em cada uma delas &mdash; assim o farol de cada regional fica correto. Marque <b>Nacional</b> quando o assunto valer para o Brasil todo.</p>
 
       <div class="row">
         <div>
@@ -489,6 +531,7 @@ function __toggleSwitcher(e){
         <option value="geral">📝 Observação geral</option>
       </select>
     </div>
+    <label class="cli-chk" style="margin:2px 0 12px;font-size:13px;"><input type="checkbox" id="f-atas" checked>Mostrar tamb&eacute;m as atas de reuni&atilde;o junto das anota&ccedil;&otilde;es</label>
     <div id="lista-anotacoes"></div>
   </section>
 
@@ -516,6 +559,7 @@ function __toggleSwitcher(e){
         </div>
       </div>
       <label><input type="checkbox" id="r-todas" style="width:auto;margin-right:6px;">Incluir também anotações já usadas em resumos anteriores</label>
+      <label><input type="checkbox" id="r-atas" checked style="width:auto;margin-right:6px;">Incluir as atas de reunião do período no resumo</label>
 
       <label>Período (meses incluídos no resumo)</label>
       <div id="r-meses" style="display:flex;flex-direction:column;gap:2px;max-height:170px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--surface);"></div>
@@ -570,9 +614,20 @@ function __toggleSwitcher(e){
       <label for="al-data">Data da reunião</label>
       <input type="date" id="al-data">
 
-      <label for="al-clientes">Clientes tratados na reunião (opcional, segure Ctrl para marcar vários)</label>
-      <select id="al-clientes" multiple size="5" style="height:auto;"></select>
-      <p class="hint" style="margin-top:4px;">Marcando os clientes, esta ata aparece automaticamente no dossiê de cada um deles na aba Buscar.</p>
+      <label for="al-participantes">Participantes</label>
+      <input type="text" id="al-participantes" placeholder="Ex.: Joice (GQ), Fernando (GQ), Rodrigo (Comercial)">
+
+      <label>Regionais tratadas (opcional)</label>
+      <div class="uf-grid" id="al-ufs"></div>
+      <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
+        <button type="button" class="ghost" data-ufs-all="al-ufs">Marcar todas</button>
+        <button type="button" class="ghost" data-ufs-none="al-ufs">Limpar regionais</button>
+      </div>
+
+      <label for="al-busca-cliente">Clientes tratados na reunião</label>
+      <input type="text" id="al-busca-cliente" placeholder="Digite para filtrar a lista de clientes...">
+      <div class="cli-box" id="al-clientes" style="margin-top:6px;"></div>
+      <p class="hint" style="margin-top:4px;">Marcando os clientes, esta ata fica salva no dossiê de cada um deles (aba <b>Painel do cliente</b>) e entra nos resumos.</p>
 
       <label for="al-arquivo">Anexar ata (PDF ou Word, opcional)</label>
       <input type="file" id="al-arquivo" accept=".pdf,.doc,.docx">
@@ -581,11 +636,15 @@ function __toggleSwitcher(e){
       <label for="al-texto">Resumo / ata (texto)</label>
       <textarea id="al-texto" placeholder="Anexe o arquivo acima que o texto é lido automaticamente aqui — ou escreva o resumo você mesma."></textarea>
       <div class="toolbar" style="margin-top:6px;">
+        <button class="ghost" id="btn-organizar-ata">🧹 Organizar a ata (data → participantes → assuntos → alinhamentos)</button>
         <button class="ghost" id="btn-resumir-ia" style="display:none;">✨ Resumir com IA</button>
       </div>
       <p class="hint" id="al-ia-status"></p>
 
       <button class="primary" id="btn-salvar-alinhamento">Salvar alinhamento</button>
+      <div style="text-align:center;">
+        <button class="ghost" id="btn-cancelar-ata" style="display:none;margin-top:10px;">Cancelar edição da ata</button>
+      </div>
       <div id="al-progresso" style="display:none;margin-top:10px;">
         <p class="hint" id="al-progresso-texto">Enviando arquivo...</p>
       </div>
@@ -602,7 +661,7 @@ function __toggleSwitcher(e){
 
 <script>
 const UFS = [
-  {v:'BR', l:'Brasil (nível nacional)'},
+  {v:'BR', l:'Nacional (Brasil todo)'},
   {v:'AC', l:'AC'}, {v:'AL', l:'AL'}, {v:'AP', l:'AP'}, {v:'AM', l:'AM'},
   {v:'BA', l:'BA'}, {v:'CE', l:'CE'}, {v:'DF', l:'DF'}, {v:'ES', l:'ES'},
   {v:'GO', l:'GO'}, {v:'MA', l:'MA'}, {v:'MT', l:'MT'}, {v:'MS', l:'MS'},
@@ -887,7 +946,70 @@ atualizarFarolUI();
 // ---------- clientes selects ----------
 function ufLabel(uf){
   if(!uf) return '';
-  return uf==='BR' ? 'Brasil' : uf;
+  return uf==='BR' ? 'Nacional' : uf;
+}
+
+// clientes sempre em ordem alfabética
+function clientesOrdenados(){
+  return [...data.clients].sort((a,b)=>
+    (a.name||'').localeCompare((b.name||''), 'pt-BR', {sensitivity:'base'})
+  );
+}
+
+// ---------- seletor de regionais em caixinhas (múltipla escolha) ----------
+function renderUfChecks(containerId){
+  const cont = document.getElementById(containerId);
+  if(!cont) return;
+  const marcados = new Set([...cont.querySelectorAll('input:checked')].map(i=>i.value));
+  cont.innerHTML = UFS.map(u=>{
+    const nac = u.v==='BR';
+    const rot = nac ? '🇧🇷 Nacional' : u.v;
+    return `<label class="uf-chk${nac?' nacional':''}"><input type="checkbox" value="${u.v}" ${marcados.has(u.v)?'checked':''}>${rot}</label>`;
+  }).join('');
+}
+function getUfsSelecionadas(containerId){
+  const cont = document.getElementById(containerId);
+  if(!cont) return [];
+  return [...cont.querySelectorAll('input:checked')].map(i=>i.value);
+}
+function setUfsSelecionadas(containerId, lista){
+  const cont = document.getElementById(containerId);
+  if(!cont) return;
+  const set = new Set(lista||[]);
+  cont.querySelectorAll('input').forEach(i=>{ i.checked = set.has(i.value); });
+}
+document.addEventListener('click', (e)=>{
+  const alvoAll = e.target.getAttribute && e.target.getAttribute('data-ufs-all');
+  const alvoNone = e.target.getAttribute && e.target.getAttribute('data-ufs-none');
+  if(alvoAll){
+    document.querySelectorAll('#'+alvoAll+' input').forEach(i=> i.checked = true);
+    if(alvoAll==='b-ufs') renderBusca();
+  }
+  if(alvoNone){
+    document.querySelectorAll('#'+alvoNone+' input').forEach(i=> i.checked = false);
+    if(alvoNone==='b-ufs') renderBusca();
+  }
+});
+
+// ---------- seletor de clientes da ata (caixinhas com filtro) ----------
+let ataClientesSel = new Set();
+function renderClientChecksAta(){
+  const cont = document.getElementById('al-clientes');
+  if(!cont) return;
+  const filtro = normalizar((document.getElementById('al-busca-cliente')||{}).value || '');
+  const lista = clientesOrdenados().filter(c=> !filtro || normalizar(c.name).includes(filtro));
+  if(lista.length===0){
+    cont.innerHTML = '<p class="hint" style="margin:0;">Nenhum cliente com esse nome.</p>';
+    return;
+  }
+  cont.innerHTML = lista.map(c=>
+    `<label class="cli-chk"><input type="checkbox" value="${c.id}" ${ataClientesSel.has(c.id)?'checked':''}>${escapeHtml(c.name)}</label>`
+  ).join('');
+  cont.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      if(inp.checked) ataClientesSel.add(inp.value); else ataClientesSel.delete(inp.value);
+    });
+  });
 }
 function setSelectPreservandoValor(id, optionsHtml){
   const el = document.getElementById(id);
@@ -896,27 +1018,23 @@ function setSelectPreservandoValor(id, optionsHtml){
   if(anterior && [...el.options].some(o=>o.value===anterior)){ el.value = anterior; }
 }
 function fillClientSelects(){
-  const optsClientes = data.clients.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+  const optsClientes = clientesOrdenados().map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
   setSelectPreservandoValor('n-cliente', optsClientes);
   setSelectPreservandoValor('f-cliente', '<option value="">Todos os clientes</option>' + optsClientes);
   setSelectPreservandoValor('g-cliente', '<option value="">Todos os clientes</option>' + optsClientes);
   setSelectPreservandoValor('r-cliente', '<option value="">Todos os clientes</option>' + optsClientes);
   setSelectPreservandoValor('b-cliente', '<option value="">Todos os clientes</option>' + optsClientes);
 
-  // multi-select das atas: preserva o que já estava marcado
-  const elAl = document.getElementById('al-clientes');
-  if(elAl){
-    const marcados = Array.from(elAl.selectedOptions).map(o=>o.value);
-    elAl.innerHTML = optsClientes;
-    Array.from(elAl.options).forEach(o=>{ if(marcados.includes(o.value)) o.selected = true; });
-  }
+  renderClientChecksAta();
 
   const ufOpts = UFS.map(u=>`<option value="${u.v}">${u.l}</option>`).join('');
-  setSelectPreservandoValor('n-uf', ufOpts);
   setSelectPreservandoValor('f-uf', '<option value="">Todas as regionais</option>' + ufOpts);
   setSelectPreservandoValor('g-uf', '<option value="">Todas as regionais</option>' + ufOpts);
   setSelectPreservandoValor('r-regional', '<option value="">Todas as regionais</option>' + ufOpts);
-  setSelectPreservandoValor('b-uf', '<option value="">Todas as regionais</option>' + ufOpts);
+
+  renderUfChecks('n-ufs');
+  renderUfChecks('b-ufs');
+  renderUfChecks('al-ufs');
 }
 
 function escapeHtml(s){
@@ -930,36 +1048,52 @@ function fmtDate(iso){
 // ---------- salvar nota ----------
 document.getElementById('btn-salvar-nota').addEventListener('click', async ()=>{
   const clienteId = document.getElementById('n-cliente').value;
-  const uf = document.getElementById('n-uf').value;
+  const ufs = getUfsSelecionadas('n-ufs');
   const dataNota = document.getElementById('n-data').value || new Date().toISOString().slice(0,10);
   const secao = document.getElementById('n-secao').value;
   const texto = document.getElementById('n-texto').value.trim();
   const farolInput = document.querySelector('#n-farol input:checked');
   const farol = farolInput ? farolInput.value : 'amarelo';
 
-  if(!clienteId || !uf || !texto){ toast('Selecione a regional e escreva a anotação antes de salvar.'); return; }
+  if(!clienteId || ufs.length===0 || !texto){
+    toast('Escolha o cliente, marque pelo menos uma regional e escreva a anotação.');
+    return;
+  }
 
   if(editingNoteId){
     const nota = data.notes.find(n=>n.id===editingNoteId);
     if(nota){
       nota.clientId = clienteId;
-      nota.uf = uf;
+      nota.uf = ufs[0];
       nota.date = dataNota;
       nota.section = secao;
       nota.text = texto;
       nota.farol = farol;
     }
+    // regionais extras marcadas durante a edição entram como novas anotações
+    const base = Date.now();
+    ufs.slice(1).forEach((uf,i)=>{
+      const jaTem = data.notes.some(n=> n.clientId===clienteId && n.uf===uf && n.date===dataNota && n.section===secao && n.text===texto);
+      if(jaTem) return;
+      data.notes.push({
+        id: uid(), clientId: clienteId, uf: uf, date: dataNota, section: secao,
+        text: texto, farol: farol, summarized:false, createdAt: base+i
+      });
+    });
     await save();
-    toast('Anotação atualizada.');
+    toast(ufs.length>1 ? 'Anotação atualizada e replicada nas regionais marcadas.' : 'Anotação atualizada.');
     sairModoEdicao();
   } else {
-    data.notes.push({
-      id: uid(), clientId: clienteId, uf: uf, date: dataNota, section: secao,
-      text: texto, farol: farol, summarized:false, createdAt: Date.now()
+    const base = Date.now();
+    ufs.forEach((uf,i)=>{
+      data.notes.push({
+        id: uid(), clientId: clienteId, uf: uf, date: dataNota, section: secao,
+        text: texto, farol: farol, summarized:false, createdAt: base+i
+      });
     });
     await save();
     document.getElementById('n-texto').value = '';
-    toast('Anotação salva.');
+    toast(ufs.length>1 ? `Anotação salva em ${ufs.length} regionais.` : 'Anotação salva.');
   }
   renderNotasFiltradas();
   renderFarolGrid();
@@ -971,7 +1105,7 @@ function entrarModoEdicao(noteId){
   if(!nota) return;
   editingNoteId = noteId;
   document.getElementById('n-cliente').value = nota.clientId;
-  document.getElementById('n-uf').value = nota.uf || '';
+  setUfsSelecionadas('n-ufs', nota.uf ? [nota.uf] : []);
   document.getElementById('n-data').value = nota.date;
   document.getElementById('n-secao').value = nota.section;
   document.getElementById('n-texto').value = nota.text;
@@ -985,6 +1119,7 @@ function entrarModoEdicao(noteId){
 function sairModoEdicao(){
   editingNoteId = null;
   document.getElementById('n-texto').value = '';
+  setUfsSelecionadas('n-ufs', []);
   document.getElementById('n-data').value = new Date().toISOString().slice(0,10);
   document.querySelectorAll('#n-farol input').forEach(inp=>{ inp.checked = (inp.value==='amarelo'); });
   atualizarFarolUI();
@@ -994,26 +1129,127 @@ function sairModoEdicao(){
 
 document.getElementById('btn-cancelar-edicao').addEventListener('click', sairModoEdicao);
 
+
+// ---------- helpers compartilhados de ata ----------
+function ataCardHtml(a, termo, opts){
+  opts = opts || {};
+  const anexo = a.arquivoUrl
+    ? `<a href="${a.arquivoUrl}" target="_blank" rel="noopener" class="tool-tag" style="display:inline-block;margin-top:8px;">📎 ${escapeHtml(a.arquivoNome||'Baixar arquivo')}</a>`
+    : '';
+  const tags = (a.clientIds||[]).map(id=>{
+    const c = data.clients.find(c=>c.id===id);
+    return c ? `<span class="tool-tag" style="display:inline-block;margin:2px 4px 0 0;font-size:10px;">${escapeHtml(c.name)}</span>` : '';
+  }).join('');
+  const regs = (a.regionais||[]).map(u=>
+    `<span class="tool-tag" style="display:inline-block;margin:2px 4px 0 0;font-size:10px;">📍 ${escapeHtml(ufLabel(u))}</span>`
+  ).join('');
+  const chk = opts.selecionavel
+    ? `<input type="checkbox" class="sel-item" data-chave="ata:${a.id}" ${selDossie.has('ata:'+a.id)?'checked':''}>`
+    : '';
+  const acoes = opts.semAcoes ? '' : `<div class="note-foot">
+        <button class="ghost" data-edit-al="${a.id}">Editar</button>
+        <button class="ghost" data-del-al="${a.id}" style="margin-left:12px;">Excluir</button>
+      </div>`;
+  return `<div class="note" style="border-left-color:var(--azul-medio);">
+      <div class="note-head">
+        <span class="note-client" style="display:flex;align-items:center;">${chk}📋 ${destacar(a.titulo||'Ata de reunião', termo)}</span>
+        <span class="note-meta">${a.date ? fmtDate(a.date) : ''}</span>
+      </div>
+      ${a.participantes ? `<div class="ata-campo">Participantes</div><div class="note-text">${destacar(a.participantes, termo)}</div>` : ''}
+      ${regs ? `<div class="ata-campo">Regionais</div><div>${regs}</div>` : ''}
+      ${a.texto ? `<div class="ata-campo">Assuntos e alinhamentos</div><div class="note-text pre-wrap">${destacar(a.texto, termo)}</div>` : ''}
+      ${tags ? `<div class="ata-campo">Clientes tratados</div><div>${tags}</div>` : ''}
+      ${anexo}
+      ${acoes}
+    </div>`;
+}
+
+function ataCombina(a, clienteId, ufsArr, termoNorm){
+  if(clienteId){
+    const c = data.clients.find(x=>x.id===clienteId);
+    if(!alinhamentoEhDoCliente(a, c, termoNorm)) return false;
+  }
+  if(ufsArr && ufsArr.length){
+    const regs = a.regionais || [];
+    if(regs.length && !regs.some(r=>ufsArr.includes(r))) return false;
+  }
+  if(termoNorm){
+    const alvo = normalizar((a.titulo||'')+' '+(a.texto||'')+' '+(a.participantes||''));
+    if(!alvo.includes(termoNorm)) return false;
+  }
+  return true;
+}
+
+function bindAcoesAta(cont){
+  cont.querySelectorAll('[data-edit-al]').forEach(b=>{
+    b.addEventListener('click', ()=> entrarModoEdicaoAta(b.dataset.editAl));
+  });
+  cont.querySelectorAll('[data-del-al]').forEach(b=>{
+    b.addEventListener('click', async ()=>{
+      if(!confirm('Excluir esta ata?')) return;
+      const al = (data.alinhamentos||[]).find(x=>x.id===b.dataset.delAl);
+      if(al && al.arquivoUrl){
+        try{ await storageRef.child(`alinhamentos/${al.id}_${al.arquivoNome}`).delete(); }
+        catch(e){ console.warn('Não foi possível remover o arquivo do Storage', e); }
+      }
+      data.alinhamentos = (data.alinhamentos||[]).filter(x=>x.id!==b.dataset.delAl);
+      await save();
+      renderAlinhamentos();
+      renderNotasFiltradas();
+      renderBusca();
+      toast('Ata excluída.');
+    });
+  });
+}
+
+function bindSelecaoDossie(cont){
+  cont.querySelectorAll('.sel-item').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      if(cb.checked) selDossie.add(cb.dataset.chave); else selDossie.delete(cb.dataset.chave);
+      atualizarContadorSelecao();
+    });
+  });
+}
+function atualizarContadorSelecao(){
+  const el = document.getElementById('dossie-conta');
+  if(el) el.textContent = `${selDossie.size} item(ns) marcado(s)`;
+}
+
 // ---------- lista de anotações ----------
 document.getElementById('f-uf').addEventListener('change', renderNotasFiltradas);
 document.getElementById('f-cliente').addEventListener('change', renderNotasFiltradas);
 document.getElementById('f-secao').addEventListener('change', renderNotasFiltradas);
+document.getElementById('f-atas').addEventListener('change', renderNotasFiltradas);
 
 function renderNotasFiltradas(){
   const uf = document.getElementById('f-uf').value;
   const cli = document.getElementById('f-cliente').value;
   const sec = document.getElementById('f-secao').value;
-  let notas = [...data.notes].sort((a,b)=> b.createdAt - a.createdAt);
+  const incluirAtas = (document.getElementById('f-atas')||{checked:false}).checked;
+
+  let notas = [...data.notes];
   if(uf) notas = notas.filter(n=>n.uf===uf);
   if(cli) notas = notas.filter(n=>n.clientId===cli);
   if(sec) notas = notas.filter(n=>n.section===sec);
 
+  let atas = [];
+  if(incluirAtas && (!sec || sec==='alinhamento')){
+    atas = (data.alinhamentos||[]).filter(a=> ataCombina(a, cli, uf?[uf]:[], ''));
+  }
+
+  const itens = [
+    ...notas.map(n=>({tipo:'nota', obj:n, data:n.date||'', ord:n.createdAt||0})),
+    ...atas.map(a=>({tipo:'ata', obj:a, data:a.date||'', ord:a.createdAt||0}))
+  ].sort((x,y)=> (y.data).localeCompare(x.data) || (y.ord - x.ord));
+
   const cont = document.getElementById('lista-anotacoes');
-  if(notas.length===0){
+  if(itens.length===0){
     cont.innerHTML = '<div class="empty">Nenhuma anotação encontrada.</div>';
     return;
   }
-  cont.innerHTML = notas.map(n=>{
+  cont.innerHTML = itens.map(it=>{
+    if(it.tipo==='ata') return ataCardHtml(it.obj, '', {});
+    const n = it.obj;
     const cliente = data.clients.find(c=>c.id===n.clientId);
     const sc = SECOES[n.section] || SECOES.geral;
     return `<div class="note ${n.farol}">
@@ -1022,7 +1258,7 @@ function renderNotasFiltradas(){
         <span class="note-meta">${fmtDate(n.date)}${n.summarized ? ' &middot; usado em resumo' : ''}</span>
       </div>
       <span class="note-section">${sc.emoji} ${sc.label}</span>
-      <div class="note-text">${escapeHtml(n.text)}</div>
+      <div class="note-text pre-wrap">${escapeHtml(n.text)}</div>
       <div class="note-foot">
         <button class="ghost" data-edit="${n.id}">Editar</button>
         <button class="ghost" data-del="${n.id}" style="margin-left:12px;">Excluir</button>
@@ -1043,8 +1279,8 @@ function renderNotasFiltradas(){
   cont.querySelectorAll('[data-edit]').forEach(b=>{
     b.addEventListener('click', ()=> entrarModoEdicao(b.dataset.edit));
   });
+  bindAcoesAta(cont);
 }
-
 // ---------- clientes tab ----------
 function renderClientes(){
   const cont = document.getElementById('lista-clientes');
@@ -1200,7 +1436,8 @@ document.getElementById('btn-gerar').addEventListener('click', ()=>{
   const regionalFiltro = document.getElementById('r-regional').value;
   const clienteFiltro = document.getElementById('r-cliente').value;
   const mesesFiltro = getMesesSelecionados();
-  const texto = montarResumo(incluirTodas, regionalFiltro, clienteFiltro, mesesFiltro);
+  const incluirAtas = document.getElementById('r-atas').checked;
+  const texto = montarResumo(incluirTodas, regionalFiltro, clienteFiltro, mesesFiltro, incluirAtas);
   document.getElementById('resumo-output').value = texto;
   document.getElementById('resumo-area').style.display = 'block';
 });
@@ -1258,14 +1495,49 @@ function buildBlocosRegionalCliente(notasSubset){
   return blocos;
 }
 
-function montarResumo(incluirTodas, regionalFiltro, clienteFiltro, mesesFiltro){
+function blocoAtasResumo(clienteFiltro, regionalFiltro, mesesFiltro){
+  let atas = (data.alinhamentos||[]).filter(a=>{
+    if(clienteFiltro){
+      const c = data.clients.find(x=>x.id===clienteFiltro);
+      if(!alinhamentoEhDoCliente(a, c, '')) return false;
+    }
+    if(regionalFiltro){
+      const regs = a.regionais||[];
+      if(regs.length && !regs.includes(regionalFiltro)) return false;
+    }
+    if(mesesFiltro && mesesFiltro.length && a.date && !mesesFiltro.includes(a.date.slice(0,7))) return false;
+    return true;
+  }).sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+  if(atas.length===0) return null;
+  let bloco = '━━━━━━━━━━\n*📋 Atas e alinhamentos de reunião*';
+  atas.forEach(a=>{
+    bloco += `\n\n*📅 ${a.date ? fmtDate(a.date) : ''} — ${a.titulo||'Ata de reunião'}*`;
+    if(a.participantes) bloco += `\n👥 Participantes: ${a.participantes}`;
+    if(a.regionais && a.regionais.length) bloco += `\n📍 Regionais: ${a.regionais.map(ufLabel).join(', ')}`;
+    const cli = (a.clientIds||[]).map(id=>{ const c = data.clients.find(x=>x.id===id); return c?c.name:null; }).filter(Boolean);
+    if(cli.length) bloco += `\n🏬 Clientes: ${cli.join(', ')}`;
+    if(a.texto) bloco += `\n${a.texto}`;
+    if(a.arquivoUrl) bloco += `\n📎 Arquivo: ${a.arquivoUrl}`;
+  });
+  return bloco;
+}
+
+function montarResumo(incluirTodas, regionalFiltro, clienteFiltro, mesesFiltro, incluirAtas){
   const notasBase = data.notes.filter(n=>
     (incluirTodas || !n.summarized) &&
     (!regionalFiltro || n.uf===regionalFiltro) &&
     (!clienteFiltro || n.clientId===clienteFiltro) &&
     (!mesesFiltro || mesesFiltro.includes(n.date.slice(0,7)))
   );
+  const ataBloco = incluirAtas ? blocoAtasResumo(clienteFiltro, regionalFiltro, mesesFiltro) : null;
   if(notasBase.length===0){
+    if(ataBloco){
+      const partes = [];
+      if(clienteFiltro){ const c = data.clients.find(c=>c.id===clienteFiltro); if(c) partes.push(c.name); }
+      if(regionalFiltro) partes.push(ufLabel(regionalFiltro));
+      const h = `*📍 Acompanhamento de clientes${partes.length?' – '+partes.join(' – '):''}*`;
+      return [h, ataBloco].join('\n\n');
+    }
     return 'Não há anotações novas para gerar o resumo com esses filtros. Marque "incluir anotações já usadas", ajuste os filtros (cliente, regional, período) ou registre novas anotações.';
   }
   const datasNotas = [...new Set(notasBase.map(n=>n.date))].sort();
@@ -1294,7 +1566,9 @@ function montarResumo(incluirTodas, regionalFiltro, clienteFiltro, mesesFiltro){
   }
   if(regionalFiltro) partesHeader.push(ufLabel(regionalFiltro));
   const header = `*📍 Acompanhamento de clientes${partesHeader.length ? ' – '+partesHeader.join(' – ') : ''} – ${dataLabel}*`;
-  return [header, ...blocos].join('\n\n');
+  const todos = [header, ...blocos];
+  if(ataBloco) todos.push(ataBloco);
+  return todos.join('\n\n');
 }
 
 document.getElementById('btn-copiar').addEventListener('click', ()=>{
@@ -1364,10 +1638,13 @@ function renderTudo(){
   refreshMesesCheckboxes();
   renderListaResumos();
   renderAlinhamentos();
+  renderBusca();
 }
 
 function render(){
-  document.getElementById('n-data').value = new Date().toISOString().slice(0,10);
+  const hoje = new Date().toISOString().slice(0,10);
+  document.getElementById('n-data').value = hoje;
+  if(!document.getElementById('al-data').value) document.getElementById('al-data').value = hoje;
   renderTudo();
 }
 
@@ -1407,6 +1684,150 @@ async function extrairTextoArquivo(file){
   return null; // .doc antigo não é suportado no navegador
 }
 
+// ---------- organizador de ata ----------
+// Deixa a ata na ordem: data -> participantes -> assuntos -> alinhamentos.
+const QUALIF = '(?:\\s+[a-zà-úçãõâêôáéíóú]+){0,3}';
+const RE_PARTICIPANTES = new RegExp('^(?:participantes|presentes|presen[cç]a|equipe|convidados)'+QUALIF+'\\s*[:\\-\\u2013\\u2014]\\s*', 'i');
+const RE_ASSUNTOS      = new RegExp('^(?:assuntos?|pauta|temas?|t[oó]picos?|itens|discuss[oõ]es|desenvolvimento|relato|hist[oó]rico)'+QUALIF+'\\s*[:\\-\\u2013\\u2014]\\s*', 'i');
+const RE_ALINHAMENTOS  = new RegExp('^(?:alinhamentos?|encaminhamentos?|combinados?|decis[oõ]es|a[cç][oõ]es|pr[oó]ximos passos|pend[eê]ncias?|responsabilidades|delibera[cç][oõ]es|conclus[oõ]es)'+QUALIF+'\\s*[:\\-\\u2013\\u2014]\\s*', 'i');
+const RE_LINHA_DATA    = new RegExp('^(?:data|realizada|realizado|dia)'+QUALIF+'\\s*[:\\-\\u2013\\u2014]\\s*', 'i');
+const RE_DATA_SOLTA    = /(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})/;
+const RE_TITULO_DOC    = /^(ata|acta|minuta|memória|memoria)\b/i;
+
+function limparMarcador(l){
+  return l.replace(/^\s*(?:[\u2022\u25aa\u25e6\u00b7\u00ba\u2013\u2014\-\*\+]|\d{1,2}\s*[\)\.\-]|[a-z]\s*\))\s*/i, '').trim();
+}
+
+function quebrarFrases(txt){
+  if(txt.length <= 240) return [txt];
+  const partes = txt.split(/(?<=[\.;!?])\s+(?=[A-ZÀ-Ý0-9])/).map(x=>x.trim()).filter(Boolean);
+  return partes.length ? partes : [txt];
+}
+
+function organizarAta(bruto){
+  let t = (bruto||'').replace(/\r/g,'').replace(/\u00a0/g,' ');
+
+  // 1) recria quebras nos marcadores de lista (PDF costuma vir tudo colado)
+  t = t.replace(/\s*([\u2022\u25aa\u25e6])\s*/g, '\n\u2022 ');
+  t = t.replace(/\s+(\d{1,2})\s*[\)\.]\s+(?=[A-ZÀ-Ý])/g, '\n$1) ');
+
+  // 2) quebra antes dos títulos conhecidos, mesmo no meio do parágrafo
+  const TITULOS = 'Participantes|Presentes|Presen[cç]a|Equipe|Convidados|Assuntos?|Pauta|Temas?|T[oó]picos?|Alinhamentos?|Encaminhamentos?|Combinados?|Decis[oõ]es|A[cç][oõ]es|Pr[oó]ximos passos|Pend[eê]ncias?|Delibera[cç][oõ]es|Conclus[oõ]es|Data|Realizada|Realizado';
+  const reTit = new RegExp('\\s+((?:'+TITULOS+')'+QUALIF+'\\s*:)', 'g');
+  t = t.replace(reTit, '\n$1');
+
+  // 3) traço usado como marcador de lista: só divide se aparecer 2x ou mais
+  const reTraco = /\s+[-\u2013]\s+(?=[A-ZÀ-Ý])/g;
+  if((t.match(reTraco)||[]).length >= 2){ t = t.replace(reTraco, '\n- '); }
+
+  t = t.replace(/[ \t]{2,}/g, ' ');
+
+  const linhas = t.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+
+  let dataDet = '';
+  const participantes = [], assuntos = [], alinhamentos = [];
+  let modo = 'assuntos';
+
+  linhas.forEach(linha=>{
+    let l = linha;
+
+    // linha de data ("Data: 15/07/2026", "Realizada em: ...")
+    if(RE_LINHA_DATA.test(l)){
+      const m = l.match(RE_DATA_SOLTA);
+      if(m && !dataDet) dataDet = m[0];
+      l = l.replace(RE_LINHA_DATA,'').replace(RE_DATA_SOLTA,'').trim();
+      if(l.length < 4) return;
+    }
+
+    // título do documento ("ATA DE REUNIÃO ...") entra fora, não é conteúdo
+    if(RE_TITULO_DOC.test(l) && l.length < 90){
+      const m = l.match(RE_DATA_SOLTA);
+      if(m && !dataDet) dataDet = m[0];
+      return;
+    }
+    // linha só em CAIXA ALTA e curta = cabeçalho
+    if(l.length < 70 && l === l.toUpperCase() && /[A-ZÀ-Ý]{4,}/.test(l) && !/\d{2}\/\d{2}/.test(l)){
+      return;
+    }
+
+    const mData = l.match(RE_DATA_SOLTA);
+    if(mData){
+      if(!dataDet) dataDet = mData[0];
+      // linha curta de cabeçalho tipo "Reunião mensal 02/06/2026": a data já foi guardada
+      const resto = l.replace(RE_DATA_SOLTA,'').trim();
+      if(resto.length < 32 && participantes.length===0 && assuntos.length===0 && alinhamentos.length===0 && !/[:]/.test(l)){
+        return;
+      }
+    }
+
+    if(RE_PARTICIPANTES.test(l)){
+      modo = 'participantes';
+      l = l.replace(RE_PARTICIPANTES,'').trim();
+      if(!l) return;
+    } else if(RE_ALINHAMENTOS.test(l)){
+      modo = 'alinhamentos';
+      l = l.replace(RE_ALINHAMENTOS,'').trim();
+      if(!l) return;
+    } else if(RE_ASSUNTOS.test(l)){
+      modo = 'assuntos';
+      l = l.replace(RE_ASSUNTOS,'').trim();
+      if(!l) return;
+    }
+
+    l = limparMarcador(l);
+    if(!l) return;
+
+    if(modo==='participantes'){
+      l.split(/[,;]|\s+e\s+(?=[A-ZÀ-Ý])/).map(x=>x.trim()).filter(x=>x.length>1)
+        .forEach(x=>{ if(!participantes.includes(x)) participantes.push(x); });
+    } else if(modo==='alinhamentos'){
+      quebrarFrases(l).forEach(x=> alinhamentos.push(x));
+    } else {
+      quebrarFrases(l).forEach(x=> assuntos.push(x));
+    }
+  });
+
+  const blocos = [];
+  if(dataDet) blocos.push('📅 Data da reunião: ' + dataDet);
+  if(participantes.length) blocos.push('👥 Participantes\n' + participantes.map(x=>'• '+x).join('\n'));
+  if(assuntos.length)      blocos.push('📌 Assuntos tratados\n' + assuntos.map(x=>'• '+x).join('\n'));
+  if(alinhamentos.length)  blocos.push('✅ Alinhamentos e próximos passos\n' + alinhamentos.map(x=>'• '+x).join('\n'));
+
+  return {
+    texto: blocos.join('\n\n'),
+    participantes: participantes.join(', '),
+    data: dataDet
+  };
+}
+
+function dataBrParaIso(br){
+  const m = (br||'').match(RE_DATA_SOLTA);
+  if(!m) return '';
+  let [, d, mes, a] = m;
+  if(a.length===2) a = '20'+a;
+  return `${a}-${mes.padStart(2,'0')}-${d.padStart(2,'0')}`;
+}
+
+document.getElementById('btn-organizar-ata').addEventListener('click', ()=>{
+  const campo = document.getElementById('al-texto');
+  const statusEl = document.getElementById('al-ia-status');
+  const bruto = campo.value.trim();
+  if(bruto.length < 30){ toast('Cole ou anexe a ata antes de organizar.'); return; }
+  const org = organizarAta(bruto);
+  if(!org.texto){ statusEl.textContent = 'Não consegui identificar a estrutura da ata. Texto mantido como está.'; return; }
+  campo.dataset.original = bruto;
+  campo.value = org.texto;
+  if(org.participantes && !document.getElementById('al-participantes').value.trim()){
+    document.getElementById('al-participantes').value = org.participantes;
+  }
+  const iso = dataBrParaIso(org.data);
+  if(iso && !document.getElementById('al-data').value){ document.getElementById('al-data').value = iso; }
+  statusEl.textContent = 'Ata organizada em data → participantes → assuntos → alinhamentos. Revise e ajuste o que precisar antes de salvar.';
+  toast('Ata organizada.');
+});
+
+document.getElementById('al-busca-cliente').addEventListener('input', renderClientChecksAta);
+
 document.getElementById('al-arquivo').addEventListener('change', async ()=>{
   const f = document.getElementById('al-arquivo').files[0];
   const infoEl = document.getElementById('al-arquivo-nome');
@@ -1430,8 +1851,16 @@ document.getElementById('al-arquivo').addEventListener('change', async ()=>{
       if(campoTexto.value.trim() && !confirm('Já existe texto escrito no resumo. Substituir pelo conteúdo lido do arquivo?')){
         statusEl.textContent = 'Texto do arquivo não aplicado (o que você escreveu foi mantido).';
       } else {
-        campoTexto.value = texto;
-        statusEl.textContent = `Conteúdo lido (${texto.length.toLocaleString('pt-BR')} caracteres). Edite à vontade — este texto é o que fica pesquisável.`;
+        const org = organizarAta(texto);
+        campoTexto.value = org.texto || texto;
+        if(org.participantes && !document.getElementById('al-participantes').value.trim()){
+          document.getElementById('al-participantes').value = org.participantes;
+        }
+        const iso = dataBrParaIso(org.data);
+        if(iso && !document.getElementById('al-data').value){ document.getElementById('al-data').value = iso; }
+        statusEl.textContent = org.texto
+          ? `Conteúdo lido e organizado (data → participantes → assuntos → alinhamentos). Revise e ajuste antes de salvar.`
+          : `Conteúdo lido (${texto.length.toLocaleString('pt-BR')} caracteres). Use o botão "Organizar a ata" ou edite manualmente.`;
       }
       if(IA_PROXY_URL) btnIA.style.display = 'inline-block';
     } else {
@@ -1476,14 +1905,52 @@ document.getElementById('btn-resumir-ia').addEventListener('click', async ()=>{
   }
 });
 
+let editingAtaId = null;
+
+function sairModoEdicaoAta(){
+  editingAtaId = null;
+  document.getElementById('al-titulo').value = '';
+  document.getElementById('al-texto').value = '';
+  document.getElementById('al-participantes').value = '';
+  document.getElementById('al-arquivo').value = '';
+  document.getElementById('al-arquivo-nome').textContent = '';
+  document.getElementById('al-ia-status').textContent = '';
+  document.getElementById('btn-resumir-ia').style.display = 'none';
+  ataClientesSel = new Set();
+  renderClientChecksAta();
+  setUfsSelecionadas('al-ufs', []);
+  document.getElementById('al-data').value = new Date().toISOString().slice(0,10);
+  document.getElementById('btn-salvar-alinhamento').textContent = 'Salvar alinhamento';
+  document.getElementById('btn-cancelar-ata').style.display = 'none';
+}
+document.getElementById('btn-cancelar-ata').addEventListener('click', sairModoEdicaoAta);
+
+function entrarModoEdicaoAta(ataId){
+  const a = (data.alinhamentos||[]).find(x=>x.id===ataId);
+  if(!a) return;
+  editingAtaId = ataId;
+  document.getElementById('al-titulo').value = a.titulo || '';
+  document.getElementById('al-data').value = a.date || '';
+  document.getElementById('al-participantes').value = a.participantes || '';
+  document.getElementById('al-texto').value = a.texto || '';
+  ataClientesSel = new Set(a.clientIds||[]);
+  renderClientChecksAta();
+  setUfsSelecionadas('al-ufs', a.regionais||[]);
+  document.getElementById('btn-salvar-alinhamento').textContent = 'Salvar alterações da ata';
+  document.getElementById('btn-cancelar-ata').style.display = 'inline-block';
+  irParaAba('alinhamentos');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
 document.getElementById('btn-salvar-alinhamento').addEventListener('click', async ()=>{
   const titulo = document.getElementById('al-titulo').value.trim();
   const dataAl = document.getElementById('al-data').value || new Date().toISOString().slice(0,10);
   const texto = document.getElementById('al-texto').value.trim();
+  const participantes = document.getElementById('al-participantes').value.trim();
   const arquivo = document.getElementById('al-arquivo').files[0];
 
   if(!titulo){ toast('Dê um título para o alinhamento.'); return; }
-  if(!texto && !arquivo){ toast('Escreva um resumo ou anexe o arquivo da ata.'); return; }
+  if(!texto && !arquivo && !editingAtaId){ toast('Escreva um resumo ou anexe o arquivo da ata.'); return; }
   if(arquivo && arquivo.size > 15*1024*1024){ toast('Arquivo muito grande (máx. 15 MB).'); return; }
 
   const btn = document.getElementById('btn-salvar-alinhamento');
@@ -1491,11 +1958,49 @@ document.getElementById('btn-salvar-alinhamento').addEventListener('click', asyn
   const progressoTexto = document.getElementById('al-progresso-texto');
   btn.disabled = true;
 
-  const clientesSel = Array.from(document.getElementById('al-clientes').selectedOptions).map(o=>o.value);
+  const clientesSel = [...ataClientesSel];
+  const regionaisSel = getUfsSelecionadas('al-ufs');
+
+  // edição de ata já existente
+  if(editingAtaId){
+    try{
+      const a = data.alinhamentos.find(x=>x.id===editingAtaId);
+      if(a){
+        a.titulo = titulo; a.date = dataAl; a.texto = texto;
+        a.participantes = participantes;
+        a.clientIds = clientesSel;
+        a.regionais = regionaisSel;
+        if(arquivo){
+          progresso.style.display = 'block';
+          progressoTexto.textContent = 'Enviando arquivo...';
+          const caminho = `alinhamentos/${a.id}_${arquivo.name}`;
+          const ref = storageRef.child(caminho);
+          await ref.put(arquivo);
+          a.arquivoUrl = await ref.getDownloadURL();
+          a.arquivoNome = arquivo.name;
+        }
+      }
+      await save();
+      toast('Ata atualizada.');
+      sairModoEdicaoAta();
+      renderAlinhamentos();
+      renderNotasFiltradas();
+      renderBusca();
+    } catch(e){
+      console.error('Falha ao atualizar ata', e);
+      toast('Não foi possível atualizar a ata. Verifique a conexão.');
+    } finally {
+      btn.disabled = false;
+      progresso.style.display = 'none';
+    }
+    return;
+  }
 
   const novoAlinhamento = {
     id: uid(), titulo, date: dataAl, texto: texto,
+    participantes: participantes,
     clientIds: clientesSel,
+    regionais: regionaisSel,
     arquivoUrl: null, arquivoNome: null, createdAt: Date.now()
   };
 
@@ -1524,16 +2029,11 @@ document.getElementById('btn-salvar-alinhamento').addEventListener('click', asyn
     data.alinhamentos.push(novoAlinhamento);
     await save();
 
-    document.getElementById('al-titulo').value = '';
-    document.getElementById('al-texto').value = '';
-    document.getElementById('al-arquivo').value = '';
-    document.getElementById('al-arquivo-nome').textContent = '';
-    document.getElementById('al-ia-status').textContent = '';
-    document.getElementById('btn-resumir-ia').style.display = 'none';
-    Array.from(document.getElementById('al-clientes').options).forEach(o=>o.selected=false);
-    document.getElementById('al-data').value = new Date().toISOString().slice(0,10);
-    toast('Alinhamento salvo.');
+    sairModoEdicaoAta();
+    toast(clientesSel.length ? `Ata salva no dossiê de ${clientesSel.length} cliente(s).` : 'Alinhamento salvo.');
     renderAlinhamentos();
+    renderNotasFiltradas();
+    renderBusca();
   } catch(e){
     console.error('Falha ao salvar alinhamento', e);
     toast('Não foi possível salvar o alinhamento. Verifique a conexão e tente novamente.');
@@ -1551,27 +2051,11 @@ function renderAlinhamentos(){
     cont.innerHTML = '<div class="empty">Nenhum alinhamento registrado ainda.</div>';
     return;
   }
-  cont.innerHTML = lista.map(a=>{
-    const anexo = a.arquivoUrl
-      ? `<a href="${a.arquivoUrl}" target="_blank" rel="noopener" class="tool-tag" style="display:inline-block;margin-top:6px;">📎 ${escapeHtml(a.arquivoNome||'Baixar arquivo')}</a>`
-      : '';
-    return `<div class="note">
-      <div class="note-head">
-        <span class="note-client">${escapeHtml(a.titulo)}</span>
-        <span class="note-meta">${fmtDate(a.date)}</span>
-      </div>
-      ${a.texto ? `<div class="note-text">${escapeHtml(a.texto.length>800 ? a.texto.slice(0,800)+'…' : a.texto)}</div>` : ''}
-      <div>${(a.clientIds||[]).map(id=>{
-        const c = data.clients.find(c=>c.id===id);
-        return c ? `<span class="tool-tag" style="display:inline-block;margin:4px 4px 0 0;font-size:10px;">${escapeHtml(c.name)}</span>` : '';
-      }).join('')}</div>
-      ${anexo}
-      <div class="note-foot">
-        <button class="ghost" data-del-al="${a.id}">Excluir</button>
-      </div>
-    </div>`;
-  }).join('');
+  cont.innerHTML = lista.map(a=> ataCardHtml(a, '')).join('');
 
+  cont.querySelectorAll('[data-edit-al]').forEach(b=>{
+    b.addEventListener('click', ()=> entrarModoEdicaoAta(b.dataset.editAl));
+  });
   cont.querySelectorAll('[data-del-al]').forEach(b=>{
     b.addEventListener('click', async ()=>{
       if(!confirm('Excluir este alinhamento?')) return;
@@ -1583,6 +2067,8 @@ function renderAlinhamentos(){
       data.alinhamentos = data.alinhamentos.filter(x=>x.id!==b.dataset.delAl);
       await save();
       renderAlinhamentos();
+      renderNotasFiltradas();
+      renderBusca();
       toast('Alinhamento excluído.');
     });
   });
@@ -1611,158 +2097,256 @@ function alinhamentoEhDoCliente(al, cliente, termoNorm){
   return alvo.includes(normalizar(cliente.name));
 }
 
+let selDossie = new Set();
+
+function notaCardDossie(n, termo){
+  const c = data.clients.find(c=>c.id===n.clientId);
+  const sec = SECOES[n.section] || {emoji:'📝', label:'Observações'};
+  const chave = 'nota:'+n.id;
+  return `<div class="note ${n.farol}">
+      <div class="note-head">
+        <span class="note-client" style="display:flex;align-items:center;">
+          <input type="checkbox" class="sel-item" data-chave="${chave}" ${selDossie.has(chave)?'checked':''}>
+          ${FAROL_EMOJI[n.farol]||''} ${escapeHtml(c?c.name:'Cliente removido')} <span style="color:var(--ink-faint);font-weight:400;">&nbsp;(${escapeHtml(ufLabel(n.uf))})</span>
+        </span>
+        <span class="note-meta">${fmtDate(n.date)}</span>
+      </div>
+      <div class="note-meta" style="margin:2px 0 4px;">${sec.emoji} ${escapeHtml(sec.label)}</div>
+      <div class="note-text pre-wrap">${destacar(n.text, termo)}</div>
+    </div>`;
+}
+
 function renderBusca(){
   const cont = document.getElementById('busca-resultado');
+  if(!cont) return;
   const clienteId = document.getElementById('b-cliente').value;
-  const uf = document.getElementById('b-uf').value;
+  const ufs = getUfsSelecionadas('b-ufs');
   const termo = document.getElementById('b-termo').value.trim();
   const termoNorm = normalizar(termo);
-
   const cliente = clienteId ? data.clients.find(c=>c.id===clienteId) : null;
 
   // ---- anotações ----
   let notas = data.notes.filter(n=>{
     if(clienteId && n.clientId !== clienteId) return false;
-    if(uf && n.uf !== uf) return false;
+    if(ufs.length && !ufs.includes(n.uf)) return false;
     if(termoNorm && !normalizar(n.text).includes(termoNorm)) return false;
     return true;
   }).sort((a,b)=> (b.date||'').localeCompare(a.date||'') || b.createdAt - a.createdAt);
 
-  // ---- alinhamentos / atas ----
-  let atas = (data.alinhamentos||[]).filter(al=>{
-    if(!alinhamentoEhDoCliente(al, cliente, termoNorm)) return false;
-    if(termoNorm){
-      const alvo = normalizar((al.titulo||'') + ' ' + (al.texto||''));
-      if(!alvo.includes(termoNorm)) return false;
-    }
-    return true;
-  }).sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+  // ---- atas ----
+  let atas = (data.alinhamentos||[]).filter(a=> ataCombina(a, clienteId, ufs, termoNorm))
+    .sort((a,b)=> (b.date||'').localeCompare(a.date||''));
 
   // ---- resumos já enviados ----
-  let resumos = (data.summaries||[]).filter(s=>{
-    if(termoNorm && !normalizar(s.text).includes(termoNorm)) return false;
-    if(cliente && !normalizar(s.text).includes(normalizar(cliente.name))) return false;
+  let resumos = (data.summaries||[]).filter(x=>{
+    if(termoNorm && !normalizar(x.text).includes(termoNorm)) return false;
+    if(cliente && !normalizar(x.text).includes(normalizar(cliente.name))) return false;
     return true;
   }).sort((a,b)=> (b.date||'').localeCompare(a.date||''));
 
-  if(!clienteId && !termo && !uf){
-    cont.innerHTML = '<div class="empty">Escolha um cliente ou digite uma palavra-chave para começar.</div>';
+  if(!clienteId && !termo && ufs.length===0){
+    cont.innerHTML = '<div class="empty">Escolha um cliente (ou digite uma palavra-chave) para abrir o dossiê.</div>';
     return;
   }
 
   let html = '';
 
-  // Cabeçalho do dossiê quando há um cliente escolhido
+  // cabeçalho do dossiê
   if(cliente){
-    const combos = [...new Set(data.notes.filter(n=>n.clientId===cliente.id).map(n=>n.uf))];
-    const chips = combos.map(u=>{
+    const regionais = [...new Set(data.notes.filter(n=>n.clientId===cliente.id).map(n=>n.uf))].sort();
+    const chips = regionais.map(u=>{
       const f = currentFarol(cliente.id, u);
       return `<span class="tool-tag" style="display:inline-block;margin:2px 4px 2px 0;">${FAROL_EMOJI[f]||'⚪'} ${escapeHtml(ufLabel(u))}</span>`;
     }).join('');
     const ultima = data.notes.filter(n=>n.clientId===cliente.id).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0];
     html += `<div class="card">
-      <p class="section-title">${escapeHtml(cliente.name)}</p>
+      <p class="section-title">🗂️ ${escapeHtml(cliente.name)}</p>
       <div style="margin:4px 0 10px;">${chips || '<span class="hint">Nenhuma regional com anotação ainda.</span>'}</div>
       <p class="hint">
         ${notas.length} anotação(ões) &middot; ${atas.length} ata(s) de reunião &middot; ${resumos.length} resumo(s) enviado(s)
         ${ultima ? ' &middot; última movimentação em '+fmtDate(ultima.date) : ''}
       </p>
-      <button class="secondary" id="btn-resumo-dossie" style="margin-top:10px;">Gerar resumo deste cliente para a gerência</button>
     </div>`;
   }
 
-  // Anotações
+  // barra de seleção
+  html += `<div class="card">
+      <p class="section-title">Montar resumo</p>
+      <p class="hint" style="margin-top:-4px;margin-bottom:10px;">Marque abaixo as anotações e atas que você quer levar para a gerência e clique em gerar. Só entra no resumo o que estiver marcado.</p>
+      <div class="sel-bar">
+        <span class="conta" id="dossie-conta">0 item(ns) marcado(s)</span>
+        <button class="ghost" id="btn-sel-tudo">Marcar tudo</button>
+        <button class="ghost" id="btn-sel-notas">Só anotações</button>
+        <button class="ghost" id="btn-sel-atas">Só atas</button>
+        <button class="ghost" id="btn-sel-limpar">Limpar seleção</button>
+      </div>
+      <button class="primary" id="btn-gerar-dossie">Gerar resumo com os itens marcados</button>
+      <div id="dossie-area" style="display:none;margin-top:14px;">
+        <label for="dossie-saida">Prévia (edite antes de enviar)</label>
+        <textarea id="dossie-saida" style="min-height:260px;"></textarea>
+        <div class="toolbar">
+          <button class="secondary" id="btn-copiar-dossie">Copiar para o WhatsApp</button>
+        </div>
+      </div>
+    </div>`;
+
+  // anotações
   html += `<div class="card"><p class="section-title">Anotações (${notas.length})</p>`;
-  if(notas.length===0){
-    html += '<div class="empty">Nenhuma anotação encontrada com esses filtros.</div>';
-  } else {
-    html += notas.map(n=>{
-      const c = data.clients.find(c=>c.id===n.clientId);
-      const sec = SECOES[n.section] || {emoji:'📝', label:'Observações'};
-      const auto = n.origem === 'automatico' ? ' <span class="tool-tag" style="font-size:10px;">automático</span>' : '';
-      return `<div class="note">
-        <div class="note-head">
-          <span class="note-client">${FAROL_EMOJI[n.farol]||''} ${escapeHtml(c?c.name:'Cliente removido')} <span style="color:var(--ink-faint);font-weight:400;">(${escapeHtml(ufLabel(n.uf))})</span>${auto}</span>
-          <span class="note-meta">${fmtDate(n.date)}</span>
-        </div>
-        <div class="note-meta" style="margin:2px 0 4px;">${sec.emoji} ${escapeHtml(sec.label)}</div>
-        <div class="note-text">${destacar(n.text, termo)}</div>
-      </div>`;
-    }).join('');
-  }
+  html += notas.length
+    ? notas.map(n=> notaCardDossie(n, termo)).join('')
+    : '<div class="empty">Nenhuma anotação encontrada com esses filtros.</div>';
   html += '</div>';
 
-  // Atas
+  // atas
   html += `<div class="card"><p class="section-title">Atas e alinhamentos (${atas.length})</p>`;
-  if(atas.length===0){
-    html += '<div class="empty">Nenhuma ata encontrada com esses filtros.</div>';
-  } else {
-    html += atas.map(a=>{
-      const trecho = (a.texto||'').length > 600 ? (a.texto||'').slice(0,600)+'…' : (a.texto||'');
-      const anexo = a.arquivoUrl
-        ? `<a href="${a.arquivoUrl}" target="_blank" rel="noopener" class="tool-tag" style="display:inline-block;margin-top:6px;">📎 ${escapeHtml(a.arquivoNome||'Baixar arquivo')}</a>`
-        : '';
-      const tags = (a.clientIds||[]).map(id=>{
-        const c = data.clients.find(c=>c.id===id);
-        return c ? `<span class="tool-tag" style="display:inline-block;margin:2px 4px 0 0;font-size:10px;">${escapeHtml(c.name)}</span>` : '';
-      }).join('');
-      return `<div class="note">
-        <div class="note-head">
-          <span class="note-client">📋 ${destacar(a.titulo||'', termo)}</span>
-          <span class="note-meta">${fmtDate(a.date)}</span>
-        </div>
-        ${trecho ? `<div class="note-text">${destacar(trecho, termo)}</div>` : ''}
-        <div>${tags}</div>
-        ${anexo}
-      </div>`;
-    }).join('');
-  }
+  html += atas.length
+    ? atas.map(a=> ataCardHtml(a, termo, {selecionavel:true})).join('')
+    : '<div class="empty">Nenhuma ata encontrada com esses filtros. Cadastre na aba <b>Alinhamentos</b> marcando o cliente.</div>';
   html += '</div>';
 
-  // Resumos anteriores
+  // resumos anteriores
   if(resumos.length){
     html += `<div class="card"><p class="section-title">Resumos já enviados (${resumos.length})</p>`;
-    html += resumos.slice(0,10).map(s=>`<div class="note">
-      <div class="note-head">
-        <span class="note-client">📤 Resumo enviado</span>
-        <span class="note-meta">${s.date ? fmtDate(s.date) : ''}</span>
-      </div>
-      <div class="note-text">${destacar(s.text.split('\n').slice(0,4).join(' / '), termo)}…</div>
-      <div class="note-foot"><button class="ghost" data-ver-resumo="${s.id}">Ver completo</button></div>
-    </div>`).join('');
+    html += resumos.slice(0,15).map(x=>{
+      const chave = 'resumo:'+x.id;
+      return `<div class="note" style="border-left-color:var(--brand);">
+        <div class="note-head">
+          <span class="note-client" style="display:flex;align-items:center;">
+            <input type="checkbox" class="sel-item" data-chave="${chave}" ${selDossie.has(chave)?'checked':''}>
+            📤 Resumo enviado
+          </span>
+          <span class="note-meta">${x.date ? fmtDate(x.date) : ''}</span>
+        </div>
+        <div class="note-text">${destacar(x.text.split('\n').slice(0,4).join(' / '), termo)}…</div>
+        <div class="note-foot"><button class="ghost" data-ver-resumo="${x.id}">Ver completo</button></div>
+      </div>`;
+    }).join('');
     html += '</div>';
   }
 
   cont.innerHTML = html;
 
-  const btnDossie = document.getElementById('btn-resumo-dossie');
-  if(btnDossie){
-    btnDossie.addEventListener('click', ()=>{
-      irParaAba('resumo');
-      document.getElementById('r-cliente').value = clienteId;
-      document.getElementById('r-regional').value = uf || '';
-      document.getElementById('r-todas').checked = true;
-      document.getElementById('btn-meses-todos').click();
-      document.getElementById('btn-gerar').click();
-      toast('Resumo gerado a partir do dossiê.');
+  bindSelecaoDossie(cont);
+  bindAcoesAta(cont);
+  atualizarContadorSelecao();
+
+  const marcar = (filtroFn)=>{
+    cont.querySelectorAll('.sel-item').forEach(cb=>{
+      if(filtroFn(cb.dataset.chave)){ cb.checked = true; selDossie.add(cb.dataset.chave); }
     });
-  }
+    atualizarContadorSelecao();
+  };
+  document.getElementById('btn-sel-tudo').addEventListener('click', ()=> marcar(()=>true));
+  document.getElementById('btn-sel-notas').addEventListener('click', ()=> marcar(k=>k.startsWith('nota:')));
+  document.getElementById('btn-sel-atas').addEventListener('click', ()=> marcar(k=>k.startsWith('ata:')));
+  document.getElementById('btn-sel-limpar').addEventListener('click', ()=>{
+    cont.querySelectorAll('.sel-item').forEach(cb=>{ cb.checked = false; selDossie.delete(cb.dataset.chave); });
+    atualizarContadorSelecao();
+  });
+
+  document.getElementById('btn-gerar-dossie').addEventListener('click', ()=>{
+    const texto = montarResumoDossie(cliente);
+    if(!texto){ toast('Marque pelo menos uma anotação ou ata antes de gerar.'); return; }
+    document.getElementById('dossie-saida').value = texto;
+    document.getElementById('dossie-area').style.display = 'block';
+  });
+  document.getElementById('btn-copiar-dossie').addEventListener('click', ()=>{
+    const ta = document.getElementById('dossie-saida');
+    ta.select();
+    navigator.clipboard.writeText(ta.value)
+      .then(()=>toast('Resumo copiado.'))
+      .catch(()=>toast('Não foi possível copiar automaticamente. Selecione e copie manualmente.'));
+  });
+
   cont.querySelectorAll('[data-ver-resumo]').forEach(b=>{
     b.addEventListener('click', ()=>{
-      const s = data.summaries.find(x=>x.id===b.dataset.verResumo);
-      if(s) alert(s.text);
+      const x = data.summaries.find(y=>y.id===b.dataset.verResumo);
+      if(x) alert(x.text);
     });
   });
 }
 
+// monta o resumo somente com o que foi marcado no dossiê
+function montarResumoDossie(cliente){
+  const notasSel = data.notes.filter(n=> selDossie.has('nota:'+n.id));
+  const atasSel  = (data.alinhamentos||[]).filter(a=> selDossie.has('ata:'+a.id));
+  const resSel   = (data.summaries||[]).filter(x=> selDossie.has('resumo:'+x.id));
+  if(notasSel.length===0 && atasSel.length===0 && resSel.length===0) return null;
+
+  const datas = [...new Set(notasSel.map(n=>n.date).concat(atasSel.map(a=>a.date)).filter(Boolean))].sort();
+  const periodo = datas.length===0 ? '' :
+    datas.length===1 ? fmtDate(datas[0]) : `${fmtDate(datas[0])} a ${fmtDate(datas[datas.length-1])}`;
+
+  const titulo = cliente ? cliente.name : 'Vários clientes';
+  const blocos = [`*🗂️ Acompanhamento – ${titulo}${periodo ? ' – '+periodo : ''}*`];
+
+  // anotações agrupadas por regional -> cliente -> seção
+  if(notasSel.length){
+    const porUf = {};
+    notasSel.forEach(n=>{ (porUf[n.uf] = porUf[n.uf]||[]).push(n); });
+    Object.keys(porUf).sort().forEach(uf=>{
+      blocos.push(`━━━━━━━━━━\n*📍 Regional: ${ufLabel(uf)}*`);
+      const porCliente = {};
+      porUf[uf].forEach(n=>{ (porCliente[n.clientId] = porCliente[n.clientId]||[]).push(n); });
+      Object.keys(porCliente).forEach(cid=>{
+        const c = data.clients.find(x=>x.id===cid);
+        const cur = currentFarol(cid, uf);
+        let bloco = `*${FAROL_EMOJI[cur]||'⚪'} ${c?c.name:'Cliente removido'}*`;
+        Object.keys(SECOES).forEach(key=>{
+          const doSecao = porCliente[cid].filter(n=>n.section===key)
+            .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+          if(doSecao.length===0) return;
+          bloco += `\n\n*${SECOES[key].emoji} ${SECOES[key].label}*`;
+          const datasU = [...new Set(doSecao.map(n=>n.date))];
+          if(datasU.length>1){
+            const porData = {};
+            doSecao.forEach(n=>{ (porData[n.date] = porData[n.date]||[]).push(n); });
+            Object.keys(porData).sort().forEach(d=>{
+              bloco += `\n\n*📅 ${fmtDate(d)}*`;
+              porData[d].forEach(n=>{ bloco += `\n• ${n.text}`; });
+            });
+          } else {
+            doSecao.forEach(n=>{ bloco += `\n• ${n.text}`; });
+          }
+        });
+        blocos.push(bloco);
+      });
+    });
+  }
+
+  // atas, na ordem: data -> participantes -> assuntos/alinhamentos
+  if(atasSel.length){
+    let bloco = '━━━━━━━━━━\n*📋 Atas e alinhamentos de reunião*';
+    atasSel.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(a=>{
+      bloco += `\n\n*📅 ${a.date ? fmtDate(a.date) : ''} — ${a.titulo||'Ata de reunião'}*`;
+      if(a.participantes) bloco += `\n👥 Participantes: ${a.participantes}`;
+      if(a.regionais && a.regionais.length) bloco += `\n📍 Regionais: ${a.regionais.map(ufLabel).join(', ')}`;
+      if(a.texto) bloco += `\n${a.texto}`;
+      if(a.arquivoUrl) bloco += `\n📎 Arquivo: ${a.arquivoUrl}`;
+    });
+    blocos.push(bloco);
+  }
+
+  if(resSel.length){
+    let bloco = '━━━━━━━━━━\n*📤 Resumos anteriores incluídos*';
+    resSel.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(x=>{
+      bloco += `\n\n*${x.date ? fmtDate(x.date) : ''}*\n${x.text}`;
+    });
+    blocos.push(bloco);
+  }
+
+  return blocos.join('\n\n');
+}
+
 document.getElementById('btn-buscar').addEventListener('click', renderBusca);
 document.getElementById('b-cliente').addEventListener('change', renderBusca);
-document.getElementById('b-uf').addEventListener('change', renderBusca);
+document.getElementById('b-ufs').addEventListener('change', renderBusca);
 document.getElementById('b-termo').addEventListener('keydown', (e)=>{ if(e.key==='Enter') renderBusca(); });
 document.getElementById('btn-limpar-busca').addEventListener('click', ()=>{
   document.getElementById('b-cliente').value = '';
-  document.getElementById('b-uf').value = '';
+  setUfsSelecionadas('b-ufs', []);
   document.getElementById('b-termo').value = '';
+  selDossie = new Set();
   renderBusca();
 });
 
