@@ -1650,7 +1650,11 @@ function _renderLote(id){
     </div>
     <div class="row2">
       <div class="field"><label>Qtd recebida corte (kg)</label><input type="text" inputmode="decimal" id="l-corte-${id}" placeholder="ex: 321"></div>
-      <div class="field"><label>Qtd reclamada (kg)</label><input type="text" inputmode="decimal" id="l-recl-${id}" placeholder="ex: 221"></div>
+      <div class="field"><label>Qtd reclamada (kg)</label><input type="text" inputmode="decimal" id="l-recl-${id}" placeholder="ex: 221" oninput="calcValorLote(${id})"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Preço do produto <span>(R$/kg)</span></label><input type="text" inputmode="decimal" id="l-preco-${id}" placeholder="ex: 24,90" oninput="calcValorLote(${id})"></div>
+      <div class="field"><label>Valor reclamado <span>(automático)</span></label><input type="text" id="l-valor-${id}" placeholder="automático" readonly></div>
     </div>
     <div id="calc-${id}" style="display:none"></div>
     <div style="border-top:1px dashed var(--border);margin-top:10px;padding-top:6px">
@@ -1660,6 +1664,23 @@ function _renderLote(id){
   `;
   c.appendChild(d);
   repintarFotos();
+}
+
+// Preço do produto x quantidade reclamada = valor reclamado do lote.
+// Preenche sozinho; se não houver qtd reclamada, usa o volume total (fechado + aberto em kg).
+function calcValorLote(id){
+  const el=document.getElementById('l-valor-'+id);
+  if(!el)return;
+  const preco=numBR(g('l-preco-'+id));
+  let kg=numBR(g('l-recl-'+id));
+  if(isNaN(kg)||kg<=0){
+    const fechKg=(g('l-vol-fech-unid-'+id)==='kg')?numBR(g('l-vol-fech-'+id)):NaN;
+    const abKg=(g('l-vol-ab-unid-'+id)==='kg')?numBR(g('l-vol-ab-'+id)):NaN;
+    kg=(isNaN(fechKg)?0:fechKg)+(isNaN(abKg)?0:abKg);
+  }
+  if(isNaN(preco)||preco<=0||!kg||kg<=0){ el.value=''; salvarRascunho(); return; }
+  el.value=(preco*kg).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  salvarRascunho();
 }
 
 function calcDatas(id){
@@ -1727,6 +1748,7 @@ function getLotes(){
       volFech:g('l-vol-fech-'+id),volFechUnid:g('l-vol-fech-unid-'+id),
       volAb:g('l-vol-ab-'+id),volAbUnid:g('l-vol-ab-unid-'+id),
       corte:g('l-corte-'+id),recl:g('l-recl-'+id),
+      preco:g('l-preco-'+id),valorTotal:g('l-valor-'+id),
       nfRef:nfDoLote(id),
       nfNum:(nfDoLote(id)!=null?g('nf-num-'+nfDoLote(id)):''),
       nfData:(nfDoLote(id)!=null?g('nf-data-'+nfDoLote(id)):''),
@@ -2156,6 +2178,8 @@ async function enviarSheets(e){
         VOL_FECHADO:        (l.volFech||'')+' '+(l.volFechUnid||'kg'),
         VOL_ABERTO:         (l.volAb||'')+' '+(l.volAbUnid||'kg'),
         QT_RECLAMADA:       l.recl||'',
+        PRECO_PRODUTO:      _precoSheet(l.preco),
+        VALOR_RECLAMADO:    _precoSheet(l.valorTotal),
         VACUO_MANTIDO:      vacuoMantido,
         VIS_AVALIADOS:      l.avalVis||'',
         VIS_NC_PERDA_VACUO: visNcPerda,
@@ -2194,6 +2218,13 @@ async function enviarSheets(e){
     console.error('Erro Sheets:',err);
     alert('⚠️ Não foi possível enviar para o Sheets: '+err.message+'\nOs dados foram salvos localmente.');
   }
+}
+
+// Normaliza o preço digitado (aceita "24,90" ou "24.90") para o formato que o
+// Sheets entende como número.
+function _precoSheet(v){
+  const n=numBR(v);
+  return isNaN(n)||n<=0 ? '' : n.toFixed(2);
 }
 
 // ─── REGISTRAR ──────────────────────────────────────────────────────────────
@@ -2436,13 +2467,17 @@ async function registrar(){
   const temAcoes=acoes.length>0;
   const enviaIndustria=chk('v-acao1')||chk('v-acao2')||chk('v-acao3')||chk('v-acao4')||chk('v-acao5')||chk('v-acao6');
 
-  // WhatsApp — só se tiver ações solicitadas
-  if(enviaIndustria){
-    document.getElementById('txt-whats').textContent=gerarWhats(e);
-    document.getElementById('res-whats').style.display='block';
-  } else {
-    document.getElementById('res-whats').style.display='none';
-  }
+  // WhatsApp — o resumo de escalonamento aparece em TODAS as modalidades
+  // (INVESTIGAÇÃO, VISITA + INVESTIGAÇÃO, VISITA, etc). A Visita de Valor não
+  // passa por aqui, porque tem relatório próprio e já retornou acima.
+  // ANTES: só aparecia quando havia ação marcada para a indústria — por isso
+  // sumia na INVESTIGAÇÃO, em que normalmente não se marca ação nenhuma.
+  document.getElementById('txt-whats').textContent=gerarWhats(e);
+  document.getElementById('res-whats').style.display='block';
+  const lblWhats=document.querySelector('#res-whats .sec-lbl');
+  if(lblWhats)lblWhats.textContent=enviaIndustria
+    ? '📱 Escalonamento — WhatsApp'
+    : '📱 Escalonamento — WhatsApp (sem ação solicitada à indústria)';
 
   // Detecta múltiplas unidades/SIFs e configura o seletor
   window._ultimaVisitaCompleta=e;
@@ -2763,6 +2798,18 @@ function agruparLotesPorNF(e){
   return grupos.length?grupos:[{nf:null,lotes:_lotes}];
 }
 
+// Linha de preço/valor no escalonamento (só sai se o técnico preencheu o preço)
+function _precoWhats(l){
+  const p=numBR(l.preco);
+  if(isNaN(p)||p<=0) return '';
+  let txt=`\n*Preço do produto:* R$ ${p.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}/kg`;
+  const total=numBR(l.valorTotal);
+  if(!isNaN(total)&&total>0){
+    txt+=` | *Valor reclamado:* R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  }
+  return txt;
+}
+
 function gerarWhats(e){
   const dataRefW=e.dataReclamacao||e.data||new Date().toISOString().split('T')[0];
   const _loteWhats=(l)=>{
@@ -2783,7 +2830,7 @@ function gerarWhats(e){
     return `*Produto:* ${l.produto}
 *Unid. prod.:* ${l.uprod} (SIF ${l.sifUprod}) | *Abate:* ${l.uabate} (SIF ${l.sifUabate})
 *Volume:* fechado ${l.volFech} ${l.volFechUnid} | aberto ${l.volAb} ${l.volAbUnid}
-*Vol. total reclamado:* ${volRecl}
+*Vol. total reclamado:* ${volRecl}${_precoWhats(l)}
 *Fabricação:* ${fmt(l.fab)} | *Validade:* ${fmt(l.val)}
 *Shelf:* ${l.shelf}d | produzido há ${diasProd}d | posição: ${fracao}
 *Visual:* ${visNCs||'—'}${(l.visOutros&&l.visOutros.length)?' | '+l.visOutros.map(o=>o.desc+': '+(o.inc||'')).join(' | '):''}
@@ -2802,6 +2849,8 @@ function gerarWhats(e){
 *Cliente:* ${e.cliente} — ${e.cidade}
 *NF:* ${e.nf} | *Placa:* ${e.placa}
 *Data visita:* ${fmt(e.data)}
+*Modalidade:* ${e.modalidade||'—'}${e.codTerceiro?`\n*Código terceiro:* ${e.codTerceiro}`:''}
+*Motivo:* ${e.motivo||'—'}
 *Acompanhamento:* ${e.acompanhamento||'—'}
 *Acompanhante:* ${acompTextoDe(e)}
 
@@ -3772,6 +3821,13 @@ function abrirParecerFinal(id){
          dataEnvio:e._dataEnvioFabrica||'',dataParecer:e._dataParecerFinal||'',area:e._areaAprovacao||'',
          aprovador:e._nomeAprovador||'',dataInfos:e._dataInfosCompletas||''};
     }
+    // Preço do produto: se ainda não houver valor no parecer, aproveita o que o
+    // técnico informou na página 3 (dados do lote) — assim a coluna
+    // PRECO_PRODUTO da aba Histórico é preenchida sozinha.
+    if(l.preco){
+      const _p=_precoSheet(l.preco);
+      if(_p){ v=v||{}; if(!v.preco) v.preco=_p; }
+    }
     const label=multi?`Lote ${idx+1} — ${l.produto||'sem produto'}`:'';
     return _mpfBlocoLote(loteId,label,v);
   }).join('');
@@ -3889,7 +3945,10 @@ async function confirmarEnvioSheets(){
         QDE_RECEBIDA_CD:    '',
         QDE_RECEBIDA_LOJA:  (l.volFech||'')+' '+(l.volFechUnid||'kg'),
         QT_RECLAMADA:       l.recl||'',
-        PRECO_PRODUTO:      pl.preco||'',
+        // Preço: usa o que foi digitado no Parecer Final; se estiver vazio,
+        // cai automaticamente para o preço informado pelo técnico na página 3.
+        PRECO_PRODUTO:      pl.preco||_precoSheet(l.preco),
+        VALOR_RECLAMADO:    _precoSheet(l.valorTotal),
         RECEBIMENTO_RESTRICAO: pl.restricao||'',
         MOTIVO_RESTRICAO:   pl.motivoRestricao||'',
         PARECER_FINAL:      pl.parecer||'',
