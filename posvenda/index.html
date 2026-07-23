@@ -1702,8 +1702,10 @@ function calcDatas(id){
   const nfRef=nfDoLote(id);
   const dataNF=nfRef!=null?g('nf-data-'+nfRef):'';
   const dataEntrega=nfRef!=null?g('nf-entrega-'+nfRef):'';
+  const dataChegada=nfRef!=null?g('nf-chegada-'+nfRef):'';
   const diasAposNF=dataNF?diffDias(dataNF,dataRef):null;
   const diasAposReceb=dataEntrega?diffDias(dataEntrega,dataRef):null;
+  const _lCalc={nfData:dataNF,nfChegada:dataChegada,nfEntrega:dataEntrega};
   box.style.display='block';
   const tituloBox=vencido?'🚫 PRODUTO VENCIDO — não realizar análise sensorial':alto?'⚠️ ATENÇÃO — acima de 2/3 da vida útil (improcedência)':'📅 Calculadora de datas';
   const classeBox=vencido||alto?'alert-red':'calc-box';
@@ -1712,12 +1714,51 @@ function calcDatas(id){
     <div class="calc-row"><span>Dias de produção:</span><span><strong>${diasProd}</strong> dias</span></div>
     ${diasVenc!==null?`<div class="calc-row"><span>Dias para vencimento:</span><span><strong>${Math.abs(diasVenc)}</strong> dias${vencido?' — <strong>VENCIDO</strong>':''}</span></div>`:''}
     <div class="calc-row"><span>Posição:</span><span>${vencido?'🚫 Produto vencido':alto?`⚠️ ${pos}º terço — improcedente`:`${pos}º terço`}</span></div>
-    ${diasAposNF!==null?`<div class="calc-row"><span>Dias após emissão da NF:</span><span><strong>${diasAposNF}</strong> dias</span></div>`:''}
-    ${diasAposReceb!==null?`<div class="calc-row"><span>Dias após recebimento na loja:</span><span><strong>${diasAposReceb}</strong> dias</span></div>`:''}
+    ${diasAposNF!==null?`<div class="calc-row"><span>Dias após emissão da NF:</span><span><strong>${diasAposNF}</strong> dias</span></div>`:`<div class="calc-row" style="opacity:.65"><span>Dias após emissão da NF:</span><span>— preencha a data da NF</span></div>`}
+    ${diasAposReceb!==null?`<div class="calc-row"><span>Dias após recebimento na loja:</span><span><strong>${diasAposReceb}</strong> dias</span></div>`:`<div class="calc-row" style="opacity:.65"><span>Dias após recebimento na loja:</span><span>— preencha a data de entrega na NF</span></div>`}
+    <div style="border-top:1px dashed rgba(0,0,0,.15);margin-top:6px;padding-top:6px;font-size:11px;line-height:1.5">
+      <strong>${_frasesVidaUtil(_lCalc,null,dataRef,diasProd,vencido?null:pos).join(' — ')}.</strong>
+    </div>
   </div>`;
 }
 
 function rmLote(id){const el=document.getElementById('lote'+id);if(el)el.remove();loteIds=loteIds.filter(i=>i!==id);}
+
+// Dias entre o recebimento do produto e a reclamação, com a referência usada.
+// Preferência: entrega na loja > chegada no CD > emissão da NF.
+// MOTIVO: antes isso olhava SÓ a data de entrega na loja. Quando o técnico não
+// preenchia aquela data (ou quando a visita tinha mais de uma NF), a frase
+// "Reclamação após X dias do recebimento" desaparecia inteira do e-mail e do
+// laudo, sem avisar ninguém — era isso que dava a impressão de que a frase
+// tinha sumido do sistema.
+function _diasRecebimento(l, nf1, dataRef){
+  nf1 = nf1 || {};
+  const entrega = (l&&l.nfEntrega) || nf1.entrega || '';
+  const chegada = (l&&l.nfChegada) || nf1.chegada || '';
+  const emissao = (l&&l.nfData)    || nf1.data    || '';
+  if(entrega) return {dias:diffDias(entrega,dataRef), ref:'do recebimento na loja'};
+  if(chegada) return {dias:diffDias(chegada,dataRef), ref:'do recebimento no CD'};
+  if(emissao) return {dias:diffDias(emissao,dataRef), ref:'da emissão da NF'};
+  return {dias:null, ref:''};
+}
+
+// Monta a frase de vida útil: dias de produzido — dias do recebimento — terço.
+// Cada pedaço só entra se existir o dado, mas nenhum pedaço é descartado por
+// engano quando o valor é ZERO (produzido/recebido no mesmo dia da reclamação).
+function _frasesVidaUtil(l, nf1, dataRef, diasProd, pos){
+  const partes=[];
+  if(diasProd!==null&&diasProd!==undefined&&!isNaN(diasProd)){
+    partes.push(`Produto com ${diasProd} ${diasProd===1?'dia':'dias'} de produzido`);
+  }
+  const rec=_diasRecebimento(l, nf1, dataRef);
+  if(rec.dias!==null&&rec.dias!==undefined&&!isNaN(rec.dias)){
+    partes.push(rec.dias===0
+      ? `Reclamação no mesmo dia ${rec.ref}`
+      : `Reclamação após ${rec.dias} ${rec.dias===1?'dia':'dias'} ${rec.ref}`);
+  }
+  if(pos) partes.push(`${pos}º terço do shelf life`);
+  return partes;
+}
 
 // Rótulo identificador do lote nas análises (distingue corte igual com SIFs diferentes)
 function _rotuloLote(l,idx){
@@ -1752,6 +1793,7 @@ function getLotes(){
       nfRef:nfDoLote(id),
       nfNum:(nfDoLote(id)!=null?g('nf-num-'+nfDoLote(id)):''),
       nfData:(nfDoLote(id)!=null?g('nf-data-'+nfDoLote(id)):''),
+      nfChegada:(nfDoLote(id)!=null?g('nf-chegada-'+nfDoLote(id)):''),
       nfEntrega:(nfDoLote(id)!=null?g('nf-entrega-'+nfDoLote(id)):''),
       pecas:[],
     };
@@ -3080,7 +3122,7 @@ function gerarEmail(e){
     const t3=shelf?Math.round(shelf/3):null;
     const pos=diasProd&&t3?Math.ceil(diasProd/t3):null;
     const volTotal=(numBR(l.volFech)||0)+(numBR(l.volAb)||0);
-    const diasAposReceb=(l.nfEntrega||nf1.entrega)?diffDias(l.nfEntrega||nf1.entrega,dataRef):null;
+    const diasAposReceb=_diasRecebimento(l,nf1,dataRef).dias;
 
     // Análise visual
     const visNCs=Object.entries(l.incsVis||{}).filter(([,v])=>parseFloat(v)>0);
@@ -3096,7 +3138,8 @@ function gerarEmail(e){
     const sensLinhas=totalPecas>0?`${totalPecas} peças analisadas<br>${vacuoConf} com boas condições de vácuo${vacuoNC>0?`<br>${vacuoNC} com alteração de vácuo`:''}${vacuoNA>0?`<br>${vacuoNA} com vácuo NA (não se aplica)`:''}${odorNC>0?`<br>${odorNC} com alteração de odor (${l.incOdor||0}%)`:''}`:' Não realizada';
 
     // Validade / vida útil
-    const vidaUtilLinha=diasProd?`Produto com ${diasProd} dias de produzido${diasAposReceb?` — Reclamação após ${diasAposReceb} dias do recebimento`:''}`:null;
+    const _vuPartes=_frasesVidaUtil(l,nf1,dataRef,diasProd,pos);
+    const vidaUtilLinha=_vuPartes.length?_vuPartes.join(' — '):null;
 
     return `
     <tr><td colspan="2" style="padding:0;border-top:3px solid #1F3864"></td></tr>
@@ -3119,7 +3162,7 @@ function gerarEmail(e){
     <tr>${cL('Teste de Borracheiro')}${cV(l.borrRealiz==='Sim'?`${l.borrVaz||0} vazamento(s) em ${l.borrQtd||0} peças — ${l.borrLocal||'—'}`:'Não realizado')}</tr>
     ${l.phRealiz?`<tr>${cL('pH (análise complementar)')}${cV(`<strong>${l.phQtd||'?'} peças analisadas</strong>${l.phValores?'<br>pHs: '+l.phValores:''}`)}</tr>`:''}
     <tr>${cL('Planilha de Temperatura')}${cV(e.regTemp==='C'?'Conforme — registros dentro do padrão':e.regTemp==='NC'?'Não conforme':'Não avaliado')}</tr>
-    ${vidaUtilLinha?`<tr>${cL('Validade / Vida Útil')}${cV(vidaUtilLinha+(pos?` — ${pos}º terço do shelf life`:''))}</tr>`:''}
+    ${vidaUtilLinha?`<tr>${cL('Validade / Vida Útil')}${cV(vidaUtilLinha)}</tr>`:''}
     ${(l.visOutros&&l.visOutros.length)?`<tr>${cL('Outro(s) motivo(s) visual')}${cV(l.visOutros.map(o=>o.desc+(o.inc?' — '+o.inc:'')).join('<br>'))}</tr>`:''}
     ${e.obs?`<tr><td colspan="2" style="padding:8px 10px;background:#fef9c3;font-size:12px;border-bottom:1px solid #e8e8e8"><strong>Observações:</strong> ${e.obs}</td></tr>`:''}`;
   }).join('');
@@ -3247,7 +3290,7 @@ function enviarParaMim(btn){
     const t3=shelf?Math.round(shelf/3):null;
     const pos=diasProd&&t3?Math.ceil(diasProd/t3):null;
     const volTotal=(numBR(l.volFech)||0)+(numBR(l.volAb)||0);
-    const diasAposReceb=nf1.entrega?diffDias(nf1.entrega,dataRef):null;
+    const diasAposReceb=_diasRecebimento(l,nf1,dataRef).dias;
     const visNCs=Object.entries(l.incsVis||{}).filter(([,v])=>parseFloat(v)>0);
     const visResumo=visNCs.length
       ?`${l.avalVis||'?'} ${l.visUnidade==='peca'?'peças':'caixas'} analisadas\n`+visNCs.map(([k,v])=>`   ${parseFloat(v).toFixed(0)}% com ${k.toLowerCase()}`).join('\n')
@@ -3258,7 +3301,8 @@ function enviarParaMim(btn){
     const sensResumo=totalPecas>0
       ?`${totalPecas} peças analisadas\n   ${l.conformes||0} com boas condições de vácuo`+(vacuoNC>0?`\n   ${vacuoNC} com alteração de vácuo`:'')+(vacuoNA>0?`\n   ${vacuoNA} com vácuo NA (não se aplica)`:'')+((l.comOdor||0)>0?`\n   ${l.comOdor} com alteração de odor (${l.incOdor||0}%)`:'')
       :'Não realizada';
-    const vidaUtil=diasProd?`${diasProd} dias de produzido`+(pos?` — ${pos}º terço do shelf life`:'')+(diasAposReceb?`\n   Reclamação após ${diasAposReceb} dias do recebimento`:''):null;
+    const _vuW=_frasesVidaUtil(l,nf1,dataRef,diasProd,pos);
+    const vidaUtil=_vuW.length?_vuW.join('\n   '):null;
     return `${sep}
 PRODUTO ${i+1}: ${l.produto||'—'}
 ${sep}
