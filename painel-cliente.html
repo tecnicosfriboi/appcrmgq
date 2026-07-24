@@ -1364,12 +1364,64 @@ async function carregarEntregas(forcar){
   return entregasCache || [];
 }
 
-// Tenta achar o cliente cadastrado no Painel cujo nome bate com o texto
-// digitado no Ato de Entrega (comparação sem acentuar maiúsculas/espaços).
-// Se não achar, o ranking mostra o nome mesmo assim — só não linka pro dossiê.
-function acharClientePorNome(nomeSheet){
+/* =========================================================================
+   CASAMENTO DE NOME DE CLIENTE — planilha (Ato de Entrega) x Painel
+   ---------------------------------------------------------------------------
+   1) Tenta nome IDÊNTICO primeiro (mais seguro).
+   2) Se não achar, tenta por PALAVRA-CHAVE: extrai as palavras significativas
+      do nome (ignorando "supermercado", "ltda", "comercio" etc., que são
+      genéricas demais e dariam falso positivo) e procura, entre os clientes
+      cadastrados, qual tem uma palavra em comum.
+   3) Só aceita automaticamente se achar EXATAMENTE UM cliente candidato.
+      Se duas palavras-chave apontarem para clientes diferentes ao mesmo
+      tempo, não arrisca — fica sem correspondência e aparece para revisão
+      manual. Prefere errar por excesso de cautela a juntar dois clientes
+      diferentes por engano.
+   ========================================================================= */
+const PALAVRAS_GENERICAS_CLIENTE = new Set([
+  'de','da','do','das','dos','e','ltda','ltda.','me','eireli','epp','sa','s.a',
+  'cia','comercio','comercial','comerciais','comercializadora',
+  'supermercado','supermercados','superm','hipermercado','hipermercados',
+  'atacado','atacadista','atacarejo','distribuidora','distribuicao',
+  'mercado','mercadinho','mercearia','loja','lojas','filial','matriz',
+  'grupo','rede','industria','industrias','alimentos','alimenticios',
+  'frigorifico','frigorificos','carnes','casa','casas','armazem','deposito'
+]);
+
+// Extrai palavras "significativas" de um nome: sem acento/maiúscula, com 4+
+// letras, e fora da lista de termos genéricos de comércio acima.
+function extrairPalavrasChave(nome){
+  return normalizar(nome)
+    .split(/[^a-z0-9]+/)
+    .filter(p=> p.length>=4 && !PALAVRAS_GENERICAS_CLIENTE.has(p));
+}
+
+// Monta uma vez por render o índice de palavras-chave de cada cliente
+// cadastrado, para não recalcular a cada linha da planilha.
+function montarIndiceClientes(){
+  return data.clients.map(c=> ({ id:c.id, name:c.name, palavras: extrairPalavrasChave(c.name) }));
+}
+
+// Acha o cliente cadastrado correspondente a um nome da planilha.
+// Devolve {cliente, exato:true|false} ou null se não achar (ou for ambíguo).
+function encontrarClienteParaSheet(nomeSheet, indice){
   const alvo = normalizar(nomeSheet);
-  return data.clients.find(c=> normalizar(c.name) === alvo);
+  const exato = indice.find(c=> normalizar(c.name)===alvo);
+  if(exato) return { cliente:exato, exato:true };
+
+  const palavrasSheet = extrairPalavrasChave(nomeSheet);
+  if(!palavrasSheet.length) return null;
+
+  const candidatos = indice.filter(c=> c.palavras.some(p=> palavrasSheet.includes(p)));
+  const idsUnicos = [...new Set(candidatos.map(c=>c.id))];
+  if(idsUnicos.length===1) return { cliente:candidatos[0], exato:false };
+  return null; // nenhum candidato, ou candidatos ambíguos (mais de um cliente possível)
+}
+
+// Mantido por compatibilidade — usado no clique da linha do ranking.
+function acharClientePorNome(nomeSheet){
+  const r = encontrarClienteParaSheet(nomeSheet, montarIndiceClientes());
+  return r ? r.cliente : null;
 }
 
 async function renderDevolucoes(forcar){
@@ -1400,8 +1452,15 @@ async function renderDevolucoes(forcar){
   const ate = document.getElementById('d-ate').value;
   const ordenarPor = document.getElementById('d-ordenar').value;
 
+  const indiceClientes = montarIndiceClientes();
+
   let filtradas = todas;
-  if(clienteSel) filtradas = filtradas.filter(x=> normalizar(x.cliente)===normalizar(clienteSel.name));
+  if(clienteSel){
+    filtradas = filtradas.filter(x=>{
+      const achou = encontrarClienteParaSheet(x.cliente, indiceClientes);
+      return achou && achou.cliente.id === cliId;
+    });
+  }
   if(uf) filtradas = filtradas.filter(x=> x.uf===uf);
   if(de) filtradas = filtradas.filter(x=> x.data && x.data >= de);
   if(ate) filtradas = filtradas.filter(x=> x.data && x.data <= ate);
@@ -1411,16 +1470,52 @@ async function renderDevolucoes(forcar){
   ultimaListaFiltradaEntregas = filtradas;
 
   if(!filtradas.length){
+    // Diagnóstico: se o filtro foi por cliente específico e deu zero, mas
+    // existem entregas na planilha, o motivo quase sempre é o nome do
+    // cliente estar escrito diferente entre o Painel e o Ato de Entrega
+    // (ex.: "Atacadão" cadastrado vs "Atacadão - Loja 12" na planilha).
+    // Mostra os nomes parecidos encontrados, em vez de só dizer "vazio".
+    if(clienteSel && todas.length){
+      const alvo = normalizar(clienteSel.name);
+      const nomesUnicos = [...new Set(todas.map(x=>x.cliente))];
+      const parecidos = nomesUnicos.filter(n=>{
+        const nn = normalizar(n);
+        return nn.includes(alvo) || alvo.includes(nn);
+      }).filter(n=> normalizar(n)!==alvo); // exclui o que já seria match exato
+      if(parecidos.length){
+        rankEl.innerHTML = '<div class="empty">'
+          + 'Nenhuma entrega encontrada para "'+escapeHtml(clienteSel.name)+'", mesmo com o casamento por palavra-chave já tentado automaticamente.<br><br>'
+          + 'Encontrei na planilha nome(s) com alguma semelhança de texto, mas a palavra em comum é curta/genérica demais para casar sozinha com segurança:<br>'
+          + '<strong>'+parecidos.map(escapeHtml).join('</strong>, <strong>')+'</strong><br><br>'
+          + 'Se for o mesmo cliente, ajuste o cadastro em "Clientes" para incluir uma palavra em comum mais específica (ex.: um nome próprio ou uma cidade), ou peça para o técnico padronizar o nome no Ato de Entrega.'
+          + '</div>';
+        return;
+      }
+      rankEl.innerHTML = '<div class="empty">Nenhuma entrega encontrada para "'+escapeHtml(clienteSel.name)+'" na planilha do Ato de Entrega, nem por nome exato, nem por palavra-chave, no período selecionado.</div>';
+      return;
+    }
     rankEl.innerHTML = '<div class="empty">Nenhuma entrega encontrada no período/filtro selecionado.</div>';
     return;
   }
 
-  // agrupa por nome de cliente (texto exatamente como está na planilha)
+  // Agrupa por cliente CADASTRADO quando acha correspondência (exata ou por
+  // palavra-chave) — assim "Guanabara", "Casas Guanabara" e "GUANABARA LTDA"
+  // caem na mesma linha do ranking. Quando não acha (ou é ambíguo), agrupa
+  // pelo nome cru da planilha mesmo, para não sumir com o registro.
   const porCliente = {};
   filtradas.forEach(x=>{
-    const chave = normalizar(x.cliente);
-    if(!porCliente[chave]) porCliente[chave] = { nome:x.cliente, volNF:0, volDev:0, ocorrencias:0, alertas:0, ultimaData:'', ufs:new Set() };
+    const achou = encontrarClienteParaSheet(x.cliente, indiceClientes);
+    const chave = achou ? ('id:'+achou.cliente.id) : ('bruto:'+normalizar(x.cliente));
+    if(!porCliente[chave]){
+      porCliente[chave] = {
+        nome: achou ? achou.cliente.name : x.cliente,
+        clienteId: achou ? achou.cliente.id : null,
+        aproximado: false, // vira true se ALGUMA entrega do grupo veio de casamento por palavra-chave (não exato)
+        volNF:0, volDev:0, ocorrencias:0, alertas:0, ultimaData:'', ufs:new Set()
+      };
+    }
     const g = porCliente[chave];
+    if(achou && !achou.exato) g.aproximado = true;
     g.volNF += x.volNF;
     g.volDev += x.volDev;
     g.ocorrencias += 1;
@@ -1432,7 +1527,7 @@ async function renderDevolucoes(forcar){
   let linhas = Object.values(porCliente).map(g=> ({
     ...g,
     taxa: g.volNF>0 ? (g.volDev/g.volNF*100) : 0,
-    clienteCadastrado: acharClientePorNome(g.nome)
+    clienteCadastrado: g.clienteId ? data.clients.find(c=>c.id===g.clienteId) : null
   }));
 
   const comparadores = {
@@ -1476,7 +1571,7 @@ async function renderDevolucoes(forcar){
         const corTaxa = l.taxa>=10 ? 'var(--vermelho)' : (l.taxa>=3 ? 'var(--amarelo)' : 'inherit');
         return `<tr style="border-bottom:1px solid var(--border);${clicavel?'cursor:pointer;':''}" ${clicavel?`data-ir-dossie="${l.clienteCadastrado.id}"`:''}>
         <td style="padding:8px 6px;color:var(--ink-faint);">${i+1}</td>
-        <td style="padding:8px 6px;font-weight:600;color:var(--brand);">${escapeHtml(l.nome)}${clicavel?'':' <span class="hint" style="font-weight:400;">(não cadastrado no Painel)</span>'}</td>
+        <td style="padding:8px 6px;font-weight:600;color:var(--brand);">${escapeHtml(l.nome)}${clicavel?'':' <span class="hint" style="font-weight:400;">(não cadastrado no Painel)</span>'}${l.aproximado?' <span class="hint" style="font-weight:400;color:var(--amarelo);" title="Casado por palavra-chave, não por nome idêntico — vale conferir">≈ nome aproximado</span>':''}</td>
         <td style="padding:8px 6px;">${[...l.ufs].map(ufLabel).join(', ')||'—'}</td>
         <td style="padding:8px 6px;text-align:right;">${l.ocorrencias}</td>
         <td style="padding:8px 6px;text-align:right;">${l.volNF.toLocaleString('pt-BR',{maximumFractionDigits:0})} kg</td>
@@ -2528,7 +2623,8 @@ function renderAlinhamentos(){
 
 // ---------- busca / dossiê do cliente ----------
 function normalizar(s){
-  return (s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  return (s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s+/g,' ').trim();
 }
 
 function destacar(texto, termo){
