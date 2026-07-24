@@ -426,6 +426,11 @@ function __toggleSwitcher(e){
 
   <header class="top">
     <p class="hint">⚠️ Os dados deste app são compartilhados e sincronizam em tempo real: qualquer pessoa com o link vê e edita as mesmas anotações.</p>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
+      <label for="meu-nome" style="font-size:12px;color:var(--ink-faint);white-space:nowrap;">👤 Você é:</label>
+      <input type="text" id="meu-nome" placeholder="Seu nome" style="max-width:220px;padding:4px 8px;font-size:13px;">
+      <span class="hint" style="font-size:11px;">Fica salvo neste aparelho e é usado para registrar quem incluiu/editou cada anotação.</span>
+    </div>
   </header>
 
   <nav class="tabs">
@@ -433,6 +438,7 @@ function __toggleSwitcher(e){
     <button data-tab="nova" class="active">Nova anotação</button>
     <button data-tab="anotacoes">Anotações</button>
     <button data-tab="resumo">Resumo &amp; farol</button>
+    <button data-tab="devolucoes">📦 Entregas &amp; Devoluções</button>
     <button data-tab="clientes">Clientes</button>
     <button data-tab="alinhamentos">Alinhamentos</button>
   </nav>
@@ -584,6 +590,51 @@ function __toggleSwitcher(e){
     <div class="card">
       <p class="section-title">Resumos anteriores</p>
       <div id="lista-resumos"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="tab-devolucoes">
+    <div class="card">
+      <p class="section-title">Entregas &amp; Devoluções — ranking por cliente</p>
+      <div class="filters">
+        <select id="d-cliente"><option value="">Todos os clientes</option></select>
+        <select id="d-uf"><option value="">Todas as regionais</option></select>
+        <select id="d-ordenar">
+          <option value="volDev">Ordenar por: volume devolvido</option>
+          <option value="taxa">Ordenar por: taxa de devolução</option>
+          <option value="ocorrencias">Ordenar por: nº de entregas</option>
+          <option value="volNF">Ordenar por: volume total (NF)</option>
+        </select>
+      </div>
+      <div class="row">
+        <div>
+          <label for="d-de">De</label>
+          <input type="date" id="d-de">
+        </div>
+        <div>
+          <label for="d-ate">Até</label>
+          <input type="date" id="d-ate">
+        </div>
+      </div>
+      <p class="hint">
+        Estes números vêm direto da planilha do Ato de Entrega — todas as entregas, com ou sem devolução, de todos os técnicos.
+        <span id="dev-atualizado-em"></span>
+        <button type="button" class="ghost" id="btn-dev-atualizar" style="margin-left:8px;padding:2px 10px;font-size:12px;">🔄 Atualizar da planilha</button>
+      </p>
+
+      <div id="dev-resumo-cards" style="display:flex;gap:12px;margin:14px 0;flex-wrap:wrap;"></div>
+
+      <div id="dev-ranking"></div>
+
+      <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px;">
+        <button class="primary" id="btn-dev-resumo">📋 Gerar resumo para WhatsApp (do filtro atual)</button>
+        <p class="hint" style="margin-top:6px;">A procedência é registrada por carga (não por corte individual). Visitas com mais de um corte devolvido vêm marcadas para você revisar antes de enviar.</p>
+        <div id="dev-resumo-area" style="display:none;margin-top:12px;">
+          <label for="dev-resumo-output">Prévia (edite se quiser antes de enviar)</label>
+          <textarea id="dev-resumo-output" style="min-height:320px;"></textarea>
+          <button class="secondary" id="btn-dev-resumo-copiar">Copiar para o WhatsApp</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -919,6 +970,7 @@ function irParaAba(tab){
   document.getElementById('tab-'+tab).classList.add('active');
   if(tab==='resumo'){ renderFarolGrid(); refreshMesesCheckboxes(); }
   if(tab==='anotacoes') renderNotasFiltradas();
+  if(tab==='devolucoes') renderDevolucoes();
   if(tab==='alinhamentos') renderAlinhamentos();
   if(tab==='busca') renderBusca();
 }
@@ -1025,6 +1077,7 @@ function fillClientSelects(){
   setSelectPreservandoValor('g-cliente', '<option value="">Todos os clientes</option>' + optsClientes);
   setSelectPreservandoValor('r-cliente', '<option value="">Todos os clientes</option>' + optsClientes);
   setSelectPreservandoValor('b-cliente', '<option value="">Todos os clientes</option>' + optsClientes);
+  setSelectPreservandoValor('d-cliente', '<option value="">Todos os clientes</option>' + optsClientes);
 
   renderClientChecksAta();
 
@@ -1032,10 +1085,34 @@ function fillClientSelects(){
   setSelectPreservandoValor('f-uf', '<option value="">Todas as regionais</option>' + ufOpts);
   setSelectPreservandoValor('g-uf', '<option value="">Todas as regionais</option>' + ufOpts);
   setSelectPreservandoValor('r-regional', '<option value="">Todas as regionais</option>' + ufOpts);
+  setSelectPreservandoValor('d-uf', '<option value="">Todas as regionais</option>' + ufOpts);
 
   renderUfChecks('n-ufs');
   renderUfChecks('b-ufs');
   renderUfChecks('al-ufs');
+}
+
+// ---------- "Você é" — quem está usando o app neste aparelho ----------
+const MEU_NOME_KEY = 'painelCliente_meuNome';
+function obterMeuNome(){
+  return (localStorage.getItem(MEU_NOME_KEY) || '').trim();
+}
+function inicializarMeuNome(){
+  const el = document.getElementById('meu-nome');
+  if(!el) return;
+  el.value = obterMeuNome();
+  el.addEventListener('change', ()=> localStorage.setItem(MEU_NOME_KEY, el.value.trim()));
+  el.addEventListener('blur', ()=> localStorage.setItem(MEU_NOME_KEY, el.value.trim()));
+}
+// Confirma que "Você é" está preenchido antes de salvar; se não estiver,
+// foca o campo e avisa, sem perder o que a pessoa já tinha digitado na nota.
+function exigirMeuNome(){
+  const nome = obterMeuNome();
+  if(nome) return nome;
+  const el = document.getElementById('meu-nome');
+  if(el) el.focus();
+  toast('Preencha "Você é" no topo da página antes de salvar.');
+  return null;
 }
 
 function escapeHtml(s){
@@ -1060,6 +1137,8 @@ document.getElementById('btn-salvar-nota').addEventListener('click', async ()=>{
     toast('Escolha o cliente, marque pelo menos uma regional e escreva a anotação.');
     return;
   }
+  const meuNome = exigirMeuNome();
+  if(!meuNome) return;
 
   if(editingNoteId){
     const nota = data.notes.find(n=>n.id===editingNoteId);
@@ -1070,6 +1149,7 @@ document.getElementById('btn-salvar-nota').addEventListener('click', async ()=>{
       nota.section = secao;
       nota.text = texto;
       nota.farol = farol;
+      nota.autor = meuNome; // sempre reflete quem fez a última alteração
     }
     // regionais extras marcadas durante a edição entram como novas anotações
     const base = Date.now();
@@ -1078,7 +1158,7 @@ document.getElementById('btn-salvar-nota').addEventListener('click', async ()=>{
       if(jaTem) return;
       data.notes.push({
         id: uid(), clientId: clienteId, uf: uf, date: dataNota, section: secao,
-        text: texto, farol: farol, summarized:false, createdAt: base+i
+        text: texto, farol: farol, summarized:false, createdAt: base+i, autor: meuNome
       });
     });
     await save();
@@ -1089,7 +1169,7 @@ document.getElementById('btn-salvar-nota').addEventListener('click', async ()=>{
     ufs.forEach((uf,i)=>{
       data.notes.push({
         id: uid(), clientId: clienteId, uf: uf, date: dataNota, section: secao,
-        text: texto, farol: farol, summarized:false, createdAt: base+i
+        text: texto, farol: farol, summarized:false, createdAt: base+i, autor: meuNome
       });
     });
     await save();
@@ -1217,6 +1297,376 @@ function atualizarContadorSelecao(){
 }
 
 // ---------- lista de anotações ----------
+document.getElementById('d-cliente').addEventListener('change', renderDevolucoes);
+document.getElementById('d-uf').addEventListener('change', renderDevolucoes);
+document.getElementById('d-de').addEventListener('change', renderDevolucoes);
+document.getElementById('d-ate').addEventListener('change', renderDevolucoes);
+document.getElementById('d-ordenar').addEventListener('change', renderDevolucoes);
+document.getElementById('btn-dev-atualizar').addEventListener('click', ()=> renderDevolucoes(true));
+
+/* =========================================================================
+   ABA "ENTREGAS & DEVOLUÇÕES" — consulta AO VIVO na planilha do Ato de Entrega
+   ---------------------------------------------------------------------------
+   Diferente do resto do Painel do Cliente (que lê do Firebase), esta aba
+   busca direto no Google Sheets via Apps Script — a MESMA planilha que o
+   Ato de Entrega já usa. Isso evita duplicar dado em dois bancos: a planilha
+   continua sendo a única fonte de verdade de TUDO que foi lançado (com ou
+   sem devolução), e aqui só agregamos por cliente para o ranking.
+
+   O resultado fica em cache na memória (entregasCache) enquanto a página
+   estiver aberta, para não bater na planilha toda vez que um filtro muda.
+   O botão "Atualizar da planilha" força uma busca nova.
+   ========================================================================= */
+const SHEETS_URL_ATO_ENTREGA = 'https://script.google.com/macros/s/AKfycbx3haDEUJfgNynbg5aJ_gENln-QazFR1yp1Z3bZKkXR2z1ir6xix21QGiOcs9p797OR/exec';
+let entregasCache = null;
+let ultimaListaFiltradaEntregas = [];
+let entregasCacheEm = null;
+let entregasCacheCarregando = false;
+
+// 'dd/mm/aaaa' -> 'aaaa-mm-dd', para poder comparar com os filtros de data
+// (que usam <input type="date">, formato ISO nativo do navegador).
+function parseDataBR(v){
+  if(!v) return '';
+  const s = String(v).trim();
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m) return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+  return '';
+}
+
+async function carregarEntregas(forcar){
+  if(entregasCache && !forcar) return entregasCache;
+  if(entregasCacheCarregando) return entregasCache || [];
+  entregasCacheCarregando = true;
+  try{
+    const r = await fetch(SHEETS_URL_ATO_ENTREGA + '?tipo=entregas');
+    const bruto = await r.json();
+    entregasCache = bruto.map(x=>({
+      cliente: String(x.cliente||'').trim(),
+      uf: String(x.estadoCliente||'').trim().toUpperCase(),
+      tecnico: String(x.tecnico||'').trim(),
+      data: parseDataBR(x.data),
+      sif: String(x.sif||'').trim(),
+      volNF: parseFloat(x.volTotalNF)||0,
+      volDev: parseFloat(x.volDevolvido)||0,
+      volRec: parseFloat(x.volRecebido)||0,
+      alto: String(x.altoVolume||'').trim().toLowerCase()==='sim',
+      presencial: String(x.presencial||'').trim().toLowerCase()==='sim',
+      devprocedente: String(x.devprocedente||'').trim(),
+      devolucoesTexto: String(x['devoluções']||'').trim()
+    })).filter(x=> x.cliente);
+    entregasCacheEm = new Date();
+  }catch(err){
+    console.warn('Não foi possível carregar as entregas da planilha', err);
+    // mantém o cache anterior (se houver) em vez de zerar a tela
+  }finally{
+    entregasCacheCarregando = false;
+  }
+  return entregasCache || [];
+}
+
+// Tenta achar o cliente cadastrado no Painel cujo nome bate com o texto
+// digitado no Ato de Entrega (comparação sem acentuar maiúsculas/espaços).
+// Se não achar, o ranking mostra o nome mesmo assim — só não linka pro dossiê.
+function acharClientePorNome(nomeSheet){
+  const alvo = normalizar(nomeSheet);
+  return data.clients.find(c=> normalizar(c.name) === alvo);
+}
+
+async function renderDevolucoes(forcar){
+  const cardsEl = document.getElementById('dev-resumo-cards');
+  const rankEl = document.getElementById('dev-ranking');
+  const marcaEl = document.getElementById('dev-atualizado-em');
+
+  rankEl.innerHTML = '<div class="empty">Carregando da planilha...</div>';
+  cardsEl.innerHTML = '';
+
+  const todas = await carregarEntregas(forcar);
+
+  if(marcaEl){
+    marcaEl.textContent = entregasCacheEm
+      ? ('Atualizado às ' + entregasCacheEm.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}))
+      : '';
+  }
+
+  if(!todas.length){
+    rankEl.innerHTML = '<div class="empty">Não foi possível carregar os dados da planilha agora. Confira a conexão e clique em "Atualizar da planilha".</div>';
+    return;
+  }
+
+  const cliId = document.getElementById('d-cliente').value;
+  const clienteSel = cliId ? data.clients.find(c=>c.id===cliId) : null;
+  const uf = document.getElementById('d-uf').value;
+  const de = document.getElementById('d-de').value;
+  const ate = document.getElementById('d-ate').value;
+  const ordenarPor = document.getElementById('d-ordenar').value;
+
+  let filtradas = todas;
+  if(clienteSel) filtradas = filtradas.filter(x=> normalizar(x.cliente)===normalizar(clienteSel.name));
+  if(uf) filtradas = filtradas.filter(x=> x.uf===uf);
+  if(de) filtradas = filtradas.filter(x=> x.data && x.data >= de);
+  if(ate) filtradas = filtradas.filter(x=> x.data && x.data <= ate);
+
+  // guarda a lista filtrada atual — o botão "Gerar resumo WhatsApp" usa
+  // exatamente o mesmo recorte que está sendo mostrado na tela.
+  ultimaListaFiltradaEntregas = filtradas;
+
+  if(!filtradas.length){
+    rankEl.innerHTML = '<div class="empty">Nenhuma entrega encontrada no período/filtro selecionado.</div>';
+    return;
+  }
+
+  // agrupa por nome de cliente (texto exatamente como está na planilha)
+  const porCliente = {};
+  filtradas.forEach(x=>{
+    const chave = normalizar(x.cliente);
+    if(!porCliente[chave]) porCliente[chave] = { nome:x.cliente, volNF:0, volDev:0, ocorrencias:0, alertas:0, ultimaData:'', ufs:new Set() };
+    const g = porCliente[chave];
+    g.volNF += x.volNF;
+    g.volDev += x.volDev;
+    g.ocorrencias += 1;
+    if(x.alto) g.alertas += 1;
+    if(x.data && x.data > g.ultimaData) g.ultimaData = x.data;
+    if(x.uf) g.ufs.add(x.uf);
+  });
+
+  let linhas = Object.values(porCliente).map(g=> ({
+    ...g,
+    taxa: g.volNF>0 ? (g.volDev/g.volNF*100) : 0,
+    clienteCadastrado: acharClientePorNome(g.nome)
+  }));
+
+  const comparadores = {
+    volDev: (a,b)=> b.volDev - a.volDev,
+    taxa: (a,b)=> b.taxa - a.taxa,
+    ocorrencias: (a,b)=> b.ocorrencias - a.ocorrencias,
+    volNF: (a,b)=> b.volNF - a.volNF
+  };
+  linhas.sort(comparadores[ordenarPor] || comparadores.volDev);
+
+  // cartões de resumo do período/filtro atual
+  const totalEntregas = filtradas.length;
+  const totalVolNF = filtradas.reduce((s,x)=> s+x.volNF, 0);
+  const totalVolDev = filtradas.reduce((s,x)=> s+x.volDev, 0);
+  const taxaGeral = totalVolNF>0 ? (totalVolDev/totalVolNF*100) : 0;
+  cardsEl.innerHTML = [
+    { label:'Entregas no período', valor: String(totalEntregas) },
+    { label:'Volume total (NF)', valor: totalVolNF.toLocaleString('pt-BR',{maximumFractionDigits:0})+' kg' },
+    { label:'Volume devolvido', valor: totalVolDev.toLocaleString('pt-BR',{maximumFractionDigits:0})+' kg' },
+    { label:'Taxa de devolução', valor: taxaGeral.toFixed(1)+'%' }
+  ].map(c=> `<div class="card" style="flex:1;min-width:150px;padding:12px 16px;">
+      <div style="font-size:12px;color:var(--ink-faint);">${c.label}</div>
+      <div style="font-size:22px;font-weight:700;color:var(--brand);">${c.valor}</div>
+    </div>`).join('');
+
+  // ranking
+  rankEl.innerHTML = '<table style="width:100%;border-collapse:collapse;">'
+    + '<thead><tr style="text-align:left;border-bottom:2px solid var(--border);">'
+    + '<th style="padding:8px 6px;">#</th>'
+    + '<th style="padding:8px 6px;">Cliente</th>'
+    + '<th style="padding:8px 6px;">Regional(is)</th>'
+    + '<th style="padding:8px 6px;text-align:right;">Entregas</th>'
+    + '<th style="padding:8px 6px;text-align:right;">Vol. NF</th>'
+    + '<th style="padding:8px 6px;text-align:right;">Vol. devolvido</th>'
+    + '<th style="padding:8px 6px;text-align:right;">Taxa</th>'
+    + '<th style="padding:8px 6px;text-align:right;">Alertas ≥3t</th>'
+    + '<th style="padding:8px 6px;">Última entrega</th>'
+    + '</tr></thead><tbody>'
+    + linhas.map((l,i)=> {
+        const clicavel = !!l.clienteCadastrado;
+        const corTaxa = l.taxa>=10 ? 'var(--vermelho)' : (l.taxa>=3 ? 'var(--amarelo)' : 'inherit');
+        return `<tr style="border-bottom:1px solid var(--border);${clicavel?'cursor:pointer;':''}" ${clicavel?`data-ir-dossie="${l.clienteCadastrado.id}"`:''}>
+        <td style="padding:8px 6px;color:var(--ink-faint);">${i+1}</td>
+        <td style="padding:8px 6px;font-weight:600;color:var(--brand);">${escapeHtml(l.nome)}${clicavel?'':' <span class="hint" style="font-weight:400;">(não cadastrado no Painel)</span>'}</td>
+        <td style="padding:8px 6px;">${[...l.ufs].map(ufLabel).join(', ')||'—'}</td>
+        <td style="padding:8px 6px;text-align:right;">${l.ocorrencias}</td>
+        <td style="padding:8px 6px;text-align:right;">${l.volNF.toLocaleString('pt-BR',{maximumFractionDigits:0})} kg</td>
+        <td style="padding:8px 6px;text-align:right;font-weight:600;">${l.volDev.toLocaleString('pt-BR',{maximumFractionDigits:0})} kg</td>
+        <td style="padding:8px 6px;text-align:right;font-weight:600;color:${corTaxa};">${l.taxa.toFixed(1)}%</td>
+        <td style="padding:8px 6px;text-align:right;">${l.alertas>0?('<span style="color:var(--vermelho);font-weight:600;">'+l.alertas+'</span>'):'—'}</td>
+        <td style="padding:8px 6px;">${fmtDate(l.ultimaData)}</td>
+      </tr>`;
+      }).join('')
+    + '</tbody></table>'
+    + '<p class="hint" style="margin-top:10px;">Clique num cliente cadastrado para abrir o dossiê completo. Clientes marcados como "não cadastrado" existem na planilha do Ato de Entrega mas ainda não foram adicionados na aba Clientes deste painel.</p>';
+
+  rankEl.querySelectorAll('[data-ir-dossie]').forEach(tr=>{
+    tr.addEventListener('click', ()=>{
+      document.getElementById('b-cliente').value = tr.dataset.irDossie;
+      irParaAba('busca');
+      renderBusca();
+    });
+  });
+}
+
+/* =========================================================================
+   GERADOR DO RESUMO DE WHATSAPP (aba Entregas & Devoluções)
+   ---------------------------------------------------------------------------
+   Monta o texto no mesmo formato do resumo que a Nívea já compilava
+   manualmente. Usa a MESMA lista filtrada que está na tela (cliente/UF/
+   período), então filtrar antes de gerar já recorta o resumo.
+
+   LIMITAÇÃO CONHECIDA E ACEITA: o Ato de Entrega hoje só registra a
+   procedência da devolução POR CARGA (visita inteira), não por corte. Este
+   gerador usa esse valor único em todos os cortes daquela visita. Quando uma
+   visita tem mais de um corte devolvido, um aviso "🔎 revisar procedência
+   por corte" é incluído automaticamente na visita e contado no rodapé, para
+   deixar claro que aquele valor é uma aproximação e merece checagem manual.
+   ========================================================================= */
+
+// Separa "STA/1110" em {sigla:'STA', numero:'1110'} — a planilha guarda
+// sigla/número, mas o resumo mostra número (sigla), como no modelo da Nívea.
+function formatarSifResumo(sifBruto){
+  const s = String(sifBruto||'').trim();
+  const partes = s.split('/');
+  if(partes.length===2) return partes[1]+' ('+partes[0]+')';
+  return s || '—';
+}
+
+// Faz o parse do texto bruto da coluna "devoluções" (formato interno do Ato
+// de Entrega) e devolve uma lista de cortes: [{produto, motivos, incidencia}]
+// Também reconhece o caso "DEVOLUÇÃO TOTAL DA NF".
+function parseDevolucoesResumo(texto){
+  const t = String(texto||'').trim();
+  if(!t) return { totalNF:false, cortes:[] };
+
+  if(t.startsWith('DEVOLUÇÃO TOTAL DA NF')){
+    // Formato: DEVOLUÇÃO TOTAL DA NF|Motivos:...|Procedência // corte1 // corte2...
+    const partes = t.split(' // ');
+    const cabecalho = partes[0]; // "DEVOLUÇÃO TOTAL DA NF|Motivos:...|Procedência"
+    const mMot = cabecalho.match(/Motivos:(.*?)\|/);
+    const motivosGerais = mMot ? mMot[1] : '';
+    const cortesTxt = partes.slice(1);
+    const cortes = cortesTxt.map(parseCorteResumo).filter(Boolean);
+    return { totalNF:true, motivosGerais, cortes };
+  }
+
+  const itens = t.split(' // ').map(parseCorteResumo).filter(Boolean);
+  return { totalNF:false, cortes:itens };
+}
+
+// Faz o parse de UM corte: "PRODUTO|SIF:x|Av:x|Pb:x|Inc:x%|Ncx|Nkg|MOTIVOS"
+function parseCorteResumo(bloco){
+  const m = bloco.match(/^(.*?)\|SIF:(.*?)\|Av:(.*?)\|Pb:(.*?)\|Inc:([\d.,]+%?)\|(\d*)cx\|([\d.,]*)kg\|(.*)$/s);
+  if(!m) return null;
+  const produto = m[1].trim();
+  const incidenciaItem = m[5].trim();
+  const motivosStr = m[8].trim();
+  // cada sub-motivo é separado por ' / '; extrai nome + Inc: individual se houver
+  const subMotivos = motivosStr.split(' / ').map(sm=>{
+    const mi = sm.match(/Inc:([\d.,]+%?)/);
+    const nome = sm.split(' | ')[0].trim();
+    return { nome, pct: mi ? mi[1] : incidenciaItem };
+  }).filter(sm=> sm.nome);
+  return { produto, subMotivos: subMotivos.length ? subMotivos : [{nome:'Não especificado', pct:incidenciaItem}] };
+}
+
+// Junta nomes com vírgula e "e" antes do último, no padrão do modelo:
+// "A (10%), B (20%) e C (30%)"
+function juntarComE(lista){
+  if(lista.length===0) return '';
+  if(lista.length===1) return lista[0];
+  return lista.slice(0,-1).join(', ') + ' e ' + lista[lista.length-1];
+}
+
+function gerarResumoWhatsAppEntregas(){
+  const lista = [...ultimaListaFiltradaEntregas].sort((a,b)=> (a.data||'').localeCompare(b.data||''));
+  if(!lista.length){
+    toast('Nenhuma entrega no filtro atual para gerar o resumo.');
+    return;
+  }
+
+  let presenciais = 0, remotos = 0;
+  let volEntregueTotal = 0, volDevolvidoTotal = 0;
+  let semDevContagem = {};
+  let visitasParaRevisar = 0;
+  const todosDesvios = new Set();
+
+  const linhas = lista.map(x=>{
+    if(x.presencial) presenciais++; else remotos++;
+    volEntregueTotal += x.volRec;
+    volDevolvidoTotal += x.volDev;
+
+    const dataFmt = x.data ? x.data.split('-').reverse().slice(0,2).join('/') : '—';
+    const sifFmt = formatarSifResumo(x.sif);
+    const modo = x.presencial ? '👥 Presencial' : '💻 Remoto';
+    const cabecalho = `🔹 ${dataFmt} | SIF ${sifFmt} – ${modo}`;
+
+    if(x.volDev<=0){
+      const chaveSif = sifFmt.match(/\(([^)]+)\)/);
+      const sigla = chaveSif ? chaveSif[1] : sifFmt;
+      semDevContagem[sigla] = (semDevContagem[sigla]||0)+1;
+      return `${cabecalho}\n📦 Entregue: ${fmtKgResumo(x.volRec)} kg ✅ Sem devoluções`;
+    }
+
+    const parsed = parseDevolucoesResumo(x.devolucoesTexto);
+    const cortes = parsed.cortes;
+    cortes.forEach(c=> c.subMotivos.forEach(sm=> todosDesvios.add(sm.nome)));
+
+    const revisar = cortes.length>1;
+    if(revisar) visitasParaRevisar++;
+
+    const procTxt = x.devprocedente==='Procedente' ? '✅ Procedente'
+      : x.devprocedente==='Improcedente' ? '❌ Improcedente'
+      : '⚪ Não se aplica';
+
+    const linhasProduto = cortes.length
+      ? cortes.map(c=>{
+          const motTxt = juntarComE(c.subMotivos.map(sm=> sm.nome + (sm.pct ? ' ('+fmtPctResumo(sm.pct)+'%)' : '')));
+          return `🥩 ${c.produto}❗ ${motTxt} – ${procTxt}`;
+        }).join('\n')
+      : `🥩 (detalhe não disponível) – ${procTxt}`;
+
+    const avisoRevisao = revisar ? ' 🔎(revisar procedência por corte)' : '';
+
+    return `${cabecalho}\n📦 Entregue: ${fmtKgResumo(x.volRec)} kg | 🔄 Devolvido: ${fmtKgResumo(x.volDev)} kg${avisoRevisao}\n${linhasProduto}`;
+  });
+
+  const semDevTotal = Object.values(semDevContagem).reduce((s,n)=>s+n,0);
+  const semDevDetalhe = Object.entries(semDevContagem).map(([sigla,n])=> sigla+' '+String(n).padStart(2,'0')).join(', ');
+
+  const periodoIni = lista[0].data ? lista[0].data.split('-').reverse().slice(0,2).join('/') : '';
+  const periodoFim = lista[lista.length-1].data ? lista[lista.length-1].data.split('-').reverse().slice(0,2).join('/') : '';
+
+  let rodape = `📊 Resumo do período\n`
+    + `* 👥 Acompanhamentos presenciais: ${String(presenciais).padStart(2,'0')}\n`
+    + `* 💻 Acompanhamentos remotos: ${String(remotos).padStart(2,'0')}\n`
+    + `* 📦 Volume entregue: ${fmtKgResumo(volEntregueTotal)} kg\n`
+    + `* 🔄 Volume devolvido: ${fmtKgResumo(volDevolvidoTotal)} kg\n`
+    + `* ✅ Acompanhamentos sem devoluções: ${semDevTotal}${semDevDetalhe?' ('+semDevDetalhe+')':''}\n`
+    + `* ⚠️ Principais desvios: ${[...todosDesvios].join(', ')||'—'}`;
+
+  if(visitasParaRevisar>0){
+    rodape += `\n\n🔎 ATENÇÃO: a procedência acima foi registrada por carga, não por corte (o Ato de Entrega ainda não captura isso). `
+      + `${visitasParaRevisar} visita(s) tiveram mais de um corte devolvido e precisam de revisão manual da procedência de cada corte antes do envio final.`;
+  }
+
+  const texto = `📋 RESUMO DE ACOMPANHAMENTOS | ${periodoIni} a ${periodoFim}\n\n`
+    + linhas.join('\n\n\n') + '\n\n\n' + rodape;
+
+  document.getElementById('dev-resumo-output').value = texto;
+  document.getElementById('dev-resumo-area').style.display = 'block';
+  document.getElementById('dev-resumo-area').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function fmtKgResumo(n){
+  return (n||0).toLocaleString('pt-BR', {maximumFractionDigits:1});
+}
+
+// "20.0%" ou "20,0" -> "20"  |  "47.8%" -> "47,8"  (vírgula, sem zero à toa)
+function fmtPctResumo(v){
+  const n = parseFloat(String(v).replace('%','').replace(',','.'));
+  if(isNaN(n)) return String(v).replace('%','');
+  return n.toLocaleString('pt-BR', {maximumFractionDigits:1});
+}
+
+document.getElementById('btn-dev-resumo').addEventListener('click', gerarResumoWhatsAppEntregas);
+document.getElementById('btn-dev-resumo-copiar').addEventListener('click', ()=>{
+  const ta = document.getElementById('dev-resumo-output');
+  ta.select();
+  navigator.clipboard?.writeText(ta.value);
+  toast('Resumo copiado.');
+});
+
 document.getElementById('f-uf').addEventListener('change', renderNotasFiltradas);
 document.getElementById('f-cliente').addEventListener('change', renderNotasFiltradas);
 document.getElementById('f-secao').addEventListener('change', renderNotasFiltradas);
@@ -1260,6 +1710,7 @@ function renderNotasFiltradas(){
       </div>
       <span class="note-section">${sc.emoji} ${sc.label}</span>
       <div class="note-text pre-wrap">${escapeHtml(n.text)}</div>
+      ${n.autor ? `<div style="font-size:11px;color:var(--ink-faint);margin-top:4px;">Feito por: ${escapeHtml(n.autor)}</div>` : ''}
       <div class="note-foot">
         <button class="ghost" data-edit="${n.id}">Editar</button>
         <button class="ghost" data-del="${n.id}" style="margin-left:12px;">Excluir</button>
@@ -2114,6 +2565,7 @@ function notaCardDossie(n, termo){
       </div>
       <div class="note-meta" style="margin:2px 0 4px;">${sec.emoji} ${escapeHtml(sec.label)}</div>
       <div class="note-text pre-wrap">${destacar(n.text, termo)}</div>
+      ${n.autor ? `<div style="font-size:11px;color:var(--ink-faint);margin-top:4px;">Feito por: ${escapeHtml(n.autor)}</div>` : ''}
     </div>`;
 }
 
@@ -2351,6 +2803,7 @@ document.getElementById('btn-limpar-busca').addEventListener('click', ()=>{
   renderBusca();
 });
 
+inicializarMeuNome();
 load();
 </script>
 </body>
