@@ -645,7 +645,12 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const storageRef = firebase.storage().ref();
+const _storage = firebase.storage();
+// IMPORTANTE: por padrao o Firebase tenta reenviar um upload que falha por
+// 10 MINUTOS antes de desistir. Isso travava o tecnico esperando. Agora falha
+// rapido (45s) e a ata ja esta salva de qualquer forma.
+try{ _storage.setMaxUploadRetryTime(45000); _storage.setMaxOperationRetryTime(20000); }catch(e){}
+const storageRef = _storage.ref();
 const DB_PATH = 'tracker-data';
 
 const LOGO_JBS_DOC = 'data:image/jpeg;base64,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';
@@ -1025,7 +1030,12 @@ function nomeArquivo(){
 async function gerarPdfBlob(){
   const alvo = document.querySelector('#doc-render .ata-doc');
   if(!alvo) return null;
-  const canvas = await html2canvas(alvo, {scale:2, backgroundColor:'#ffffff', useCORS:true});
+  // escala 1.6 em vez de 2: PDF bem mais leve e rapido no celular do tecnico,
+  // sem perda visivel de qualidade na leitura.
+  const canvas = await Promise.race([
+    html2canvas(alvo, {scale:1.6, backgroundColor:'#ffffff', useCORS:true}),
+    new Promise((_,rej)=> setTimeout(()=> rej(new Error('timeout-canvas')), 45000))
+  ]);
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
   const lm = 10;
@@ -1072,6 +1082,52 @@ document.getElementById('btn-imprimir').addEventListener('click', ()=>{
   document.getElementById('doc-print-area').innerHTML = docHtml();
   window.print();
 });
+
+/* ============ anexar PDF a uma ata ja gravada ============ */
+// Gera o PDF a partir do que esta na tela e anexa na ata de id informado.
+// Retorna true se conseguiu, false se nao. NUNCA joga erro para fora.
+async function anexarPdf(id, silencioso){
+  try{
+    const blob = await gerarPdfBlob();
+    if(!blob) throw new Error('sem documento na tela');
+    const nome = nomeArquivo();
+    const ref = storageRef.child('atas/'+id+'_'+nome);
+    await ref.put(blob);
+    const url = await ref.getDownloadURL();
+    const i = (data.alinhamentos||[]).findIndex(x=>x.id===id);
+    if(i<0) throw new Error('ata nao encontrada');
+    data.alinhamentos[i].arquivoUrl = url;
+    data.alinhamentos[i].arquivoNome = nome;
+    await save();
+    if(!silencioso) toast('PDF anexado na ata.');
+    return true;
+  }catch(e){
+    console.warn('PDF nao anexado', e);
+    return false;
+  }
+}
+
+// Botao "Gerar PDF" da lista de atas salvas: carrega a ata no formulario
+// (o que remonta a pre-visualizacao), gera o PDF, anexa e volta para a lista.
+async function gerarPdfDeAtaSalva(id){
+  const a = (data.alinhamentos||[]).find(x=>x.id===id);
+  if(!a) return;
+  toast('Abrindo a ata para gerar o PDF...');
+  editar(id);
+  // espera a pre-visualizacao terminar de montar na tela
+  await new Promise(r=> setTimeout(r, 600));
+  const ok = await anexarPdf(id, true);
+  limparForm();
+  irParaAba('salvas');
+  if(ok){
+    toast('PDF gerado e anexado na ata.');
+  } else {
+    alert('Nao consegui anexar o PDF agora.\n\n'
+      + 'A ata continua salva normalmente. Tente de novo com uma conexao melhor, '
+      + 'ou abra a ata em "Abrir / editar" e use "Imprimir / Salvar como PDF" '
+      + 'para gerar o arquivo no seu computador.');
+  }
+}
 
 /* ================= salvar ================= */
 document.getElementById('btn-salvar').addEventListener('click', async ()=>{
@@ -1120,40 +1176,47 @@ document.getElementById('btn-salvar').addEventListener('click', async ()=>{
   };
 
   try{
-    // anexa o PDF no Storage para quem quiser baixar depois
-    st.textContent = 'Gerando o PDF da ata...';
-    try{
-      const blob = await gerarPdfBlob();
-      if(blob){
-        const nome = nomeArquivo();
-        const ref = storageRef.child('atas/'+registro.id+'_'+nome);
-        await ref.put(blob);
-        registro.arquivoUrl = await ref.getDownloadURL();
-        registro.arquivoNome = nome;
-      }
-    }catch(e){
-      console.warn('PDF não anexado', e);
-      st.textContent = 'A ata será salva sem o PDF anexo (o texto fica guardado normalmente).';
-    }
-
+    // ORDEM NOVA: grava a ata no banco PRIMEIRO (rapido), e so depois tenta
+    // anexar o PDF. Antes era o contrario, e um upload lento deixava o tecnico
+    // esperando ate 11 minutos na tela de "Salvando...".
     if(!Array.isArray(data.alinhamentos)) data.alinhamentos = [];
     if(editandoId){
       const i = data.alinhamentos.findIndex(x=>x.id===editandoId);
       const anterior = i>=0 ? data.alinhamentos[i] : null;
-      if(anterior && !registro.arquivoUrl){
+      if(anterior){
         registro.arquivoUrl = anterior.arquivoUrl || null;
         registro.arquivoNome = anterior.arquivoNome || null;
+        registro.createdAt = anterior.createdAt || Date.now();
       }
-      if(anterior) registro.createdAt = anterior.createdAt || Date.now();
       if(i>=0) data.alinhamentos[i] = registro; else data.alinhamentos.push(registro);
     } else {
       data.alinhamentos.push(registro);
     }
+    st.textContent = 'Gravando a ata...';
     await save();
     st.textContent = '';
     toast(editandoId ? 'Ata atualizada.' : 'Ata salva na plataforma.');
+
+    // Agora o PDF, com o formulario ainda preenchido na tela.
+    const idSalvo = registro.id;
+    let pdfOk = false;
+    if(!registro.arquivoUrl){
+      st.textContent = 'Gerando e anexando o PDF...';
+      pdfOk = await anexarPdf(idSalvo, true);
+    } else {
+      pdfOk = true;
+    }
+
     limparForm();
+    st.textContent = '';
     irParaAba('salvas');
+
+    if(!pdfOk){
+      alert('ATENCAO: a ata foi salva, mas o PDF nao pode ser anexado.\n\n'
+        + 'O texto da ata esta guardado normalmente e nada foi perdido.\n\n'
+        + 'Para anexar o PDF depois, use o botao "Gerar PDF" no cartao da ata, '
+        + 'dentro da pasta de atas salvas.');
+    }
   }catch(e){
     console.error(e);
     st.textContent = '';
@@ -1258,6 +1321,7 @@ function renderSalvas(){
       (a.arquivoUrl ? '<a href="'+esc(a.arquivoUrl)+'" target="_blank" rel="noopener" class="tool-tag" style="display:inline-block;margin-top:8px;">📎 '+esc(a.arquivoNome||'Baixar PDF')+'</a>' : '')+
       '<div class="note-foot">'+
         (estrut ? '<button class="ghost" data-edit="'+esc(a.id)+'">Abrir / editar</button>' : '<span class="hint">Ata antiga (sem campos estruturados) — edite no Painel do Cliente.</span>')+
+        (estrut && !a.arquivoUrl ? '<button class="ghost" data-pdf="'+esc(a.id)+'" style="margin-left:12px;">&#128196; Gerar PDF</button>' : '')+
         '<button class="ghost" data-del="'+esc(a.id)+'" style="margin-left:12px;">Excluir</button>'+
       '</div>'+
     '</div>';
@@ -1265,6 +1329,14 @@ function renderSalvas(){
 
   cont.querySelectorAll('[data-edit]').forEach(b=>
     b.addEventListener('click', ()=> editar(b.dataset.edit)));
+  cont.querySelectorAll('[data-pdf]').forEach(b=>
+    b.addEventListener('click', async ()=>{
+      b.disabled = true;
+      const t = b.textContent;
+      b.textContent = 'Gerando...';
+      await gerarPdfDeAtaSalva(b.dataset.pdf);
+      b.disabled = false; b.textContent = t;
+    }));
   cont.querySelectorAll('[data-del]').forEach(b=>
     b.addEventListener('click', async ()=>{
       if(!confirm('Excluir esta ata? Isso remove também do Painel do Cliente.')) return;
