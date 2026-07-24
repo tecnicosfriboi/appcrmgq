@@ -596,6 +596,8 @@ function __toggleSwitcher(e){
       <div class="toolbar" style="margin-top:12px;">
         <button class="secondary" id="btn-pdf">&#128196; Baixar PDF (para enviar por e-mail)</button>
         <button class="ghost" id="btn-imprimir">&#128424; Imprimir / Salvar como PDF</button>
+        <button class="ghost" id="btn-diag" style="margin-left:12px;">&#128295; Ver diagn&oacute;stico do PDF</button>
+        <div class="hint" style="margin-top:6px;">Vers&atilde;o do arquivo: <b id="marca-versao">v2-diag 24/07</b></div>
       </div>
       <button class="primary" id="btn-salvar" style="margin-top:12px;">Salvar ata na plataforma</button>
       <div style="text-align:center;">
@@ -649,7 +651,15 @@ const _storage = firebase.storage();
 // IMPORTANTE: por padrao o Firebase tenta reenviar um upload que falha por
 // 10 MINUTOS antes de desistir. Isso travava o tecnico esperando. Agora falha
 // rapido (45s) e a ata ja esta salva de qualquer forma.
-try{ _storage.setMaxUploadRetryTime(45000); _storage.setMaxOperationRetryTime(20000); }catch(e){}
+window.__DIAG = { versao:'v2-diag 24/07', retryOk:false, retryErro:'' };
+try{
+  _storage.setMaxUploadRetryTime(45000);
+  _storage.setMaxOperationRetryTime(20000);
+  window.__DIAG.retryOk = true;
+}catch(e){
+  window.__DIAG.retryErro = String(e && e.message || e);
+  console.warn('setMaxUploadRetryTime falhou:', e);
+}
 const storageRef = _storage.ref();
 const DB_PATH = 'tracker-data';
 
@@ -1041,6 +1051,8 @@ async function gerarPdfBlob(){
   const lm = 10;
   const larg = 210 - lm*2;
   const alt = canvas.height * larg / canvas.width;
+  window.__DIAG.canvasW = canvas.width;
+  window.__DIAG.canvasH = canvas.height;
   const img = canvas.toDataURL('image/jpeg', 0.92);
   const altPag = 297 - lm*2;
   if(alt <= altPag){
@@ -1055,7 +1067,11 @@ async function gerarPdfBlob(){
       if(restante > 0.5) pdf.addPage();
     }
   }
-  return pdf.output('blob');
+  const _blob = pdf.output('blob');
+  window.__DIAG.pdfBytes = _blob.size;
+  window.__DIAG.pdfMB = (_blob.size/1048576).toFixed(2);
+  console.log('DIAG canvas', canvas.width+'x'+canvas.height, '| PDF', window.__DIAG.pdfMB+' MB');
+  return _blob;
 }
 document.getElementById('btn-pdf').addEventListener('click', async ()=>{
   const btn = document.getElementById('btn-pdf');
@@ -1078,6 +1094,7 @@ document.getElementById('btn-pdf').addEventListener('click', async ()=>{
     btn.disabled = false; btn.textContent = orig;
   }
 });
+document.getElementById('btn-diag').addEventListener('click', mostrarDiagnostico);
 document.getElementById('btn-imprimir').addEventListener('click', ()=>{
   document.getElementById('doc-print-area').innerHTML = docHtml();
   window.print();
@@ -1087,24 +1104,64 @@ document.getElementById('btn-imprimir').addEventListener('click', ()=>{
 // Gera o PDF a partir do que esta na tela e anexa na ata de id informado.
 // Retorna true se conseguiu, false se nao. NUNCA joga erro para fora.
 async function anexarPdf(id, silencioso){
+  const st = document.getElementById('status-salvar');
+  const t0 = Date.now();
+  const seg = ()=> ((Date.now()-t0)/1000).toFixed(1)+'s';
   try{
+    if(st) st.textContent = 'Montando a imagem da ata...';
     const blob = await gerarPdfBlob();
     if(!blob) throw new Error('sem documento na tela');
+    window.__DIAG.tGerar = seg();
     const nome = nomeArquivo();
     const ref = storageRef.child('atas/'+id+'_'+nome);
-    await ref.put(blob);
+
+    // upload com progresso real, para saber se esta enviando ou travado
+    const t1 = Date.now();
+    await new Promise((res,rej)=>{
+      const tarefa = ref.put(blob);
+      tarefa.on('state_changed',
+        sn=>{
+          const pc = sn.totalBytes ? Math.round(sn.bytesTransferred/sn.totalBytes*100) : 0;
+          window.__DIAG.ultimoPct = pc;
+          if(st) st.textContent = 'Enviando PDF ('+window.__DIAG.pdfMB+' MB): '+pc+'%';
+        },
+        err=> rej(err),
+        ()=> res()
+      );
+    });
+    window.__DIAG.tUpload = ((Date.now()-t1)/1000).toFixed(1)+'s';
     const url = await ref.getDownloadURL();
+    window.__DIAG.tTotal = seg();
     const i = (data.alinhamentos||[]).findIndex(x=>x.id===id);
     if(i<0) throw new Error('ata nao encontrada');
     data.alinhamentos[i].arquivoUrl = url;
     data.alinhamentos[i].arquivoNome = nome;
     await save();
+    if(st) st.textContent = '';
     if(!silencioso) toast('PDF anexado na ata.');
     return true;
   }catch(e){
-    console.warn('PDF nao anexado', e);
+    window.__DIAG.erro = String(e && e.message || e);
+    window.__DIAG.tTotal = seg();
+    console.warn('PDF nao anexado', e, window.__DIAG);
+    if(st) st.textContent = '';
     return false;
   }
+}
+
+// Mostra na tela os numeros medidos, para diagnostico.
+function mostrarDiagnostico(){
+  const d = window.__DIAG || {};
+  alert('DIAGNOSTICO DO PDF\n\n'
+    + 'Versao do arquivo: ' + (d.versao||'?') + '\n'
+    + 'Limite de retry aplicado: ' + (d.retryOk ? 'SIM' : 'NAO -> ' + (d.retryErro||'?')) + '\n\n'
+    + 'Imagem gerada: ' + (d.canvasW||'?') + ' x ' + (d.canvasH||'?') + ' pixels\n'
+    + 'Tamanho do PDF: ' + (d.pdfMB||'?') + ' MB\n\n'
+    + 'Tempo para gerar o PDF: ' + (d.tGerar||'nao chegou') + '\n'
+    + 'Tempo para enviar: ' + (d.tUpload||'nao chegou') + '\n'
+    + 'Ultimo progresso visto: ' + (d.ultimoPct==null?'nenhum':d.ultimoPct+'%') + '\n'
+    + 'TEMPO TOTAL: ' + (d.tTotal||'?') + '\n\n'
+    + 'Erro: ' + (d.erro||'nenhum'));
 }
 
 // Botao "Gerar PDF" da lista de atas salvas: carrega a ata no formulario
